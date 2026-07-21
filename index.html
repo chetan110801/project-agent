@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>project-agent — notes</title>
+<style>
+:root{--content-width:760px;
+  --ui-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --read-font:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif}
+html[data-theme="light"]{--bg:#fbfbf9;--bg-2:#f2f1ec;--panel:#ffffff;--text:#1d1d1f;
+  --muted:#6b6b6f;--border:#e4e2db;--accent:#8a5a2b;--accent-soft:#f0e6da;--quote:#f6f3ec}
+html[data-theme="dark"]{--bg:#1b1c1e;--bg-2:#232427;--panel:#202123;--text:#e3e2df;
+  --muted:#9a9a9e;--border:#34353a;--accent:#d8a566;--accent-soft:#2c2a26;--quote:#26272a}
+html[data-theme="sepia"]{--bg:#f3e7cf;--bg-2:#ece0c4;--panel:#f7eed9;--text:#46392a;
+  --muted:#8c7a59;--border:#dccaa3;--accent:#9c5a25;--accent-soft:#ecdcbd;--quote:#efe4ca}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui-font);
+  display:flex;min-height:100vh}
+.sidebar{width:290px;flex-shrink:0;background:var(--bg-2);border-right:1px solid var(--border);
+  padding:1rem .9rem 2rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{font-weight:700;font-size:1.02rem;margin:0 .2rem .2rem}
+.tagline{font-size:.78rem;color:var(--muted);margin:0 .2rem 1rem;line-height:1.45}
+.nav-section{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  margin:1.1rem .2rem .35rem}
+.nav-link{display:block;padding:.42rem .55rem;border-radius:8px;color:var(--text);
+  text-decoration:none;font-size:.88rem;line-height:1.35}
+.nav-link:hover{background:var(--accent-soft)}
+.nav-link.active{background:var(--accent);color:#fff}
+.themes{display:flex;gap:.35rem;margin:1.4rem .2rem 0}
+.themes button{border:1px solid var(--border);background:var(--panel);color:var(--text);
+  border-radius:8px;padding:.35rem .6rem;font-size:.78rem;cursor:pointer}
+.themes button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.built{font-size:.72rem;color:var(--muted);margin:1rem .2rem 0}
+main{flex:1;min-width:0;padding:2.2rem 1.4rem 5rem}
+article{display:none;max-width:var(--content-width);margin:0 auto;
+  font-family:var(--read-font);font-size:1.06rem;line-height:1.66}
+article.active{display:block}
+article h1,article h2,article h3{font-family:var(--ui-font);line-height:1.25}
+article h1{font-size:1.65rem;margin:.2rem 0 1rem}
+article h2{font-size:1.25rem;margin-top:2.2rem;border-bottom:1px solid var(--border);
+  padding-bottom:.3rem}
+article h3{font-size:1.05rem;margin-top:1.6rem}
+article a{color:var(--accent)}
+article hr{border:0;border-top:1px solid var(--border);margin:2rem 0}
+article blockquote{margin:1rem 0;padding:.6rem 1rem;background:var(--quote);
+  border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
+article code{font-family:ui-monospace,Consolas,monospace;font-size:.85em;
+  background:var(--accent-soft);padding:.1em .35em;border-radius:5px}
+article pre{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:.9rem 1rem;overflow-x:auto}
+article pre code{background:none;padding:0;font-size:.82rem;line-height:1.55}
+.tablewrap,article table{max-width:100%}
+article table{border-collapse:collapse;font-family:var(--ui-font);font-size:.88rem;
+  display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:.45rem .6rem;text-align:left;
+  vertical-align:top}
+article th{background:var(--bg-2)}
+.menu-btn{display:none}
+@media (max-width:820px){
+  body{flex-direction:column}
+  .sidebar{position:static;width:100%;height:auto;border-right:0;
+    border-bottom:1px solid var(--border)}
+  main{padding:1.4rem 1rem 4rem}
+}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <p class="brand">project-agent</p>
+  <p class="tagline">An LLM agent for ARC-AGI-3, judged by its engineering harness.
+     Plain-language notes, decisions, and rules — all in one page.</p>
+  <div class="nav-section">Study notes</div>
+<a class="nav-link" href="#01-project-definition" data-doc="01-project-definition">What this project is, and why it exists</a>
+<a class="nav-link" href="#02-phase0-verification" data-doc="02-phase0-verification">Phase 0: checking the ground before building on it</a>
+<a class="nav-link" href="#03-agent-harness-spec" data-doc="03-agent-harness-spec">The project, take two: an agent you can trust, on ARC-AGI-3</a>
+<a class="nav-link" href="#decisions" data-doc="decisions">Decision log</a>
+<div class="nav-section">Project</div>
+<a class="nav-link" href="#claude" data-doc="claude">CLAUDE.md — binding rules for every Claude session in this project</a>
+<div class="nav-section">Deferred: TRM</div>
+<a class="nav-link" href="#readme" data-doc="readme">TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)</a>
+<a class="nav-link" href="#ablation-plan" data-doc="ablation-plan">The recursion-depth ablation — experiment design</a>
+  <div class="themes" id="themes">
+    <button data-theme="dark">Dark</button>
+    <button data-theme="light">Light</button>
+    <button data-theme="sepia">Sepia</button>
+  </div>
+  <p class="built">Built 2026-07-21 · rebuild: <code>py build_site.py</code></p>
+</nav>
+<main>
+<article id="01-project-definition" data-title="What this project is, and why it exists"><h1>Study note 1 — What this project is, and why it exists</h1>
+<p><em>Written 2026-07-21. Plain language on purpose: if you can't say it simply, you don't understand it yet.</em></p>
+<hr />
+<h2>The decision (locked 2026-07-21)</h2>
+<p>This project is <strong>not an app</strong>. It is the first real research work of your AGI/ASI path
+(project-asi), packaged so it also works as a portfolio piece for data-science and
+applied-science interviews.</p>
+<p>Two steps, in order:</p>
+<ol>
+<li>
+<p><strong>Reproduce a tiny reasoning model and run an experiment its authors never published.</strong>
+   The Tiny Recursion Model (TRM) has only 7 million parameters — thousands of times
+   smaller than models like Gemini — yet it beats much larger models on a famous
+   reasoning test called ARC-AGI-1. We rebuild it on free Kaggle GPUs, confirm the
+   published score, then measure something the paper skipped: <strong>what happens to accuracy
+   as you cut the model's "thinking depth" from 16 steps to 8 to 4?</strong> That curve doesn't
+   exist publicly. Producing it is a small but genuine contribution.</p>
+</li>
+<li>
+<p><strong>Build an agent for ARC-AGI-3.</strong> This is the newest version of the benchmark: an AI
+   is dropped into a small game world with <em>no instructions, no rules, no stated goal</em> —
+   it has to figure everything out by trying things, like a child with a new toy. Humans
+   solve 100% of these. The best frontier model scores under 1%. Hand-built agents score
+   ~13× better than the frontier model. We build one and put it on the public Kaggle
+   leaderboard (open-source milestone deadline: 30 September 2026).</p>
+</li>
+</ol>
+<p>Timeline: flexible. Step 1 is roughly two weeks of work; it can stretch or shrink.
+Each step is complete and showable on its own.</p>
+<hr />
+<h2>Why this, in one story</h2>
+<p>There are two ways to get better scores on a hard reasoning test:
+<strong>spend more money</strong> (bigger models, more compute per question) or <strong>have better ideas</strong>.</p>
+<p>In 2026 the field split along exactly that line. On ARC-AGI-2 — a puzzle test built so
+that memorizing the internet doesn't help — the leaderboard that allows ~$10,000 per run
+is now above the average human score. The leaderboard that caps cost at cents per task
+sits around 24%. Same test, 3.5× apart. The ARC Prize Foundation's own words: the
+accuracy gap is now bottlenecked by <em>engineering</em>; the efficiency gap is still
+bottlenecked by <em>science and ideas</em>.</p>
+<p>You have no compute budget. So the money-bound side of the field is closed to you — and
+the ideas-bound side is wide open, <strong>because on that side, spending more money is against
+the rules</strong>. A 7M-parameter model that trains on a free GPU beating giants is the
+existence proof that small players can still do real work there.</p>
+<p>That is why this project is on the <em>efficiency frontier</em> and not another LLM app:
+it is the one part of the AGI problem where your situation is not a handicap.</p>
+<hr />
+<h2>The timeless ideas you'll actually learn (and be interviewed on)</h2>
+<p>These are the things that will still matter in ten years, whatever happens to today's
+tools. Each gets its own study note as we hit it.</p>
+<ol>
+<li><strong>Generalization vs. memorization.</strong> Why ARC puzzles are designed so that having seen
+   the whole internet doesn't help, and why that's the honest definition of learning.
+   This is <em>the</em> core concept of machine learning, and most candidates can't explain it.</li>
+<li><strong>Test-time compute — thinking longer instead of being bigger.</strong> TRM loops over its
+   own draft answer up to 16 times. The same idea, at giant scale, is what "reasoning
+   models" like o3 do. One principle, two extremes.</li>
+<li><strong>The ablation — how scientists find out <em>why</em> something works.</strong> Change one thing
+   (recursion depth), hold everything else fixed, plot the curve. This is the daily bread
+   of applied-science roles, and our Step 1 is one honest ablation done end-to-end.</li>
+<li><strong>What a benchmark can and cannot tell you.</strong> Two leaderboards, same test, opposite
+   conclusions — a live lesson in reading evaluation numbers critically.</li>
+<li><strong>Exploration — learning with no instructions.</strong> Step 2's agent must act to find out
+   what the world even is. Explore-vs-exploit is a forever-concept (it predates AI).</li>
+<li><strong>The research loop.</strong> Question → ground it → shrink it until it runs → run it →
+   write what happened → update your beliefs. This is how research works at any scale,
+   from 30 GPU-hours to 30,000.</li>
+</ol>
+<p><strong>What we deliberately do NOT make a study topic:</strong> CI pipelines, observability vendors,
+web frameworks. Claude builds that plumbing where useful; it is not what you're here to
+learn. The <em>idea</em> behind it — "results must be reproducible and checked automatically,
+because wishful thinking is the default failure mode of research" — is timeless, and
+that idea is the only part that goes in your notes.</p>
+<hr />
+<h2>How we'll know it's real (rigor, stated timelessly)</h2>
+<ul>
+<li><strong>A reproduction target:</strong> the paper's published number. If we can't get close, we say
+  so and investigate — that is a result too.</li>
+<li><strong>A held-out test:</strong> we never tune on the data we score on. (This single sentence
+  kills half of all bad data science.)</li>
+<li><strong>One-command reruns:</strong> anyone — including an interviewer — can re-run the evaluation
+  and get our number. Every claim in the write-up traces to a run.</li>
+<li><strong>A written record:</strong> every experiment ends in a short page — question, setup, result,
+  what we now believe that we didn't before. Negative results get written up with the
+  same care.</li>
+</ul>
+<hr />
+<h2>The plan (phases, not dates)</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>What happens</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0 — Verify the ground</strong></td>
+<td>Re-check today's facts before relying on them: TRM code availability, ARC-AGI-1 data, Kaggle quota, ARC Prize 2026 rules and the Sept 30 milestone</td>
+<td>A short note listing each fact as confirmed / changed</td>
+</tr>
+<tr>
+<td><strong>1 — Reproduce</strong></td>
+<td>TRM training on ARC-AGI-1, free Kaggle GPUs</td>
+<td>Our score is in the paper's ballpark, from a clean rerun</td>
+</tr>
+<tr>
+<td><strong>2 — The missing curve</strong></td>
+<td>The recursion-depth ablation (16 → 8 → 4), same setup otherwise</td>
+<td>A plot + write-up: does thinking-depth substitute for size gracefully, or fall off a cliff?</td>
+</tr>
+<tr>
+<td><strong>3 — Publish piece #1</strong></td>
+<td>GitHub repo (Chetan creates it), README that tells the story, study notes complete</td>
+<td>A stranger can understand and re-run it</td>
+</tr>
+<tr>
+<td><strong>4 — The agent</strong></td>
+<td>ARC-AGI-3 agent: explore, remember, form and test hypotheses about the world's rules</td>
+<td>On the public leaderboard; aiming at the 30 Sept open-source milestone</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Facts that must be re-verified before Phase 1 (they are dated 2026-07-21)</h2>
+<ul>
+<li>TRM: arXiv 2510.04871, 45% on ARC-AGI-1 / 8% on ARC-AGI-2 at 7M parameters.</li>
+<li>Kaggle free quota: 30 GPU-hours/week, T4/P100.</li>
+<li>ARC Prize 2026: ARC-AGI-3 track, $75K open-source milestone, deadline 2026-09-30,
+  submissions via Kaggle, code must be open-sourced.</li>
+<li>ARC-AGI-3 state of play: best frontier model 0.37%, best purpose-built agent ~12.6%.</li>
+</ul>
+<p><em>(Numbers move. The reasoning above is built to survive them changing; the numbers are not.)</em></p>
+<hr />
+<h2>The interview pitch (draft — will improve as results arrive)</h2>
+<blockquote>
+<p>"A 7-million-parameter model beats reasoning models a thousand times its size on
+ARC-AGI-1, by recursing on its own answer instead of being big. I reproduced it
+end-to-end on free GPUs, then published the ablation the paper didn't: the
+accuracy-vs-thinking-depth curve. Then I used what that taught me to build an agent
+for ARC-AGI-3 — the benchmark where humans score 100% and frontier models under 1% —
+and put it on the public leaderboard. Every number I just said, you can re-run."</p>
+</blockquote></article>
+<article id="02-phase0-verification" data-title="Phase 0: checking the ground before building on it"><h1>Study note 2 — Phase 0: checking the ground before building on it</h1>
+<p><em>Written 2026-07-21, from live sources checked today. Phase 0's whole job is to catch
+the facts that moved between "when we planned" and "when we build." Two did.</em></p>
+<hr />
+<h2>The verdict in one paragraph</h2>
+<p>The plan survives, with one forced change: <strong>a full-scale ARC-AGI-1 reproduction is
+arithmetically impossible on free Kaggle GPUs</strong> (the paper used ~288 H100-hours; that is
+roughly two <em>years</em> of Kaggle quota). The fix is not to abandon reproduction but to
+reorder it: reproduce TRM <strong>on Sudoku-Extreme first</strong> (the paper's cheapest headline
+result, ~18 GPU-hours on a datacenter card — feasible in 1–2 weeks of quota), run the
+recursion-depth ablation there, and then do a <strong>reduced-scale</strong> ARC-AGI-1 run, reported
+honestly as reduced-scale. The ablation — the part of Step 1 that is genuinely ours —
+is untouched; it just runs on a task we can afford. Step 2 (ARC-AGI-3 agent) is
+confirmed and the Sept 30 milestone is real, but the leaderboard has moved a lot since
+our numbers were written down.</p>
+<hr />
+<h2>Fact by fact</h2>
+<h3>1. The TRM paper — ✅ confirmed unchanged</h3>
+<p><a href="https://arxiv.org/abs/2510.04871">arXiv 2510.04871</a>, "Less is More: Recursive
+Reasoning with Tiny Networks," Alexia Jolicoeur-Martineau (Samsung SAIL Montréal).
+45% on ARC-AGI-1, 8% on ARC-AGI-2, ~7M parameters, ~87% on Sudoku-Extreme. Still v1,
+no revisions.</p>
+<h3>2. The TRM code — ⚠️ available, but the repo is now frozen</h3>
+<p><a href="https://github.com/SamsungSAILMontreal/TinyRecursiveModels">SamsungSAILMontreal/TinyRecursiveModels</a>
+is MIT-licensed and public, but was <strong>archived (made read-only) on 2026-04-01</strong>.
+Cloning and modifying is fine; upstream fixes, answered issues, or updates will never
+come. Consequence: we fork it into our own repo early so our reproduction can't be
+orphaned by a deletion.</p>
+<h3>3. Training cost — 🚨 the fact that changes the plan</h3>
+<p>From the repo's own README:</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Paper's hardware</th>
+<th>Paper's runtime</th>
+<th>≈ on Kaggle (T4×2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sudoku-Extreme</td>
+<td>1× L40S</td>
+<td>~18 h</td>
+<td>~45–60 h → <strong>1–2 weeks of quota</strong></td>
+</tr>
+<tr>
+<td>Maze-Hard</td>
+<td>4× L40S</td>
+<td>&lt;24 h</td>
+<td>several weeks</td>
+</tr>
+<tr>
+<td>ARC-AGI-1</td>
+<td>4× H100</td>
+<td>~3 days (~288 H100-h)</td>
+<td><strong>thousands of hours → ~2 years</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Kaggle gives ~30 GPU-hours/week (T4×2 or P100, 12-hour session cap — so training must
+checkpoint and resume). An H100 is roughly 10–15× a T4 for this kind of training; the
+conversion above is approximate but the conclusion is not close: full-scale ARC training
+is out by two orders of magnitude. <strong>This is why Phase 0 exists.</strong> The original plan's
+"confirm the published ARC score" was written before this arithmetic was done.</p>
+<h3>4. ARC-AGI-1 data — ✅ confirmed, free</h3>
+<p>Public on GitHub (<a href="https://github.com/fchollet/ARC-AGI">fchollet/ARC-AGI</a>) and mirrored
+as Kaggle competition data. TRM's dataset builder expects the Kaggle layout
+(<code>kaggle/combined/arc-agi</code>). No access barrier.</p>
+<h3>5. Kaggle quota — ✅ confirmed as remembered</h3>
+<p>~30 GPU-hours/week, NVIDIA T4×2 or P100 (16 GB), sessions up to 12 h, background
+execution supported. Free.</p>
+<h3>6. ARC Prize 2026 / ARC-AGI-3 — ✅ confirmed, with corrected numbers</h3>
+<p>Per <a href="https://arcprize.org/competitions/2026/arc-agi-3">arcprize.org/competitions/2026/arc-agi-3</a>:</p>
+<ul>
+<li>Total pool <strong>$850K</strong>: Grand Prize $700K (first agent to score 100% — carries over if
+  unclaimed), Top Score awards $75K, Milestone prizes $75K.</li>
+<li><strong>Milestone #2 closes 2026-09-30</strong>: 1st $25K / 2nd $10K / 3rd $2.5K, open-source
+  required. (Our old note said "$75K milestone" — that's the whole milestone <em>category</em>
+  across both deadlines; Milestone #1, June 30, has already passed.)</li>
+<li>Submissions via Kaggle. All prize-eligible code open-sourced. <strong>No internet access
+  during evaluation</strong> — so no calling GPT/Claude APIs from inside the agent.</li>
+</ul>
+<h3>7. ARC-AGI-3 state of play — ⚠️ moved a lot since our numbers</h3>
+<p>What we had written down (frontier best 0.37%, best agent ~12.6%) is now stale:</p>
+<ul>
+<li>Frontier best is now <strong>GPT-5.6 Sol at ~7.8%</strong> (up ~20× in months).</li>
+<li>The ~12.58% figure was a preview-phase RL + graph-search agent.</li>
+<li>A July 2026 paper, OPINE-World (<a href="https://arxiv.org/pdf/2607.01531">arXiv 2607.01531</a>),
+  claims <strong>78.4% on the public eval set</strong> with programmatic world-modeling +
+  ontology-guided exploration. (Public eval ≠ the competition's private eval, and
+  paper claims deserve skepticism until reproduced — but the direction is clear.)</li>
+<li>Humans: still 100%.</li>
+</ul>
+<p>Two honest consequences. First, study note 1's line "best frontier model scores under
+1%" is now false and the interview pitch must not use it. Second, the bar for "a
+leaderboard-worthy agent" is rising monthly — our Step 2 goal stays <em>getting on the
+public leaderboard with an open, explainable agent</em>, not prize money.</p>
+<hr />
+<h2>The revised Step 1 (decision recorded in DECISIONS.md)</h2>
+<ol>
+<li><strong>Reproduce cheap, at full scale:</strong> TRM on Sudoku-Extreme, target ≈87%. This is a
+   real reproduction of a headline paper number, affordable on Kaggle.</li>
+<li><strong>Run the ablation where we can afford statistics:</strong> recursion depth 16 → 8 → 4
+   (→ 2), identical budget per depth, on Sudoku-Extreme. This curve is still
+   unpublished — the contribution survives intact.</li>
+<li><strong>Touch ARC honestly:</strong> one reduced-scale ARC-AGI-1 run (reduced augmentation /
+   shorter schedule), reported as "X% at 1/Nth of the paper's compute," never presented
+   as a full reproduction.</li>
+</ol>
+<p>The timeless lesson this note exists to teach: <strong>check the arithmetic of a plan against
+its budget before writing code.</strong> One README table invalidated a phase; ten minutes of
+verification saved weeks. That is what Phase 0 is <em>for</em>.</p>
+<hr />
+<h2>Sources checked (2026-07-21)</h2>
+<ul>
+<li>https://arxiv.org/abs/2510.04871</li>
+<li>https://github.com/SamsungSAILMontreal/TinyRecursiveModels (+ raw README)</li>
+<li>https://github.com/fchollet/ARC-AGI</li>
+<li>https://arcprize.org/arc-agi/3 and https://arcprize.org/competitions/2026/arc-agi-3</li>
+<li>Kaggle docs / community posts on GPU quota</li>
+<li>ARC-AGI-3 leaderboard trackers (llm-stats.com, benchlm.ai) + arXiv 2607.01531</li>
+</ul></article>
+<article id="03-agent-harness-spec" data-title="The project, take two: an agent you can trust, on ARC-AGI-3"><h1>Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3</h1>
+<p><em>Written 2026-07-21, evening — the day the project pivoted. Supersedes the plan in
+note 01; the DECISIONS.md evening entry records why. Plain language, as always.</em></p>
+<hr />
+<h2>What we are building, in one paragraph</h2>
+<p>An <strong>LLM-driven agent that plays ARC-AGI-3 games</strong> — worlds with no instructions, no
+stated goal, where the agent must figure out the rules by acting — wrapped in the
+<strong>engineering harness that makes an agent trustworthy</strong>: a hand-built loop, an eval
+suite that runs on every change, traces of every decision, reliability guards, and a
+token/cost budget it must live inside. The score matters less than the harness: the
+interview artifact is <em>"here is how I measure, debug, and improve an agent — and every
+claim, you can re-run."</em> Free tiers only; no GPU training anywhere.</p>
+<hr />
+<h2>Why this covers what interviews actually ask (checked 2026-07-21)</h2>
+<p>2026 AI-engineering interviews concentrate on five areas. Each maps to a layer of this
+one project — that mapping <em>is</em> the design:</p>
+<table>
+<thead>
+<tr>
+<th>What interviews probe</th>
+<th>Where it lives in this project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LLM fundamentals</strong> — tokens, tokenization, context windows, sampling/temperature</td>
+<td>Study notes wired to real code: we count every token the agent spends, watch truncation break it, and tune sampling for planning vs. acting</td>
+</tr>
+<tr>
+<td><strong>Context engineering</strong> — what goes in the window, compression, prompt structure</td>
+<td>The heart of the loop: each step decides what the model sees — observations, memory summaries, hypotheses. Measured, not vibed: context changes go through the eval suite</td>
+</tr>
+<tr>
+<td><strong>Agent design &amp; failure modes</strong> — loops, tools, memory, stuck states</td>
+<td>The agent loop built from first principles (observe → hypothesize → plan → act → reflect), plus a failure taxonomy from real traces, bucketed and counted</td>
+</tr>
+<tr>
+<td><strong>Evals</strong> — golden sets, LLM-as-judge, regression gates</td>
+<td>A fixed suite of games + per-game metrics (score, actions-to-first-progress, tokens spent). Every change ships with before/after numbers; regressions block the merge</td>
+</tr>
+<tr>
+<td><strong>Production ops</strong> — tracing, cost/latency budgets, caching, model routing</td>
+<td>Every LLM call traced (inputs, outputs, tokens, cost, latency). Per-game token budget. Cheap-model-first routing with escalation; caching of repeated world-queries</td>
+</tr>
+<tr>
+<td><strong>Retrieval/embeddings</strong> (the honest RAG angle)</td>
+<td>The agent's long-term memory: embedding-based retrieval over its <em>own past experience</em> — same concepts as RAG (chunking, similarity search, retrieval quality) without building a tutorial doc-bot</td>
+</tr>
+</tbody>
+</table>
+<p>Sources: 2026 interview guides and real-interview compilations (UPenn career services,
+Interview Coder, KORE1, 100+-interview Medium compilation), cross-checked against the
+<code>youtube-data/</code> research in this repo (evals + observability + failure modes dominate).</p>
+<hr />
+<h2>The phases — each one showable on its own</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>What gets built</th>
+<th>Showable when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A — First contact</strong></td>
+<td>ARC-AGI-3 SDK running locally, API key, a scripted random agent, scorecard retrieved</td>
+<td>A game plays end-to-end from our code</td>
+</tr>
+<tr>
+<td><strong>B — The loop</strong></td>
+<td>Hand-built agent loop with an LLM planner; free-tier model bake-off (Gemini Flash / Groq / local) chosen <em>by measurement</em></td>
+<td>The agent makes non-random progress on ≥1 game</td>
+</tr>
+<tr>
+<td><strong>C — Evals</strong></td>
+<td>Fixed eval suite of games; metrics: score, actions-to-progress, tokens/game; one-command run; results table auto-written</td>
+<td>Any change can be judged in numbers within minutes</td>
+</tr>
+<tr>
+<td><strong>D — Traces &amp; failure taxonomy</strong></td>
+<td>Every decision logged (context in, action out, tokens, latency, cost); failures bucketed by mode; evals added for each bucket</td>
+<td>We can answer "<em>why</em> did it do that?" for any action, with receipts</td>
+</tr>
+<tr>
+<td><strong>E — Memory &amp; retrieval</strong></td>
+<td>Short-term (in-context) + long-term (embedding retrieval over past episodes); measured effect on the suite</td>
+<td>Before/after numbers showing memory helps (or doesn't — also a result)</td>
+</tr>
+<tr>
+<td><strong>F — Budget engineering</strong></td>
+<td>Per-game token/cost budget, caching, cheap-first model routing; cost-vs-score curve</td>
+<td>The agent's cost per game is a dial, and we show the curve</td>
+</tr>
+<tr>
+<td><strong>G — Publish</strong></td>
+<td>Public leaderboard entry; README that tells the story; study notes complete</td>
+<td>A stranger can re-run the suite and get our numbers</td>
+</tr>
+</tbody>
+</table>
+<p>Phase order is dependency order: you can't do context engineering (B) honestly without
+evals (C) — so C comes <em>immediately</em> after the first working loop, before any tuning.
+Timeline: flexible, as always. A–C is the minimum showable core.</p>
+<hr />
+<h2>Rules carried over from note 01 (unchanged, re-aimed)</h2>
+<ul>
+<li><strong>Held-out games:</strong> the eval suite is split — a dev set we iterate on and a held-out
+  set we touch rarely. Never tune on what we report.</li>
+<li><strong>One-command reruns:</strong> <code>make eval</code> (or equivalent) reproduces every number in the
+  README.</li>
+<li><strong>Written records:</strong> every experiment — including failed prompt ideas — gets its
+  page: question, change, numbers, what we believe now.</li>
+<li><strong>Study notes teach timeless things:</strong> tokens and context windows, the agent loop,
+  evaluation design, exploration under unknown rules, budgets as constraints. Vendor
+  tools appear only as implementations of those ideas.</li>
+</ul>
+<h2>What this project deliberately is not</h2>
+<p>Not a RAG doc-bot, not a framework showcase, not a prize bid (the Kaggle no-internet
+track would forbid LLM APIs; it stays optional for later), and not GPU research — the
+TRM reproduction is parked in <code>trm-reproduction/</code> for project-asi.</p>
+<hr />
+<h2>Next step</h2>
+<p>Phase A: install the <code>arc-agi-3</code> SDK, register the free API key (three.arcprize.org),
+run a scripted agent on one public game, pull the scorecard. First study note after
+that: <strong>tokens, context windows, and why they are the physics of this whole project.</strong></p></article>
+<article id="decisions" data-title="Decision log"><h1>Decision log</h1>
+<p>One entry per decision that shaped the project. Newest first.
+Format: date · decision · why · what was rejected.</p>
+<hr />
+<h2>2026-07-21 (evening) — PIVOT: the project is an LLM-driven ARC-AGI-3 agent judged by its engineering harness; TRM deferred to project-asi</h2>
+<p><strong>Decision:</strong> project-agent is re-centered on one build: an <strong>LLM-driven agent for
+ARC-AGI-3</strong>, where the interview-facing deliverable is the <strong>engineering harness</strong>
+around it — the agent loop built from first principles, context engineering, an eval
+suite run on every change, tracing/observability, reliability guards, and free-tier
+cost/latency engineering. Target: the public leaderboard (internet allowed); the Kaggle
+prize track (no internet → no LLM APIs) is optional later, not the goal. The
+TRM/Sudoku reproduction + ablation is <strong>deferred to project-asi</strong> — the Phase 0
+verification and the pre-registered ablation plan are kept in this repo
+(<code>trm-reproduction/</code>, marked deferred) so nothing is lost.</p>
+<p><strong>Why:</strong> Chetan's requirement, stated plainly: the portfolio must showcase <em>current</em>
+AI-engineering / agentic-engineering practice (loops, evals, reliability, efficiency)
+because that's what interviews probe, and he needs to learn it ("I don't know shit
+about it"). The morning plan had a real gap the pivot fixes: prize-eligible ARC-AGI-3
+agents can't call LLM APIs (no internet at eval), so building for the prize would have
+taught loop fundamentals but not the LLM-engineering stack. Off-Kaggle, LLM-driven
+agents are the expected pattern (the official SDK ships OpenAI/LangGraph integrations).
+The substrate keeps the AGI-path spine that motivation depends on; the harness carries
+the interview story. No GPU training anywhere — laptop + free API tiers only.</p>
+<p><strong>Rejected:</strong> (a) same harness on a business-shaped benchmark (τ-bench-style) — closer
+to product-company day jobs but crowded territory and loses the AGI spine; (b) keeping
+the TRM-first plan — the LLM/agentic stack would arrive too late or not at all;
+(c) dropping TRM entirely — the ablation idea stays parked, it costs nothing to keep.</p>
+<p><strong>Supersedes:</strong> the morning entries below insofar as they made TRM Step 1. The rigor
+constraint (reproducible claims, held-out evals, written records, timeless study notes)
+carries over unchanged — it now applies to agent evals instead of training runs.</p>
+<hr />
+<h2>2026-07-21 — Step 1 reordered: Sudoku-first reproduction; ARC at reduced scale only</h2>
+<p><strong>Decision:</strong> Phase 0 verification (see <code>notes/02-phase0-verification.md</code>) found the
+paper's ARC-AGI-1 training run cost ~288 H100-hours — roughly two years of Kaggle's
+free 30 GPU-h/week. Step 1 therefore becomes: (a) full-scale TRM reproduction on
+<strong>Sudoku-Extreme</strong> (~18 datacenter-GPU-hours, feasible in 1–2 weeks of quota, target
+≈87%), (b) the recursion-depth ablation (16→8→4→2, equal budget per depth) on
+Sudoku-Extreme, (c) one <strong>reduced-scale</strong> ARC-AGI-1 run reported honestly as
+reduced-scale. The ablation contribution is unchanged; only the task it runs on moved.</p>
+<p><strong>Why:</strong> Forced by arithmetic, not preference. The alternative — burning weeks of quota
+to reach a fraction of one ARC run — produces nothing showable.</p>
+<p><strong>Rejected:</strong> Renting cloud GPUs (violates zero-budget constraint); skipping
+reproduction and doing only the ablation (no calibration that our training pipeline is
+correct); Maze-Hard as the cheap task (several weeks of quota vs Sudoku's 1–2).</p>
+<p><strong>Also recorded:</strong> TRM's official repo was archived 2026-04-01 (read-only) — we fork it
+so the reproduction can't be orphaned. ARC-AGI-3 leaderboard moved (frontier ~7.8%,
+a paper claims 78.4% on public eval); the "frontier under 1%" line is retired from the
+pitch.</p>
+<hr />
+<h2>2026-07-21 — Where "agentic engineering" lives in this project</h2>
+<p><strong>Decision:</strong> Interview-facing agentic topics (the agent loop, memory, exploration
+policy, evaluation of agents) are covered by <strong>Step 2 itself</strong> — the ARC-AGI-3 agent is
+an observe→decide→act loop with memory and hypothesis-testing, built from first
+principles rather than a framework. A study note on "the agent loop, timelessly" is
+added to the standing list. Framework-specific tooling (LangGraph et al.) stays out of
+study notes per the timeless-concepts constraint; RAG/function-calling interview
+questions are covered by ResearchPath (resume project #2), not this project.</p>
+<hr />
+<h2>2026-07-21 — The project is an AGI-direction research piece, not an app</h2>
+<p><strong>Decision:</strong> Build (1) a reproduction of the Tiny Recursion Model on ARC-AGI-1 plus an
+unpublished recursion-depth ablation, then (2) a purpose-built agent for ARC-AGI-3
+targeting the 30 Sept 2026 open-source milestone. Timeline flexible; each step showable
+on its own.</p>
+<p><strong>Why:</strong> Chetan's long-term goal is AGI/ASI work; the portfolio must be a step on that
+path or motivation dies. project-asi's own forward plan (<code>LEARNING/THE_PLAN.md</code>,
+2026-07-21) identified the efficiency frontier as the one part of AGI research open to a
+zero-budget individual, with these exact two moves as Phases 2–3. The portfolio project
+and the AGI path now share one spine.</p>
+<p><strong>Rejected:</strong> study-materials generator, job-application copilot, GitHub issue triage,
+customer-support agent, SRE/log copilot — all "generic software" apps; Chetan is
+explicitly not interested in learning replaceable app-stack practices.</p>
+<p><strong>Constraint recorded:</strong> study notes teach <em>timeless</em> concepts (generalization,
+test-time compute, ablations, exploration, the research loop) — never tooling for its
+own sake. Claude writes the code; Chetan owns the understanding.</p>
+<hr />
+<h2>2026-07-21 — (earlier) Reliability-as-thesis, reframed</h2>
+<p><strong>Decision:</strong> The original thesis — "anyone can vibe-code an app; the trust system
+around it is the differentiator" — survives, reframed for research: reproduction
+targets, held-out tests, one-command reruns, written experiment records.</p>
+<p><strong>Why:</strong> It is the same discipline interviewers probe in applied-science loops
+(how do you know your result is real?), and it is timeless scientific method rather
+than a tooling stack.</p></article>
+<article id="claude" data-title="CLAUDE.md — binding rules for every Claude session in this project"><h1>CLAUDE.md — binding rules for every Claude session in this project</h1>
+<p>These rules apply to ANY Claude model working here (Opus, Fable, or later models).
+They exist because sessions and models change but quality must not. Treat every rule
+as hard unless Chetan explicitly overrides it in-session — and if he does, record the
+override in <code>notes/DECISIONS.md</code>.</p>
+<h2>1. Session protocol</h2>
+<ul>
+<li><strong>Start:</strong> read auto-memory <code>MEMORY.md</code>, then <code>notes/DECISIONS.md</code> (newest entries
+  first), then the newest <code>notes/NN-*.md</code>. "continue" from Chetan means: resume from
+  the NEXT STEP line in memory. Do not re-plan work that is already planned.</li>
+<li><strong>End:</strong> persist every decision made this session to auto-memory (update the NEXT
+  STEP line), commit with a descriptive message, and push to <code>origin main</code>.
+  A session that changed things but pushed nothing is an unfinished session.</li>
+</ul>
+<h2>2. Decision discipline — no silent drift</h2>
+<ul>
+<li><code>notes/DECISIONS.md</code> is binding. Do not re-litigate or quietly deviate from a locked
+  decision. Changing one requires: Chetan's explicit agreement in-session + a new dated
+  entry (decision / why / rejected alternatives / what it supersedes).</li>
+<li>Current scope (2026-07-21 evening entry): <strong>LLM-driven ARC-AGI-3 agent judged by its
+  engineering harness</strong> — spec in <code>notes/03-agent-harness-spec.md</code>. Not an app, not a
+  tutorial RAG project, no GPU training. TRM work is deferred, not deletable.</li>
+</ul>
+<h2>3. Recheck everything you produce (the rule this file exists for)</h2>
+<p>Before ending any turn that produced content, do an explicit self-review pass:</p>
+<ul>
+<li><strong>Code:</strong> state plainly whether it was run. Untested code is labeled
+  <code>DRAFT — untested</code> in the file itself, not just in chat. Never claim "works" without
+  having executed it in this session.</li>
+<li><strong>Numbers and facts:</strong> every number in a note traces to either (a) a run artifact in
+  this repo or (b) a cited live source checked this session. Facts older than ~a month
+  in a fast-moving area (leaderboards, prices, quotas, APIs) get re-verified with web
+  search before being relied on. No number may be produced from model memory alone.</li>
+<li><strong>Consistency:</strong> new content must not contradict <code>DECISIONS.md</code> or earlier notes.
+  If it does, either fix the new content or record a decision — never leave both
+  versions standing.</li>
+<li><strong>Claims about what exists</strong> (files, configs, API flags, library functions): verify
+  against the actual file/repo/docs before writing them down. Do not guess interfaces.</li>
+</ul>
+<h2>4. Honesty of reporting</h2>
+<ul>
+<li>Failures, regressions, and negative results are reported plainly and written up with
+  the same care as wins. Never round "partially works" up to "works".</li>
+<li>Reduced-scale or shortcut results are labeled as such everywhere they appear.</li>
+<li>If a session hits a wall, write down the wall (what was tried, what failed) before
+  stopping — the next session must not rediscover it.</li>
+</ul>
+<h2>5. Evals gate all tuning (from Phase C onward)</h2>
+<ul>
+<li>Once the eval suite exists: <strong>no prompt, context, model, or loop change is kept
+  without before/after eval numbers</strong> on the dev set. Regressions revert or get a
+  written justification.</li>
+<li>The held-out game set is touched only for reported results, never for iteration.
+  Tuning on held-out data is the one unforgivable sin of this project.</li>
+<li>Every experiment gets a record: question, change, numbers, conclusion.</li>
+</ul>
+<h2>6. Chetan must be able to explain everything</h2>
+<ul>
+<li>Chetan's goal is interview fluency; he is learning this stack from scratch. Every
+  non-trivial artifact gets a plain-language explanation (what it is, why it exists,
+  how to explain it in an interview). If it can't be said simply, flag it — that's a
+  sign it isn't understood yet.</li>
+<li>Study notes in <code>notes/</code> teach <strong>timeless concepts</strong> (tokens/context windows, the
+  agent loop, evaluation design, exploration, budgets); tools and vendors appear only
+  as implementations of those concepts.</li>
+</ul>
+<h2>7. Hard constraints</h2>
+<ul>
+<li><strong>Free tiers only.</strong> No paid APIs, no paid infra, no "small" spend. If a free tier
+  is insufficient, that constraint becomes part of the engineering story — say so.</li>
+<li>Windows machine, PowerShell primary; code must run on Chetan's laptop.</li>
+<li>Secrets (API keys) never committed. Use env vars / untracked <code>.env</code>; keep
+  <code>.gitignore</code> current before any commit that could touch them.</li>
+<li>Repo: <code>github.com/chetan110801/project-agent</code>, branch <code>main</code>.</li>
+</ul></article>
+<article id="readme" data-title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><h1>TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)</h1>
+<blockquote>
+<p><strong>Status: deferred to project-asi's research track</strong> (see
+<a href="#decisions">notes/DECISIONS.md</a>, evening entry). project-agent pivoted to
+the LLM-driven ARC-AGI-3 agent + engineering harness. Everything below — the Phase 0
+feasibility findings and the pre-registered ablation design — is kept intact for
+when this work resumes. Nothing here is abandoned; it's parked.</p>
+</blockquote>
+<p>Step 1 of this project: reproduce the Tiny Recursion Model (TRM,
+<a href="https://arxiv.org/abs/2510.04871">arXiv 2510.04871</a>) and run the unpublished
+recursion-depth ablation. Scope was set by the Phase 0 feasibility check
+(<a href="#02-phase0-verification">notes/02-phase0-verification.md</a>):
+<strong>Sudoku-Extreme at full scale, ARC-AGI-1 at reduced scale.</strong></p>
+<h2>Upstream code</h2>
+<p>Official repo: <a href="https://github.com/SamsungSAILMontreal/TinyRecursiveModels">SamsungSAILMontreal/TinyRecursiveModels</a>
+— MIT license, <strong>archived 2026-04-01 (read-only)</strong>.</p>
+<p>First action of Phase 1: fork it (Chetan's GitHub account) so the code we depend on
+cannot disappear, then clone the fork inside Kaggle notebooks.</p>
+<h2>Plan of record</h2>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Task</th>
+<th>Scale</th>
+<th>Purpose</th>
+<th>Est. Kaggle cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Sudoku-Extreme</td>
+<td>smoke (minutes)</td>
+<td>pipeline works end-to-end on T4</td>
+<td>&lt;1 h</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Sudoku-Extreme</td>
+<td>full (paper config)</td>
+<td>reproduce ≈87% exact-accuracy</td>
+<td>~45–60 h (2 wks quota)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Sudoku-Extreme</td>
+<td>ablation ×3–4 depths</td>
+<td>the missing depth-vs-accuracy curve</td>
+<td>budget set after run 1</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ARC-AGI-1</td>
+<td>reduced</td>
+<td>connect the story to ARC, honestly labeled</td>
+<td>1 week of quota, fixed cap</td>
+</tr>
+</tbody>
+</table>
+<p>Experiment design for run 2 lives in <a href="#ablation-plan">ablation-plan.md</a>.</p>
+<h2>Kaggle constraints that shape everything</h2>
+<ul>
+<li>~30 GPU-hours/week (T4×2 or P100, 16 GB), sessions capped at 12 h
+  → <strong>training must checkpoint and resume across sessions</strong>. Verifying/patching
+  checkpoint-resume in the upstream trainer is the first engineering task of Phase 1.</li>
+<li>No persistent disk between sessions → checkpoints saved to a Kaggle Dataset each
+  session, reloaded at the start of the next.</li>
+<li>Paper used <code>torchrun</code> multi-GPU; T4×2 supports 2-process DDP, P100 is single-GPU.</li>
+</ul>
+<h2>Files</h2>
+<ul>
+<li><a href="#ablation-plan">ablation-plan.md</a> — the experiment: question, knob, protocol,
+  what would falsify it.</li>
+<li><a href="kaggle/bootstrap.sh">kaggle/bootstrap.sh</a> — draft setup script for a Kaggle
+  notebook cell (clone, install, build Sudoku data). Untested until first Kaggle run;
+  expect to adjust.</li>
+</ul>
+<h2>Rigor rules (from note 01, unchanged)</h2>
+<p>Reproduction target stated before running (87% Sudoku). Never tune on the scored
+split. Every claim traces to a run artifact (config + seed + checkpoint + log).
+Negative results get written up with the same care.</p></article>
+<article id="ablation-plan" data-title="The recursion-depth ablation — experiment design"><h1>The recursion-depth ablation — experiment design</h1>
+<p><em>Drafted 2026-07-21, before any run. Written down now so we can't quietly move the
+goalposts later — that's what a pre-registration is for.</em></p>
+<h2>Question</h2>
+<p>TRM improves its answer by looping: draft an answer, reconsider, redraft — up to 16
+supervised improvement steps at training time. The paper reports results at one depth.
+<strong>How does accuracy change as that depth is cut: 16 → 8 → 4 → 2?</strong></p>
+<p>Two live hypotheses, and the curve decides:</p>
+<ul>
+<li><strong>Graceful:</strong> accuracy declines smoothly — thinking depth substitutes for size, and
+  you can trade it for compute at inference.</li>
+<li><strong>Cliff:</strong> accuracy holds then collapses below a critical depth — recursion isn't
+  "more of the same," some minimum number of passes does qualitative work.</li>
+</ul>
+<p>Either answer is publishable as a small honest result. The curve does not currently
+exist in public.</p>
+<h2>The knob (to pin down exactly in Phase 1, against the repo config)</h2>
+<p>TRM has three nested loop counts: <code>H_cycles</code> and <code>L_cycles</code> (reasoning passes inside
+one improvement step) and the <strong>max number of supervised improvement steps</strong> (the
+paper's "up to 16," ACT/halting-controlled). The headline ablation varies the
+improvement-step cap: <strong>16 / 8 / 4 / 2</strong>. <code>H_cycles=3, L_cycles=4</code> and everything else
+stays at the paper's Sudoku config. Exact config-key names get confirmed from the
+forked repo before run 0 — this file then records them.</p>
+<h2>Protocol</h2>
+<ul>
+<li>Task: Sudoku-Extreme, paper's dataset build (<code>--subsample-size 1000 --num-aug 1000</code>).</li>
+<li><strong>Equal budget per depth</strong>: identical optimizer steps, batch size, schedule, and data
+  for every arm. If quota forces a shorter budget than the paper's full run, <em>all</em> arms
+  shrink identically and the write-up says so — the curve's <em>shape</em> is the claim, not
+  the absolute numbers.</li>
+<li>One seed per arm first (4 runs); repeat seeds only if the quota allows and the
+  curve's shape is ambiguous.</li>
+<li>Metric: exact-accuracy on the held-out test split, evaluated once per arm at the end.
+  No peeking at test during training; model selection (if any) on the validation split
+  only.</li>
+<li>Every arm logs: config, seed, git commit of the fork, wall-clock GPU hours,
+  final checkpoint.</li>
+</ul>
+<h2>What would break the result (named in advance)</h2>
+<ul>
+<li><strong>Confound:</strong> deeper recursion = more compute per optimizer step. Equal <em>steps</em> is
+  not equal <em>FLOPs</em>. We report both step-matched and (if affordable) a FLOP-matched
+  spot-check at one depth; the write-up discusses the difference rather than hiding it.</li>
+<li><strong>Halting interaction:</strong> ACT may learn to stop early anyway, making depth caps
+  non-binding. We log the <em>realized</em> average depth per arm; if 16 and 8 realize the
+  same depth, the top of the curve is a null result about the cap, not about depth.</li>
+<li><strong>Single-seed noise:</strong> flagged in the write-up if we can't afford repeats.</li>
+</ul>
+<h2>Deliverable</h2>
+<p>One plot (accuracy vs. depth, with realized-depth annotations), one page of prose:
+question, setup, curve, what we now believe that we didn't before.</p></article>
+</main>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.nav-link'));
+  var docs=[].slice.call(document.querySelectorAll('article'));
+  function show(id){
+    var target=document.getElementById(id)||docs[0];
+    docs.forEach(function(d){d.classList.toggle('active',d===target)});
+    links.forEach(function(l){l.classList.toggle('active',l.dataset.doc===target.id)});
+    document.title='project-agent — '+target.dataset.title;
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+  show(location.hash.slice(1));
+
+  var themeBtns=[].slice.call(document.querySelectorAll('#themes button'));
+  function setTheme(t){
+    document.documentElement.dataset.theme=t;
+    themeBtns.forEach(function(b){b.classList.toggle('active',b.dataset.theme===t)});
+    try{localStorage.setItem('pa-theme',t)}catch(e){}
+  }
+  themeBtns.forEach(function(b){b.onclick=function(){setTheme(b.dataset.theme)}});
+  var saved='dark';
+  try{saved=localStorage.getItem('pa-theme')||'dark'}catch(e){}
+  setTheme(saved);
+})();
+</script>
+</body>
+</html>

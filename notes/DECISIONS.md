@@ -5,6 +5,39 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-21 (evening) — PIVOT: the project is an LLM-driven ARC-AGI-3 agent judged by its engineering harness; TRM deferred to project-asi
+
+**Decision:** project-agent is re-centered on one build: an **LLM-driven agent for
+ARC-AGI-3**, where the interview-facing deliverable is the **engineering harness**
+around it — the agent loop built from first principles, context engineering, an eval
+suite run on every change, tracing/observability, reliability guards, and free-tier
+cost/latency engineering. Target: the public leaderboard (internet allowed); the Kaggle
+prize track (no internet → no LLM APIs) is optional later, not the goal. The
+TRM/Sudoku reproduction + ablation is **deferred to project-asi** — the Phase 0
+verification and the pre-registered ablation plan are kept in this repo
+(`trm-reproduction/`, marked deferred) so nothing is lost.
+
+**Why:** Chetan's requirement, stated plainly: the portfolio must showcase *current*
+AI-engineering / agentic-engineering practice (loops, evals, reliability, efficiency)
+because that's what interviews probe, and he needs to learn it ("I don't know shit
+about it"). The morning plan had a real gap the pivot fixes: prize-eligible ARC-AGI-3
+agents can't call LLM APIs (no internet at eval), so building for the prize would have
+taught loop fundamentals but not the LLM-engineering stack. Off-Kaggle, LLM-driven
+agents are the expected pattern (the official SDK ships OpenAI/LangGraph integrations).
+The substrate keeps the AGI-path spine that motivation depends on; the harness carries
+the interview story. No GPU training anywhere — laptop + free API tiers only.
+
+**Rejected:** (a) same harness on a business-shaped benchmark (τ-bench-style) — closer
+to product-company day jobs but crowded territory and loses the AGI spine; (b) keeping
+the TRM-first plan — the LLM/agentic stack would arrive too late or not at all;
+(c) dropping TRM entirely — the ablation idea stays parked, it costs nothing to keep.
+
+**Supersedes:** the morning entries below insofar as they made TRM Step 1. The rigor
+constraint (reproducible claims, held-out evals, written records, timeless study notes)
+carries over unchanged — it now applies to agent evals instead of training runs.
+
+---
+
 ## 2026-07-21 — Step 1 reordered: Sudoku-first reproduction; ARC at reduced scale only
 
 **Decision:** Phase 0 verification (see `notes/02-phase0-verification.md`) found the

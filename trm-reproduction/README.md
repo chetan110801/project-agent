@@ -1,4 +1,10 @@
-# TRM reproduction on free Kaggle GPUs
+# TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)
+
+> **Status: deferred to project-asi's research track** (see
+> [notes/DECISIONS.md](../notes/DECISIONS.md), evening entry). project-agent pivoted to
+> the LLM-driven ARC-AGI-3 agent + engineering harness. Everything below — the Phase 0
+> feasibility findings and the pre-registered ablation design — is kept intact for
+> when this work resumes. Nothing here is abandoned; it's parked.
 
 Step 1 of this project: reproduce the Tiny Recursion Model (TRM,
 [arXiv 2510.04871](https://arxiv.org/abs/2510.04871)) and run the unpublished

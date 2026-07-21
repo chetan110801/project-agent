@@ -5,6 +5,53 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 — Study notes become a structured course for a zero-knowledge reader; step-by-step walkthroughs are mandatory
+
+**Decision:** Three new hard rules, written into `CLAUDE.md` (§6A, §6B) so every future
+session and model obeys them:
+
+1. **Study notes are a course, not a pile.** They live in `notes/study/`, are numbered,
+   and are read in order. Every note declares *You are here* / *Assumes you read* /
+   *After this you can*, defines every term at first use, **makes no forward references**,
+   gives overview before detail, anchors abstract ideas in something concrete, and ends
+   with **Say it in an interview**. Non-basic English gets a short inline gloss.
+2. **Anything Chetan must do himself gets a numbered, click-by-click walkthrough** in
+   `notes/howto/` — exact clicks, exact commands, exact expected output, what can go
+   wrong, and how to report back. Never a one-line instruction.
+3. **Rechecks are separate single-focus passes** (flow / jargon / closure / truth), not
+   one combined skim.
+
+Written this session: `notes/study/00`–`05` (how to use the notes; the project in plain
+English; the vocabulary in dependency order; tokens & context windows; ARC-AGI-3 and its
+exact interface; the agent loop) and `notes/howto/01-get-your-arc-api-key.md`.
+Notes 06–11 (context engineering, evals, traces, memory, budgets, the interview story)
+are listed in the ladder and get written **as each component is built** — a note about an
+unbuilt component would be guesswork.
+
+**Why:** Chetan stated plainly that he has **zero** technical knowledge of this stack and
+cannot learn from notes that assume any. He also cannot act on instructions like "get an
+API key" without a walkthrough. Both were previously implicit-at-best; interview fluency
+is the project's whole purpose, so failing at them fails the project regardless of how
+good the agent gets.
+
+**Rejected:** writing all of notes 06–11 now (would violate the no-unverified-claims rule
+— they'd describe components that don't exist); keeping the course inside `notes/`
+alongside the project record (mixes teaching with history and breaks the reading order).
+
+**Also decided (reader/site):** `build_site.py` now groups documents into *Learn from
+zero* → *Do this — step by step* → *Project record* → *Project* → *Deferred: TRM*, which
+is the reading order, and renders `::: key/example/warn/note` callout boxes. Reader-shell
+fixes for iPhone: the menu and home buttons moved into one fixed flex row so they can
+never overlap at any inset or font size; corner buttons stay faintly visible on touch
+devices (which have no hover, so they were invisible forever after the load hint faded);
+phone padding cut from 3.4rem/4.5rem to 3.05rem/1.6rem so text fills the screen
+vertically; and the JS viewport-height override now only runs where CSS `dvh` is
+unsupported — a stale `innerHeight` in an in-app browser (e.g. opening the file from the
+OneDrive app) is the most likely cause of the dead band Chetan saw at the bottom.
+**Untested on the actual iPhone** — needs his confirmation.
+
+---
+
 ## 2026-07-21 (evening) — PIVOT: the project is an LLM-driven ARC-AGI-3 agent judged by its engineering harness; TRM deferred to project-asi
 
 **Decision:** project-agent is re-centered on one build: an **LLM-driven agent for

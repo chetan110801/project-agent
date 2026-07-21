@@ -38,14 +38,17 @@ html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--ui-font);
   display:flex;flex-direction:column;height:var(--app-h);overflow:hidden}
 
-/* floating hamburger + home — present but invisible while reading; reveal on hover / focus */
-.hamburger,.homebtn{position:fixed;top:env(safe-area-inset-top);z-index:50;width:46px;height:46px;
+/* menu + home live in ONE fixed flex row, so the browser lays them out side by side and
+   they can never overlap — whatever the safe-area inset, font size or device is. (They
+   used to be two independently positioned buttons whose gap was a hardcoded 46px.) */
+.navbtns{position:fixed;top:env(safe-area-inset-top);left:env(safe-area-inset-left);
+  z-index:50;display:flex;align-items:center;gap:.25rem}
+.hamburger,.homebtn{flex:0 0 auto;width:46px;height:46px;
   border:0;background:transparent;color:var(--muted);font-size:1.2rem;line-height:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;opacity:0;
   transition:opacity .25s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
   text-shadow:0 0 5px var(--bg),0 0 5px var(--bg),0 0 5px var(--bg)}
-.hamburger{left:env(safe-area-inset-left)}
-.homebtn{left:calc(46px + env(safe-area-inset-left));font-size:1.15rem}  /* sits beside the menu */
+.homebtn{font-size:1.15rem}
 .hamburger:hover,.hamburger:focus-visible,
 .homebtn:hover,.homebtn:focus-visible{opacity:.85;outline:none}
 .hamburger.hint,.homebtn.hint{opacity:.55}                   /* brief "I'm here" hint on load */
@@ -304,8 +307,11 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
   .closeSidebar{font-size:1.7rem;padding:.1rem .5rem}
   .tab{padding:.6rem .6rem}                          /* easier to tap */
   .group>summary{padding:.55rem .55rem}
-  .content{padding:calc(3.4rem + env(safe-area-inset-top)) max(.95rem,env(safe-area-inset-right))
-                   calc(4.5rem + env(safe-area-inset-bottom)) max(.95rem,env(safe-area-inset-left))}
+  /* Give the text as much of the screen as the fixed corner buttons allow. Top clears the
+     46px button row and nothing more; bottom is just breathing room + the home-bar inset.
+     (Was 3.4rem / 4.5rem — ~70px of dead space on a phone screen.) */
+  .content{padding:calc(3.05rem + env(safe-area-inset-top)) max(.9rem,env(safe-area-inset-right))
+                   calc(1.6rem + env(safe-area-inset-bottom)) max(.9rem,env(safe-area-inset-left))}
   .cards{grid-template-columns:1fr;gap:.7rem}             /* one clean column on a phone */
   .content .home-h{font-size:1.7rem}
   .content a.card{padding:.9rem 1rem 1rem}
@@ -317,12 +323,23 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
   .pager{flex-wrap:wrap;gap:.6rem}
   .pager a{max-width:100%;flex:1 1 100%}
   .pager .pager-next{margin-left:0;justify-content:flex-end}
+  .content h2{margin-top:2em}                        /* less air between sections on a phone */
+}
+
+/* Touch devices have no hover, so buttons that only appear on hover are invisible forever
+   after the load hint fades. Keep them faintly but permanently visible there instead —
+   still out of the way while reading, but always findable. The drawer-open rule above
+   still wins (higher specificity), so they stay hidden behind the scrim. */
+@media (hover:none){
+  .hamburger,.homebtn,.backbtn{opacity:.5}
 }
 </style>
 </head>
 <body class="sidebar-collapsed">
-<button class="hamburger" id="toggleSidebar" aria-label="Open menu" title="Menu">☰</button>
-<button class="homebtn" id="homeBtn" aria-label="Home" title="Home" hidden>⌂</button>
+<div class="navbtns">
+  <button class="hamburger" id="toggleSidebar" aria-label="Open menu" title="Menu">☰</button>
+  <button class="homebtn" id="homeBtn" aria-label="Home" title="Home" hidden>⌂</button>
+</div>
 <button class="backbtn" id="backBtn" aria-label="Back" title="Back" hidden>←</button>
 
 <div class="shell">
@@ -378,21 +395,1985 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
     </div>
     <input class="filter" id="filter" type="search" placeholder="Filter…" autocomplete="off">
     <a class="tab homelink" data-target="home" href="#home"><span class="num">⌂</span><span class="tab-title">Home</span></a>
-    <details class="group" open><summary>Study notes<span class="group-count">4</span></summary>
+    <details class="group" open><summary>Learn from zero<span class="group-count">6</span></summary>
+<div class="group-body"><a class="tab" data-target="00-how-to-use-these-notes" href="#00-how-to-use-these-notes" title="Study 00 — Start here: how to use these notes"><span class="num">00</span><span class="tab-title">Start here: how to use these notes</span></a><a class="tab" data-target="01-what-we-are-building" href="#01-what-we-are-building" title="Study 01 — What we are building, in plain English"><span class="num">01</span><span class="tab-title">What we are building, in plain English</span></a><a class="tab" data-target="02-the-words-you-need" href="#02-the-words-you-need" title="Study 02 — The words you need, in the order you need them"><span class="num">02</span><span class="tab-title">The words you need, in the order you need them</span></a><a class="tab" data-target="03-what-an-llm-really-is" href="#03-what-an-llm-really-is" title="Study 03 — What an LLM really is: tokens and the context window"><span class="num">03</span><span class="tab-title">What an LLM really is: tokens and the context window</span></a><a class="tab" data-target="04-arc-agi-3-the-game" href="#04-arc-agi-3-the-game" title="Study 04 — ARC-AGI-3: the game our agent has to play"><span class="num">04</span><span class="tab-title">ARC-AGI-3: the game our agent has to play</span></a><a class="tab" data-target="05-the-agent-loop" href="#05-the-agent-loop" title="Study 05 — The agent loop, from first principles"><span class="num">05</span><span class="tab-title">The agent loop, from first principles</span></a></div></details>
+<details class="group" open><summary>Do this — step by step<span class="group-count">1</span></summary>
+<div class="group-body"><a class="tab" data-target="01-get-your-arc-api-key" href="#01-get-your-arc-api-key" title="How-to 01 — Get your ARC-AGI-3 API key (step by step)"><span class="num">01</span><span class="tab-title">Get your ARC-AGI-3 API key (step by step)</span></a></div></details>
+<details class="group" open><summary>Project record<span class="group-count">4</span></summary>
 <div class="group-body"><a class="tab" data-target="01-project-definition" href="#01-project-definition" title="Study note 1 — What this project is, and why it exists"><span class="num">01</span><span class="tab-title">What this project is, and why it exists</span></a><a class="tab" data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it"><span class="num">02</span><span class="tab-title">Phase 0: checking the ground before building on it</span></a><a class="tab" data-target="03-agent-harness-spec" href="#03-agent-harness-spec" title="Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3"><span class="num">03</span><span class="tab-title">The project, take two: an agent you can trust, on ARC-AGI-3</span></a><a class="tab" data-target="decisions" href="#decisions" title="Decision log"><span class="tab-title">Decision log</span></a></div></details>
 <details class="group" open><summary>Project<span class="group-count">1</span></summary>
 <div class="group-body"><a class="tab" data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project"><span class="tab-title">binding rules for every Claude session in this project</span></a></div></details>
 <details class="group" open><summary>Deferred: TRM<span class="group-count">2</span></summary>
 <div class="group-body"><a class="tab" data-target="readme" href="#readme" title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><span class="tab-title">⏸ DEFERRED (2026-07-21)</span></a><a class="tab" data-target="ablation-plan" href="#ablation-plan" title="The recursion-depth ablation — experiment design"><span class="tab-title">experiment design</span></a></div></details>
-    <p class="built">Built 2026-07-21 · rebuild: <code>py build_site.py</code></p>
+    <p class="built">Built 2026-07-22 · rebuild: <code>py build_site.py</code></p>
   </nav>
   <main class="main" id="main">
     <div class="content" id="content">
-      <article class="doc nav-view" id="doc-home" data-tabid="home"><header class="nav-head"><h1 class="home-h">project-agent</h1><p class="home-sub">An LLM agent for ARC-AGI-3, judged by its engineering harness. Plain-language notes, decisions, and rules — all in one page.</p></header><a class="resume" id="homeResume" href="#" hidden><span class="resume-k">Continue reading</span><span class="resume-t" id="homeResumeTitle"></span><span class="resume-go">→</span></a><div class="cards"><a class="card" data-target="sec-0" href="#sec-0"><span class="card-k">01–03 · 4 files</span><span class="card-t">Study notes</span><span class="card-p">What this project is, and why it exists · Phase 0 · The project, take two · Decision log</span></a><a class="card" data-target="sec-1" href="#sec-1"><span class="card-k">1 file</span><span class="card-t">Project</span><span class="card-p">binding rules for every Claude session in this project</span></a><a class="card" data-target="sec-2" href="#sec-2"><span class="card-k">2 files</span><span class="card-t">Deferred: TRM</span><span class="card-p">⏸ DEFERRED (2026-07-21) · experiment design</span></a></div></article>
-<article class="doc nav-view" id="doc-sec-0" data-tabid="sec-0"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Study notes</span></nav><header class="nav-head"><h1 class="home-h">Study notes</h1><p class="home-sub">01–03 · 4 files</p></header><div class="seclist"><a data-target="01-project-definition" href="#01-project-definition" title="Study note 1 — What this project is, and why it exists"><span class="num">01</span><span class="st">What this project is, and why it exists</span></a><a data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it"><span class="num">02</span><span class="st">Phase 0: checking the ground before building on it</span></a><a data-target="03-agent-harness-spec" href="#03-agent-harness-spec" title="Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3"><span class="num">03</span><span class="st">The project, take two: an agent you can trust, on ARC-AGI-3</span></a><a data-target="decisions" href="#decisions" title="Decision log"><span class="num"></span><span class="st">Decision log</span></a></div></article>
-<article class="doc nav-view" id="doc-sec-1" data-tabid="sec-1"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Project</span></nav><header class="nav-head"><h1 class="home-h">Project</h1><p class="home-sub">1 file</p></header><div class="seclist"><a data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project"><span class="num"></span><span class="st">binding rules for every Claude session in this project</span></a></div></article>
-<article class="doc nav-view" id="doc-sec-2" data-tabid="sec-2"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Deferred: TRM</span></nav><header class="nav-head"><h1 class="home-h">Deferred: TRM</h1><p class="home-sub">2 files</p></header><div class="seclist"><a data-target="readme" href="#readme" title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><span class="num"></span><span class="st">⏸ DEFERRED (2026-07-21)</span></a><a data-target="ablation-plan" href="#ablation-plan" title="The recursion-depth ablation — experiment design"><span class="num"></span><span class="st">experiment design</span></a></div></article>
-<article class="doc" id="doc-01-project-definition" data-tabid="01-project-definition"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Study notes</a></nav><h1>Study note 1 — What this project is, and why it exists</h1>
+      <article class="doc nav-view" id="doc-home" data-tabid="home"><header class="nav-head"><h1 class="home-h">project-agent</h1><p class="home-sub">An LLM agent for ARC-AGI-3, judged by its engineering harness. Plain-language notes, decisions, and rules — all in one page.</p></header><a class="resume" id="homeResume" href="#" hidden><span class="resume-k">Continue reading</span><span class="resume-t" id="homeResumeTitle"></span><span class="resume-go">→</span></a><div class="cards"><a class="card" data-target="sec-0" href="#sec-0"><span class="card-k">00–05 · 6 files</span><span class="card-t">Learn from zero</span><span class="card-p">Start here · What we are building, in plain English · The words you need, in the order you need them · What an LLM really is</span></a><a class="card" data-target="sec-1" href="#sec-1"><span class="card-k">01 · 1 file</span><span class="card-t">Do this — step by step</span><span class="card-p">Get your ARC-AGI-3 API key (step by step)</span></a><a class="card" data-target="sec-2" href="#sec-2"><span class="card-k">01–03 · 4 files</span><span class="card-t">Project record</span><span class="card-p">What this project is, and why it exists · Phase 0 · The project, take two · Decision log</span></a><a class="card" data-target="sec-3" href="#sec-3"><span class="card-k">1 file</span><span class="card-t">Project</span><span class="card-p">binding rules for every Claude session in this project</span></a><a class="card" data-target="sec-4" href="#sec-4"><span class="card-k">2 files</span><span class="card-t">Deferred: TRM</span><span class="card-p">⏸ DEFERRED (2026-07-21) · experiment design</span></a></div></article>
+<article class="doc nav-view" id="doc-sec-0" data-tabid="sec-0"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Learn from zero</span></nav><header class="nav-head"><h1 class="home-h">Learn from zero</h1><p class="home-sub">00–05 · 6 files</p></header><div class="seclist"><a data-target="00-how-to-use-these-notes" href="#00-how-to-use-these-notes" title="Study 00 — Start here: how to use these notes"><span class="num">00</span><span class="st">Start here: how to use these notes</span></a><a data-target="01-what-we-are-building" href="#01-what-we-are-building" title="Study 01 — What we are building, in plain English"><span class="num">01</span><span class="st">What we are building, in plain English</span></a><a data-target="02-the-words-you-need" href="#02-the-words-you-need" title="Study 02 — The words you need, in the order you need them"><span class="num">02</span><span class="st">The words you need, in the order you need them</span></a><a data-target="03-what-an-llm-really-is" href="#03-what-an-llm-really-is" title="Study 03 — What an LLM really is: tokens and the context window"><span class="num">03</span><span class="st">What an LLM really is: tokens and the context window</span></a><a data-target="04-arc-agi-3-the-game" href="#04-arc-agi-3-the-game" title="Study 04 — ARC-AGI-3: the game our agent has to play"><span class="num">04</span><span class="st">ARC-AGI-3: the game our agent has to play</span></a><a data-target="05-the-agent-loop" href="#05-the-agent-loop" title="Study 05 — The agent loop, from first principles"><span class="num">05</span><span class="st">The agent loop, from first principles</span></a></div></article>
+<article class="doc nav-view" id="doc-sec-1" data-tabid="sec-1"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Do this — step by step</span></nav><header class="nav-head"><h1 class="home-h">Do this — step by step</h1><p class="home-sub">01 · 1 file</p></header><div class="seclist"><a data-target="01-get-your-arc-api-key" href="#01-get-your-arc-api-key" title="How-to 01 — Get your ARC-AGI-3 API key (step by step)"><span class="num">01</span><span class="st">Get your ARC-AGI-3 API key (step by step)</span></a></div></article>
+<article class="doc nav-view" id="doc-sec-2" data-tabid="sec-2"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Project record</span></nav><header class="nav-head"><h1 class="home-h">Project record</h1><p class="home-sub">01–03 · 4 files</p></header><div class="seclist"><a data-target="01-project-definition" href="#01-project-definition" title="Study note 1 — What this project is, and why it exists"><span class="num">01</span><span class="st">What this project is, and why it exists</span></a><a data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it"><span class="num">02</span><span class="st">Phase 0: checking the ground before building on it</span></a><a data-target="03-agent-harness-spec" href="#03-agent-harness-spec" title="Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3"><span class="num">03</span><span class="st">The project, take two: an agent you can trust, on ARC-AGI-3</span></a><a data-target="decisions" href="#decisions" title="Decision log"><span class="num"></span><span class="st">Decision log</span></a></div></article>
+<article class="doc nav-view" id="doc-sec-3" data-tabid="sec-3"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Project</span></nav><header class="nav-head"><h1 class="home-h">Project</h1><p class="home-sub">1 file</p></header><div class="seclist"><a data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project"><span class="num"></span><span class="st">binding rules for every Claude session in this project</span></a></div></article>
+<article class="doc nav-view" id="doc-sec-4" data-tabid="sec-4"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><span class="crumb-here">Deferred: TRM</span></nav><header class="nav-head"><h1 class="home-h">Deferred: TRM</h1><p class="home-sub">2 files</p></header><div class="seclist"><a data-target="readme" href="#readme" title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><span class="num"></span><span class="st">⏸ DEFERRED (2026-07-21)</span></a><a data-target="ablation-plan" href="#ablation-plan" title="The recursion-depth ablation — experiment design"><span class="num"></span><span class="st">experiment design</span></a></div></article>
+<article class="doc" id="doc-00-how-to-use-these-notes" data-tabid="00-how-to-use-these-notes"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 00 — Start here: how to use these notes</h1>
+<p><em>Written 2026-07-22. This is the front door. Read this one first, then read the rest in
+number order. Nothing here assumes you know anything about AI, agents, or LLMs.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> the beginning.
+<strong>Assumes you read:</strong> nothing.
+<strong>After this you can:</strong> say what this course is, how it is ordered, and where to
+start when you have 20 free minutes.</p>
+</blockquote>
+<hr />
+<h2>Why these notes exist</h2>
+<p>You are building a portfolio project to get an AI-engineering job. Claude writes the
+code. <strong>You own the understanding.</strong> In an interview nobody will ask you to type code
+on the spot — they will ask you to <em>explain</em>: what you built, why you built it that
+way, how you know it works, what broke, and what you would do differently.</p>
+<p>So the code and the notes are two halves of one thing. The code is the proof. These
+notes are the words.</p>
+<div class="callout key">
+<p>These notes are a <strong>course</strong>, not a reference pile. They are meant to be read
+<strong>in number order</strong>, once each, top to bottom. Each note is written assuming you have
+read the ones before it — and assuming you have read <em>nothing else</em>.</p>
+</div>
+<hr />
+<h2>The one rule that shapes everything here</h2>
+<p>Every note follows the same shape, because you told me the thing that kills learning
+is a jump — a moment where a word or an idea shows up that was never explained, and you
+quietly fall off (lose the thread) and stop understanding the rest.</p>
+<p>So there is a hard rule now, written into this project's <code>CLAUDE.md</code> so every future
+session obeys it:</p>
+<blockquote>
+<p><strong>No forward references.</strong> A note may only use a word that an earlier note already
+explained, or that this note explains right there on the spot.</p>
+</blockquote>
+<p>That is why the early notes look "too basic". They are supposed to. The basics are the
+floor everything else stands on, and if the floor has a hole, the rest collapses.</p>
+<hr />
+<h2>How each note is built</h2>
+<p>Every study note has the same five parts, always in the same place:</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>You are here</strong></td>
+<td>Where this note sits in the ladder</td>
+</tr>
+<tr>
+<td><strong>Assumes you read</strong></td>
+<td>Which earlier notes it stands on</td>
+</tr>
+<tr>
+<td><strong>After this you can</strong></td>
+<td>The exact thing you'll be able to <em>say</em> when you finish</td>
+</tr>
+<tr>
+<td>The body</td>
+<td>The teaching — plain words, one idea at a time, with real examples</td>
+</tr>
+<tr>
+<td><strong>Say it in an interview</strong></td>
+<td>Lines you can actually speak out loud, plus the follow-up questions an interviewer would ask and how to answer them</td>
+</tr>
+</tbody>
+</table>
+<p>Two more habits you'll see throughout:</p>
+<ul>
+<li><strong>Hard words get a short meaning in brackets right after them</strong> — like <em>ambiguous
+  (can be read in more than one way)</em>. Once per note, at first appearance. If a word
+  ever appears bare and you don't know it, that is a bug in the note. Tell me and I
+  fix it.</li>
+<li><strong>Every abstract idea gets something concrete</strong> — a picture, a number, a real case —
+  so you feel what it is <em>for</em>, not just what it means.</li>
+</ul>
+<hr />
+<h2>The ladder — what you will read, in order</h2>
+<p>The notes marked <strong>✅ written</strong> exist now. The rest get written as we build the thing
+they describe, because a note about a part we haven't built yet would be guesswork, and
+this project does not do guesswork.</p>
+<h3>Part 1 — The ground (read these first)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Note</th>
+<th>What it gives you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>00</td>
+<td><strong>How to use these notes</strong> ✅</td>
+<td>you are reading it</td>
+</tr>
+<tr>
+<td>01</td>
+<td><strong>What we are building, in plain English</strong> ✅</td>
+<td>the whole project in words your non-technical friend would follow</td>
+</tr>
+<tr>
+<td>02</td>
+<td><strong>The words you need, in the order you need them</strong> ✅</td>
+<td>every technical term in this project, defined, in dependency order</td>
+</tr>
+<tr>
+<td>03</td>
+<td><strong>What an LLM really is</strong> ✅</td>
+<td>tokens, context window, prompt — the <em>physics</em> of everything we build</td>
+</tr>
+<tr>
+<td>04</td>
+<td><strong>ARC-AGI-3: the game our agent has to play</strong> ✅</td>
+<td>the benchmark, the grid, the 8 actions, the scorecard</td>
+</tr>
+<tr>
+<td>05</td>
+<td><strong>The agent loop</strong> ✅</td>
+<td>what an "agent" actually is, from first principles, with real code</td>
+</tr>
+</tbody>
+</table>
+<h3>Part 2 — The engineering (written as we build each one)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Note</th>
+<th>What it will give you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>06</td>
+<td>Context engineering</td>
+<td>choosing what the model gets to see each step, and why that is the job</td>
+</tr>
+<tr>
+<td>07</td>
+<td>Evals</td>
+<td>how you <em>know</em> a change helped, instead of believing it did</td>
+</tr>
+<tr>
+<td>08</td>
+<td>Traces and observability</td>
+<td>answering "why did it do that?" with receipts</td>
+</tr>
+<tr>
+<td>09</td>
+<td>Memory and retrieval</td>
+<td>short-term vs long-term memory, embeddings, and the honest version of RAG</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Budgets: tokens, cost, latency</td>
+<td>making cost a dial you control, not a surprise</td>
+</tr>
+<tr>
+<td>11</td>
+<td>The interview story</td>
+<td>the whole project as a 3-minute answer, with the hard follow-ups</td>
+</tr>
+</tbody>
+</table>
+<p>Alongside the course there are two other kinds of file in this repo, and it helps to
+know what they are so you don't confuse them with teaching:</p>
+<ul>
+<li><strong>Project record</strong> (<code>notes/01</code>, <code>02</code>, <code>03</code>, and <code>DECISIONS.md</code>) — the log of what we
+  decided and why, written as we went. Useful later; not a course.</li>
+<li><strong>How-to walkthroughs</strong> (<code>notes/howto/</code>) — click-by-click instructions for the things
+  <em>you</em> have to do yourself, like getting an API key.</li>
+</ul>
+<hr />
+<h2>How to actually read this</h2>
+<ol>
+<li><strong>In order.</strong> 00 → 01 → 02 → 03 → 04 → 05. Don't skip ahead; the ladder only works
+   as a ladder.</li>
+<li><strong>One note per sitting.</strong> Each is a 10–20 minute read. Finishing one and stopping
+   beats skimming three.</li>
+<li><strong>Read the "Say it in an interview" section out loud.</strong> Silently reading a sentence
+   and <em>saying</em> it are different skills, and only one of them is the one being tested.</li>
+<li><strong>When something doesn't land, say so.</strong> "Note 03, the part about the context
+   window, didn't click" is the most useful sentence you can send me. The note gets
+   rewritten, not patched with an explanation in chat that you'll lose.</li>
+</ol>
+<div class="callout warn">
+<p>The one thing that will not work: reading these notes once, nodding, and assuming it
+stuck. Understanding you can't <em>speak</em> isn't understanding yet — it's recognition
+(you know it when you see it). The "Say it in an interview" sections exist to turn one
+into the other.</p>
+</div>
+<hr />
+<h2>Say it in an interview</h2>
+<p>You will not be asked about your study notes. But you will be asked <em>"how did you
+learn this?"</em>, and this is a genuinely good answer:</p>
+<blockquote>
+<p>"I came from data science, so the whole LLM and agent stack was new to me. I built
+the project and a written course alongside it — every component I built, I wrote a
+plain-language note explaining what it is and why it's there, in an order where
+nothing is used before it's defined. It forced me to notice when I was cargo-culting
+[copying a pattern without understanding it] rather than understanding. The notes are
+in the repo."</p>
+</blockquote>
+<p><strong>Follow-up an interviewer might ask:</strong> <em>"Isn't that just documentation?"</em></p>
+<blockquote>
+<p>"Documentation describes what the code does. This explains why the design is what it
+is — the decisions, the alternatives I rejected, and the evidence. There's a separate
+decision log with dates for exactly that reason."</p>
+</blockquote>
+<hr />
+<p><strong>Next:</strong> <a href="#01-what-we-are-building" class="wikilink" data-target="01-what-we-are-building">Study 01 — What we are building, in plain English</a></p><nav class="pager"><span class="pager-spacer"></span><a class="pager-next" data-target="01-what-we-are-building" href="#01-what-we-are-building" title="Study 01 — What we are building, in plain English"><span>What we are building, in plain English</span> →</a></nav></article>
+<article class="doc" id="doc-01-what-we-are-building" data-tabid="01-what-we-are-building"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 01 — What we are building, in plain English</h1>
+<p><em>Written 2026-07-22. No jargon in this note that isn't explained on the spot. If you
+read only one note before an interview, read this one — then note 11 when it exists.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> rung 1 of the ladder.
+<strong>Assumes you read:</strong> <a href="#00-how-to-use-these-notes" class="wikilink" data-target="00-how-to-use-these-notes">Study 00</a>.
+<strong>After this you can:</strong> explain the whole project to someone in two minutes, say why
+we chose it, and name the six things it is meant to prove about you.</p>
+</blockquote>
+<hr />
+<h2>The two-sentence version</h2>
+<p>We are building a <strong>computer program that plays puzzle-games it has never seen, with
+no instructions, by figuring out the rules through trial and error</strong> — and it does the
+figuring-out by asking an AI language model (the same kind of AI as ChatGPT) what to
+try next.</p>
+<p>The program is only half the project. The other half — the half that actually gets you
+hired — is all the <strong>engineering around it</strong>: the machinery that measures whether it's
+getting better, records why it did what it did, catches it when it breaks, and keeps it
+inside a cost budget.</p>
+<div class="callout key">
+<p>The score is not the point. <strong>The harness is the point.</strong> ("Harness" = all the
+supporting machinery built around a thing to make it measurable, debuggable and
+trustworthy — like the test rig around an engine, not the engine.) A stranger should be
+able to open our repository, run one command, and reproduce every number we claim.</p>
+</div>
+<hr />
+<h2>Part 1 — The game</h2>
+<p>There is a competition called <strong>ARC-AGI-3</strong>. It is run by the ARC Prize Foundation, and
+it exists to test one specific thing that today's AI is bad at.</p>
+<p>Here is the setup. You are dropped into a small video-game. Nobody tells you:</p>
+<ul>
+<li>what the goal is,</li>
+<li>what the buttons do,</li>
+<li>what the shapes on screen mean,</li>
+<li>or even whether you're winning.</li>
+</ul>
+<p>You get a grid of coloured squares on screen, and eight buttons. That's it. You press a
+button, the screen changes, and from that change you have to <em>infer</em> (work out from
+evidence) what just happened. Press more buttons, watch more changes, slowly build a
+theory of the world — "ah, button 3 moves the blue block right" — then use that theory
+to reach a goal you also had to figure out for yourself.</p>
+<p><strong>Humans do this easily.</strong> Drop a person into an unfamiliar game and they'll be poking
+around productively within a minute, because they bring a lifetime of intuition
+(instant understanding without reasoning it out) about objects, goals, cause and effect.
+Measured on these games, humans score 100%.</p>
+<p><strong>AI is dramatically worse at it.</strong> As of our last check on 2026-07-21, the best
+frontier model [the most advanced publicly available AI models] scored around 7.8% on
+this benchmark. That number was near-zero a few months earlier, so it's climbing fast —
+but the gap to 100% is still enormous.</p>
+<div class="callout note">
+<p>Why such a gap? Because the AI's usual advantage is gone. A language model is
+extraordinary at things it has seen written down somewhere before. ARC games are
+deliberately built so that memory doesn't help — every game has fresh rules. What's
+left is the thing being measured: <strong>can you learn a brand-new rule from scratch, on the
+spot, from a handful of observations?</strong> That skill has a name in this field —
+<em>fluid intelligence</em> — and it's the closest thing we have to a measurable stand-in for
+general intelligence.</p>
+</div>
+<h3>What the screen actually is</h3>
+<p>Concretely, and verified from the official toolkit installed on your laptop today: the
+game sends back a <strong>frame</strong> — a 64×64 grid where each square holds a number, and each
+number means a colour. Think of it as a very low-resolution picture, described as a
+table of numbers instead of pixels.</p>
+<p>The agent can send back exactly <strong>eight</strong> things: a RESET (start over), six plain
+button-presses, and one "click at position (x, y)" — where x and y are each between 0
+and 63, i.e. anywhere on the grid.</p>
+<p>That's the entire conversation with the world: <em>numbers in, one button out, repeat.</em></p>
+<hr />
+<h2>Part 2 — The player</h2>
+<p>Our program plays those games. And the way it decides what to press is by asking a
+<strong>large language model</strong> — an AI trained on enormous amounts of text, the technology
+behind ChatGPT, Claude and Gemini. (Note 03 opens this up properly. For now: a thing
+you send text to, and it sends text back.)</p>
+<p>Roughly, each turn goes like this:</p>
+<ol>
+<li>Look at the current grid.</li>
+<li>Turn it into text the model can read, along with a summary of what we've learned so
+   far and what we've already tried.</li>
+<li>Ask the model: <em>given all this, what should we press next, and why?</em></li>
+<li>Press it.</li>
+<li>See what changed. Update what we believe about the world.</li>
+<li>Repeat.</li>
+</ol>
+<p>That cycle — <strong>look, decide, act, learn</strong> — is called an <strong>agent loop</strong>, and a program
+built around one is called an <strong>agent</strong>. That is the whole meaning of the word. It is
+not a mystical thing; it is a loop with a language model inside the "decide" step.
+(Note 05 builds it properly, with real code.)</p>
+<div class="callout example">
+<p>Make it concrete. Turn 1, our agent presses ACTION3 at random. The grid changes: a
+blue square that was at row 10 is now at row 11. Turn 2, the model is told exactly
+that, and it now has a hypothesis (a proposed explanation, not yet proven): <em>"ACTION3
+probably moves the blue thing down."</em> Turn 3, it tests the hypothesis by pressing
+ACTION3 again and checking whether the blue square moves down once more. If it does,
+that belief gets stronger and goes into memory. If it doesn't, the belief was wrong and
+gets thrown out.</p>
+<p>That is not fancy AI. That is the scientific method, running in a loop, with a language
+model proposing the hypotheses.</p>
+</div>
+<h3>One important thing we are deliberately <em>not</em> doing</h3>
+<p>The competition has a prize track, run on the Kaggle platform, and in that track your
+program is judged <strong>with the internet switched off</strong>. No internet means no calling an
+AI model over the network — so prize-eligible agents can't use language models at all.</p>
+<p>We checked this and made a deliberate choice, recorded in the project's decision log on
+2026-07-21: <strong>we are not chasing the prize.</strong> We target the public leaderboard, where
+internet is allowed and language models are the normal approach.</p>
+<p>Why that's the right call for you: the prize track would have taught you how to write
+clever search code. The public track teaches you the stack that job interviews actually
+probe — language models, prompts, context, evaluation, tracing, cost control. You are
+building a portfolio, not entering a lottery.</p>
+<div class="callout warn">
+<p>This is worth rehearsing, because it's exactly the kind of thing an interviewer pokes
+at: <em>"there was prize money and you skipped it?"</em> The answer is a design decision with
+a reason, not an excuse. Say it as one: <strong>"the prize track forbids internet access at
+evaluation time, which forbids LLM APIs. I optimised for learning the LLM engineering
+stack, not for lottery odds against funded teams."</strong></p>
+</div>
+<hr />
+<h2>Part 3 — The harness (this is the actual project)</h2>
+<p>Anyone can write a loop that calls a language model. That takes an afternoon. What
+separates a hobby script from engineering is everything wrapped around it — and that
+wrapping is what we're really building.</p>
+<p>Six pieces, and each one maps to a thing interviews ask about:</p>
+<p><strong>1. The loop, built by hand.</strong> We write the observe → decide → act cycle ourselves
+instead of importing a framework that hides it. You cannot explain in an interview what
+you never wrote. → note 05.</p>
+<p><strong>2. Context engineering.</strong> The model can only see what we put in front of it, and
+there is a hard limit on how much that can be (note 03 explains why). Every turn we
+choose: which parts of the grid, how much history, which past lessons, in what order.
+That choosing <em>is</em> the job. It's the difference between an agent that works and one
+that flails. → note 06.</p>
+<p><strong>3. Evals.</strong> Short for <em>evaluations</em>. A fixed set of games, a fixed set of measurements
+— score, how many actions until first real progress, how many tokens spent — that we
+re-run after every single change. So "did that prompt tweak help?" is answered with a
+number instead of a feeling. This is the single most important discipline in the whole
+project, and the one most beginner projects don't have. → note 07.</p>
+<p><strong>4. Traces.</strong> Every decision the agent makes gets written down: exactly what the model
+was shown, exactly what it replied, how long it took, how much it cost. When the agent
+does something stupid, we can open the record and see <em>why</em>, instead of guessing. →
+note 08.</p>
+<p><strong>5. Memory and retrieval.</strong> The agent plays hundreds of turns. It can't hold all of
+that in front of the model at once. So it needs a way to store what it learned and pull
+back the relevant bits later — which is the same set of ideas behind "RAG", the
+retrieval technique interviewers love asking about, except here it's over the agent's
+own experience rather than a folder of PDFs. → note 09.</p>
+<p><strong>6. Budget engineering.</strong> Every call to a model costs money and time. We give the agent
+a spending limit per game, cache (save and re-use) repeated work, and try a cheap model
+first before escalating to an expensive one. Then we show the curve: how score changes
+as budget changes. → note 10.</p>
+<div class="callout key">
+<p>Read those six again and notice: <strong>only #1 is about the agent.</strong> The other five are
+about <em>knowing whether the agent works</em>. That ratio is the thesis of this project, and
+it is what an experienced engineer will recognise instantly as the real work.</p>
+</div>
+<hr />
+<h2>Why this project and not something easier</h2>
+<p>You could have built a chatbot over your documents. Most portfolios do. Three reasons
+we didn't, recorded in the decision log:</p>
+<p><strong>It doesn't blend in.</strong> Reviewers see the same document-chatbot dozens of times. An
+agent that plays unknown games is remembered — and, more usefully, it <em>invites the
+questions you've prepared for</em>, instead of "so, which vector database?"</p>
+<p><strong>It has a real, honest, hard problem.</strong> A chatbot over your own PDFs works on the first
+try, so there's nothing to measure and nothing to say. On ARC, your first agent will
+score zero, and everything interesting — the evals, the failure analysis, the fixes —
+comes from climbing off zero. <strong>Difficulty is the raw material the story is made from.</strong></p>
+<p><strong>It points where you want to go.</strong> Your long-term interest is general intelligence, and
+this benchmark exists to measure exactly the gap between what today's models can do and
+what general intelligence would need. The portfolio piece and the direction you actually
+care about are the same object.</p>
+<p>And one honest constraint on top: <strong>free tiers only, no GPU training, must run on a
+Windows laptop.</strong> No paid APIs, no rented servers. That's not a limitation we're
+apologising for — it's part of the engineering story. Building something that works
+inside a hard budget is a skill; it's why note 10 exists.</p>
+<hr />
+<h2>Where we actually are today (2026-07-22)</h2>
+<p>Honest status, no rounding up:</p>
+<ul>
+<li><strong>Done:</strong> the plan, the decision log, the project rules, this course, and the
+  official ARC toolkit installed and confirmed working on your laptop.</li>
+<li><strong>Blocked on you:</strong> we need a free API key from the ARC Prize site before the agent
+  can talk to a real game. That is a 5-minute job and there's a click-by-click
+  walkthrough waiting for you: <a href="#01-get-your-arc-api-key" class="wikilink" data-target="01-get-your-arc-api-key">How-to 01 — Get your ARC-AGI-3 API key</a>.</li>
+<li><strong>Not started:</strong> everything from the first real game onward — the loop, the evals,
+  all of it.</li>
+</ul>
+<div class="callout warn">
+<p>That "blocked on you" line is real. Nothing else in the project can move until the key
+exists, because we can't run a game, and without a game there are no numbers, and this
+project doesn't write notes about numbers it hasn't measured.</p>
+</div>
+<hr />
+<h2>Say it in an interview</h2>
+<p>The two-minute version, out loud:</p>
+<blockquote>
+<p>"I built an LLM-driven agent for ARC-AGI-3 — a benchmark of small games where the
+agent gets no instructions, no stated goal, and has to work out the rules by acting
+and observing. Humans score 100% on it; the best frontier models were around 7.8%
+when I checked in July 2026, so it isolates exactly the thing models are weakest at:
+learning a brand-new rule on the spot.</p>
+<p>The agent itself is an observe–decide–act loop with an LLM in the decide step, built
+from scratch rather than with a framework, so I understand every part of it. But the
+real project is the harness around it: an eval suite that runs on every change so no
+improvement is claimed without before-and-after numbers on a fixed set of games; full
+tracing of every model call, with inputs, outputs, tokens, latency and cost, so I can
+answer 'why did it do that?' with evidence; a failure taxonomy [a sorted catalogue of
+the ways it breaks] built from real traces; and a per-game token budget with
+cheap-model-first routing.</p>
+<p>I ran it all on free tiers on a laptop, which forced the cost engineering to be real
+rather than decorative."</p>
+</blockquote>
+<p><strong>Follow-up: "What was the hardest part?"</strong></p>
+<blockquote>
+<p>"Deciding what the model sees each turn. A 64×64 grid plus full history doesn't fit in
+a context window, so every turn is a choice about what to include and what to
+summarise away. It's also the change most likely to break things silently — which is
+why the eval suite came before any tuning, not after."</p>
+</blockquote>
+<p><strong>Follow-up: "How do you know your agent is actually better and not just lucky?"</strong></p>
+<blockquote>
+<p>"Fixed eval set, same games every run, and the games I report on are held out from the
+ones I tune on. Every change ships with before-and-after numbers, and regressions
+either get reverted or get a written justification. It's in the repo — the run
+artifacts and the decision log are both committed."</p>
+</blockquote>
+<p><strong>Follow-up: "Why ARC and not something practical?"</strong></p>
+<blockquote>
+<p>"Because it's honestly hard. A retrieval chatbot works on the first attempt, so there's
+nothing to measure and nothing to learn from. Here my first agent scored zero, and
+every technique I can talk about came from climbing off zero with evidence."</p>
+</blockquote>
+<hr />
+<p><strong>Next:</strong> <a href="#02-the-words-you-need" class="wikilink" data-target="02-the-words-you-need">Study 02 — The words you need, in the order you need them</a></p><nav class="pager"><a class="pager-prev" data-target="00-how-to-use-these-notes" href="#00-how-to-use-these-notes" title="Study 00 — Start here: how to use these notes">← <span>Start here: how to use these notes</span></a><a class="pager-next" data-target="02-the-words-you-need" href="#02-the-words-you-need" title="Study 02 — The words you need, in the order you need them"><span>The words you need, in the order you need them</span> →</a></nav></article>
+<article class="doc" id="doc-02-the-words-you-need" data-tabid="02-the-words-you-need"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 02 — The words you need, in the order you need them</h1>
+<p><em>Written 2026-07-22. This is the dictionary for the whole course — but sorted so you can
+read it top to bottom like a story, because each word is built from the ones above it.
+Don't memorise it. Read it once now, and come back when a later note uses a word you've
+gone fuzzy on.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> rung 2 of the ladder.
+<strong>Assumes you read:</strong> <a href="#00-how-to-use-these-notes" class="wikilink" data-target="00-how-to-use-these-notes">Study 00</a>,
+<a href="#01-what-we-are-building" class="wikilink" data-target="01-what-we-are-building">Study 01</a>.
+<strong>After this you can:</strong> hear any sentence in an AI-engineering interview and know what
+every word in it means.</p>
+</blockquote>
+<hr />
+<h2>How to read this note</h2>
+<p>Seven groups, in dependency order — each group uses only words defined above it. Every
+entry is the same three lines:</p>
+<ul>
+<li><strong>The word</strong> — one plain sentence saying what it is.</li>
+<li><em>Picture:</em> something concrete, so it isn't just a definition.</li>
+<li><em>Why it matters here:</em> where it shows up in our project.</li>
+</ul>
+<div class="callout warn">
+<p>Do not try to hold all of this in your head today. The job of this note is that
+<strong>nothing in notes 03–11 is ever a surprise word.</strong> You'll re-meet each of these in
+context, which is where they actually stick.</p>
+</div>
+<hr />
+<h2>Group A — What a "model" is</h2>
+<p><strong>Model.</strong> A big pile of numbers that turns an input into an output. That's it. Nothing
+is "understood" or "stored as facts" inside it — there are just numbers that were
+adjusted until the outputs came out useful.
+<em>Picture:</em> a spice mix tuned over thousands of attempts until the dish tastes right. The
+mix doesn't "know" the recipe; it just produces the taste.
+<em>Why it matters:</em> when someone asks "does the model know X?", the honest answer is
+always about behaviour, never about knowledge.</p>
+<p><strong>Parameters (also called weights).</strong> The individual numbers inside the model. Modern
+language models have billions of them. "A 7B model" means seven billion parameters.
+<em>Picture:</em> the knobs on a mixing desk. Billions of knobs, each set to a specific value.
+<em>Why it matters:</em> parameter count is the rough size dial — bigger usually means smarter,
+slower and more expensive. Our project never trains any, but you'll be asked about them.</p>
+<p><strong>Training.</strong> The process of adjusting those numbers by showing the model huge amounts of
+data and nudging the knobs whenever it gets something wrong. It's expensive, slow, and
+needs specialised hardware.
+<em>Picture:</em> thousands of practice rounds with a coach correcting you after each one.
+<em>Why it matters:</em> <strong>we do zero training in this project</strong> — deliberately. Training needs
+GPUs we don't have. Everything we do happens at the <em>next</em> word.</p>
+<p><strong>Inference.</strong> Actually <em>using</em> a trained model — you give it an input, it gives you an
+output. Cheap and fast compared to training.
+<em>Picture:</em> training is learning to cook; inference is cooking one meal.
+<em>Why it matters:</em> this whole project is inference. Every mention of "calling the model"
+means one inference.</p>
+<p><strong>LLM (Large Language Model).</strong> A model trained on an enormous amount of text, whose one
+skill is: given some text, produce the text that plausibly comes next. ChatGPT, Claude
+and Gemini are products built on LLMs.
+<em>Picture:</em> the world's most well-read autocomplete.
+<em>Why it matters:</em> the "decide what to press next" step of our agent is an LLM call.
+Everything else in the project is scaffolding around that one act.</p>
+<p><strong>Frontier model.</strong> Informal term for the most capable models available at a given
+moment. It's a moving label — today's frontier model is next year's baseline.
+<em>Why it matters:</em> "the best frontier model scores ~7.8% on ARC-AGI-3" (checked
+2026-07-21) is how we describe how hard our benchmark is.</p>
+<div class="callout key">
+<p>Everything in Group A collapses to one sentence worth remembering: <strong>a language model is
+a fixed function from text to text.</strong> It doesn't learn while you use it, it doesn't
+remember your last conversation, and it has no state of its own. Every appearance of
+memory or learning in an agent is something <em>we</em> built around it. Internalise that and
+half of agent engineering becomes obvious.</p>
+</div>
+<hr />
+<h2>Group B — Talking to a model</h2>
+<p><strong>Token.</strong> The unit a model reads and writes. Not quite a word — it's a chunk of
+characters. Common words are one token; rare words split into several.
+<em>Picture:</em> <code>"unbelievable"</code> might arrive as <code>un</code> + <code>believ</code> + <code>able</code> — three tokens.
+<em>Why it matters:</em> you are billed per token, limited per token, and slowed per token.
+Tokens are the currency of this entire field. Note 03 is largely about them.</p>
+<p><strong>Tokenisation.</strong> The step that chops your text into tokens before the model sees it.
+<em>Why it matters:</em> it's why models are oddly bad at counting letters in a word — they
+never see the letters, only the chunks.</p>
+<p><strong>Context window.</strong> The hard maximum number of tokens a model can look at in one call —
+your input and its output together. Go over it and something must be dropped.
+<em>Picture:</em> a desk of a fixed size. Everything the model can consider has to physically
+fit on that desk at once. Anything else may as well not exist.
+<em>Why it matters:</em> this is <em>the</em> constraint that shapes agent design. Our agent plays
+hundreds of turns; the full history will never fit; so every turn we must choose what
+goes on the desk. That choosing has a name — see Group C, <em>context engineering</em>.</p>
+<p><strong>Prompt.</strong> The text you send the model.
+<em>Why it matters:</em> in an agent, the prompt isn't hand-written once — it's <em>assembled by
+code</em>, freshly, every single turn.</p>
+<p><strong>System prompt.</strong> A special instruction block placed before everything else, setting the
+model's role and rules for the whole conversation.
+<em>Picture:</em> the briefing you give a new hire on day one, versus the individual tasks you
+give them after.
+<em>Why it matters:</em> the agent's standing rules — "you are playing an unknown game, here
+are the eight legal actions, always reply in this format" — live here.</p>
+<p><strong>Completion (or response, or generation).</strong> What the model sends back.</p>
+<p><strong>Temperature.</strong> A dial from roughly 0 to 1+ controlling randomness. Near 0, the model
+picks the most likely next token every time — repeatable, predictable, boring. Higher,
+it takes chances — varied, creative, less reliable.
+<em>Picture:</em> 0 is a person who always orders their usual; 1 is a person who tries the
+weird thing on the menu.
+<em>Why it matters:</em> a real design decision for us. Deciding <em>which action to take</em> wants
+low temperature (be consistent). <em>Generating candidate theories about the game</em> may want
+higher (be varied). Both are testable choices, and note 07's eval suite is how we test
+them instead of guessing.</p>
+<p><strong>Sampling.</strong> The general name for how the model picks each next token from its ranked
+options. Temperature is one sampling control.</p>
+<p><strong>Hallucination.</strong> When a model states something false with complete confidence. Not a
+bug to be patched — a direct consequence of what a model <em>is</em> (Group A: a function
+producing plausible next text, with no fact-checker inside).
+<em>Why it matters:</em> our agent will hallucinate rules the game doesn't have. The defence
+isn't hoping — it's the loop: any theory gets <em>tested</em> against the real game, and gets
+dropped when the game disagrees.</p>
+<p><strong>API (Application Programming Interface).</strong> A way for one program to ask another program
+for something over the internet. You send a structured request; you get a structured
+answer.
+<em>Picture:</em> a restaurant's ordering window. You don't enter the kitchen; you pass a
+written order in and food comes out.
+<em>Why it matters:</em> we use two APIs — one to play the game, one to call the language model.</p>
+<p><strong>API key.</strong> A long secret string that identifies you to an API, like a password for
+programs.
+<em>Why it matters:</em> it must never be committed to the repository. Ours lives in an
+untracked <code>.env</code> file. Leaked keys get abused and billed. This is the <em>first</em> thing a
+security-conscious interviewer checks in a portfolio repo.</p>
+<p><strong>SDK (Software Development Kit).</strong> A ready-made code library that wraps an API so you
+write <code>agent.take_action(...)</code> instead of hand-building web requests.
+<em>Why it matters:</em> ARC Prize ships an official Python SDK (<code>arc-agi-3</code>) — installed and
+verified on your laptop. We use it for the plumbing and write our own agent on top.</p>
+<p><strong>Latency.</strong> How long a call takes to come back, usually in milliseconds or seconds.
+<em>Why it matters:</em> our agent makes one model call per turn and a game runs many turns —
+so latency multiplies. It's a first-class number in our traces, not an afterthought.</p>
+<p><strong>Rate limit.</strong> A cap on how many calls you may make per minute or per day.
+<em>Why it matters:</em> free tiers are generous on price and strict on rate. Handling
+"slow down, you've hit the limit" gracefully is a reliability feature we have to build.</p>
+<p><strong>Free tier.</strong> The amount of a paid service you can use for nothing.
+<em>Why it matters:</em> a hard project constraint — no paid APIs, ever. It's also a genuine
+engineering story: staying useful inside a tight budget.</p>
+<hr />
+<h2>Group C — Building something with a model</h2>
+<p><strong>Agent.</strong> A program that repeatedly looks at a situation, decides an action, performs it,
+observes the result, and goes again — pursuing a goal without a human in the loop each
+step. When the deciding is done by an LLM, it's an LLM agent.
+<em>Picture:</em> a thermostat is the simplest possible agent — observe temperature, decide,
+act, repeat. Swap the thermostat's rule for a language model and you have ours.
+<em>Why it matters:</em> it's the noun in your job title. Being able to define it plainly, with
+no hype, is a real interview advantage.</p>
+<p><strong>Agent loop.</strong> The cycle itself: <strong>observe → decide → act → observe…</strong> Everything else in
+agent engineering is a question about one of those four arrows.
+<em>Why it matters:</em> note 05 builds ours from scratch, with real code.</p>
+<p><strong>Observation.</strong> What the agent perceives at one moment. Ours: a 64×64 grid of numbers,
+plus the score and game state.</p>
+<p><strong>Action.</strong> One thing the agent can do. Ours: exactly eight — RESET, six simple button
+presses, and one click at a coordinate.</p>
+<p><strong>State.</strong> Everything true about the world right now. In our game the state is what the
+grid shows; the agent's <em>belief</em> about the state is a separate, often wrong, thing.
+<em>Why it matters:</em> the gap between real state and believed state is where nearly every
+agent failure lives.</p>
+<p><strong>Episode.</strong> One complete run from start to finish — here, one play of one game.</p>
+<p><strong>Tool use (function calling).</strong> Letting a model trigger real code — search the web, run
+a query, press a button — rather than only emitting text.
+<em>Picture:</em> the difference between an advisor who tells you what to do and one who's been
+given the keys.
+<em>Why it matters:</em> our agent's eight game actions are its tools. It's the same concept
+interviewers mean by "function calling", in its simplest possible form.</p>
+<p><strong>Context engineering.</strong> Deciding what goes into the context window on each call — which
+observations, how much history, which remembered lessons, in what order, and what gets
+compressed or dropped.
+<em>Picture:</em> briefing a colleague who has 30 seconds and no memory of yesterday. What do
+you tell them, and in what order?
+<em>Why it matters:</em> it is the highest-leverage work in the whole project, and note 06's
+entire subject.</p>
+<p><strong>Framework.</strong> A pre-built library that gives you an agent loop for free (LangGraph,
+smolagents and similar).
+<em>Why it matters:</em> <strong>we deliberately don't use one for the core loop.</strong> A framework hides
+exactly the parts an interview asks you to explain. Knowing they exist and why you chose
+not to use them is a stronger answer than having used one.</p>
+<hr />
+<h2>Group D — Knowing whether it works</h2>
+<p><strong>Benchmark.</strong> A standard test set everyone measures against, so numbers can be compared
+across people.
+<em>Why it matters:</em> ARC-AGI-3 is ours. We didn't invent the test — which means our number
+means something to a stranger.</p>
+<p><strong>Metric.</strong> One specific number you measure. Ours: score per game, actions until first
+progress, tokens spent per game, cost per game, latency per call.
+<em>Why it matters:</em> "it got better" is a feeling. A metric is a claim.</p>
+<p><strong>Baseline.</strong> The simple, dumb version you compare everything against. Ours is a random
+agent — it presses buttons at random.
+<em>Picture:</em> before claiming your diet works, you need to know what happens if you do
+nothing.
+<em>Why it matters:</em> without a baseline, a number is meaningless. "Score 3" means nothing
+until you know random scores 1.</p>
+<p><strong>Eval (evaluation).</strong> A repeatable measurement of your system on a fixed set of cases
+with fixed metrics. Run it before a change and after, and the difference tells you
+whether the change helped.
+<em>Picture:</em> a blood test. Same test, same conditions, so the before/after comparison is
+real.
+<em>Why it matters:</em> this is the single most-probed skill in 2026 AI-engineering interviews,
+and note 07's subject. Our project rule: <strong>no prompt, model or loop change is kept
+without before/after eval numbers.</strong></p>
+<p><strong>Dev set and held-out set.</strong> Split your test cases in two. You tune against the <em>dev</em>
+set as much as you like. You touch the <em>held-out</em> set only to report final results.
+<em>Picture:</em> practice papers versus the actual exam. Study the exam paper in advance and
+your score stops meaning anything.
+<em>Why it matters:</em> tuning on the data you report is the cardinal sin of ML, and this
+project's decision log calls it exactly that. Getting this right in a portfolio project
+signals seniority faster than almost anything else.</p>
+<p><strong>Regression.</strong> When a change makes something that used to work stop working.
+<em>Why it matters:</em> our rule is that a regression either gets reverted or gets a written
+justification. Nothing silently rots.</p>
+<p><strong>Ablation.</strong> Deliberately removing one piece to measure how much it was contributing.
+<em>Picture:</em> to find out whether the salt matters, cook it once without salt.
+<em>Why it matters:</em> it's how you prove a component earns its place. "Memory helps" is a
+claim; "the suite scores 22% with memory and 14% without, same seeds" is evidence.</p>
+<p><strong>Reproducibility.</strong> A stranger can re-run your work and get your numbers.
+<em>Why it matters:</em> it's the project's whole thesis. One command re-runs the suite; every
+number in the README traces to a committed run artifact.</p>
+<p><strong>Artifact.</strong> A file produced by an actual run — a results table, a log, a scorecard —
+committed to the repo as evidence.
+<em>Why it matters:</em> project rule: <strong>every number in a note traces to an artifact or a cited
+source checked that day.</strong> Nothing comes from memory.</p>
+<hr />
+<h2>Group E — Running it for real</h2>
+<p><strong>Trace.</strong> The complete record of one operation: what went in, what came out, how long it
+took, what it cost. For an LLM call: the exact prompt, the exact reply, token counts,
+latency, price.
+<em>Picture:</em> a flight recorder. After a crash you don't guess — you read the box.
+<em>Why it matters:</em> it's how "why did it do that?" gets an answer instead of a theory.
+Note 08.</p>
+<p><strong>Observability.</strong> The general property of a system you can inspect from the outside well
+enough to explain its behaviour. Traces and logs are how you get it.
+<em>Why it matters:</em> the word interviewers use. Traces are the mechanism; observability is
+the goal.</p>
+<p><strong>Failure taxonomy.</strong> A sorted catalogue of the distinct ways your system fails, with
+counts, built by reading real traces.
+<em>Picture:</em> a doctor doesn't treat "feeling unwell" — they name the illness first.
+<em>Why it matters:</em> it converts "the agent is bad" into "31% of failures are repeating a
+known-dead action, 22% are misreading the grid" — and each named bucket becomes a fix
+and an eval case. This is the single most impressive thing a junior can bring to an
+interview.</p>
+<p><strong>Token budget.</strong> A hard cap on tokens spent per game or per run, enforced in code.
+<em>Why it matters:</em> it makes cost a <em>design parameter</em> instead of a monthly surprise, and
+it gives us the cost-versus-score curve in note 10.</p>
+<p><strong>Caching.</strong> Saving the result of expensive work so an identical request is answered from
+storage instead of being recomputed.
+<em>Why it matters:</em> agents repeat themselves constantly. Caching is often the largest single
+cost saving available, for almost no complexity.</p>
+<p><strong>Model routing.</strong> Sending easy requests to a cheap, fast model and only escalating hard
+ones to an expensive model.
+<em>Picture:</em> triage in an emergency room.
+<em>Why it matters:</em> one of the highest-value production patterns in the field, and easy to
+demonstrate honestly with an eval suite behind it.</p>
+<p><strong>Guardrail.</strong> A check that stops the system doing something forbidden or nonsensical —
+validating the model's output, capping retries, refusing an illegal action.
+<em>Why it matters:</em> the model <em>will</em> eventually reply "press ACTION9". Our code must reject
+that rather than crash.</p>
+<hr />
+<h2>Group F — Memory and retrieval</h2>
+<p><strong>Embedding.</strong> A piece of text converted into a list of numbers, arranged so that texts
+with similar meaning get similar lists.
+<em>Picture:</em> a map where every sentence is a dot, and sentences about the same thing land
+near each other — regardless of the exact words used.
+<em>Why it matters:</em> it's how a computer measures "similar in meaning" rather than "shares
+keywords".</p>
+<p><strong>Vector.</strong> The list of numbers itself. An embedding <em>is</em> a vector.</p>
+<p><strong>Similarity search.</strong> Given one vector, find the stored vectors nearest to it — i.e.
+find the most related pieces of text.</p>
+<p><strong>Vector store (vector database).</strong> Storage built to do similarity search fast over many
+vectors.</p>
+<p><strong>Retrieval.</strong> Fetching the most relevant stored items and putting them into the prompt,
+so the model can use information it was never trained on.</p>
+<p><strong>RAG (Retrieval-Augmented Generation).</strong> The pattern of: retrieve relevant text →
+paste it into the prompt → let the model answer using it. The standard way to make a
+model answer about <em>your</em> documents.
+<em>Picture:</em> an open-book exam. The model isn't smarter; it just has the right page open.
+<em>Why it matters:</em> interviews ask about RAG constantly. <strong>Our project does the same
+mechanics, but over the agent's own past experience instead of a document folder</strong> — so
+you can discuss chunking, retrieval quality and relevance from something you actually
+built, without shipping the same doc-chatbot everyone else has. Note 09.</p>
+<p><strong>Chunking.</strong> Splitting long text into pieces small enough to embed and retrieve
+usefully. Chunk too big and you retrieve noise; too small and you lose the context that
+made it meaningful.</p>
+<hr />
+<h2>Group G — The plumbing you'll be touching</h2>
+<p><strong>Repository (repo).</strong> A project folder tracked by Git, with full history of every change.
+Ours: <code>github.com/chetan110801/project-agent</code>.</p>
+<p><strong>Commit.</strong> One saved snapshot of changes, with a message explaining them.</p>
+<p><strong>Push.</strong> Uploading your commits to GitHub so they exist somewhere other than your laptop.
+<em>Why it matters:</em> project rule — a session that changed things but pushed nothing is an
+unfinished session.</p>
+<p><strong>Branch.</strong> A parallel line of work. Ours is <code>main</code>.</p>
+<p><strong>Environment variable.</strong> A setting stored outside your code, in the operating system or a
+file, that your code reads at runtime.
+<em>Why it matters:</em> it's how secrets stay out of source code. Our API key is the
+environment variable <code>ARC_API_KEY</code>.</p>
+<p><strong><code>.env</code> file.</strong> A plain text file holding environment variables for one project, listed
+in <code>.gitignore</code> so Git never uploads it.
+<em>Why it matters:</em> this is the specific mechanism that keeps your key off GitHub.</p>
+<p><strong><code>.gitignore</code>.</strong> A list of files Git must never track. <code>.env</code> is in ours.</p>
+<p><strong>CLI (Command-Line Interface).</strong> A program you run by typing a command instead of
+clicking. You'll run these in PowerShell.</p>
+<p><strong>JSON.</strong> A plain-text format for structured data — the standard shape of API requests
+and replies.</p>
+<p><strong>Markdown.</strong> The simple text format these notes are written in. <code>#</code> makes a heading,
+<code>**bold**</code> makes bold. Our <code>build_site.py</code> turns all of them into the single <code>index.html</code>
+you read on your phone.</p>
+<hr />
+<h2>Say it in an interview</h2>
+<p>You won't be asked to recite definitions — but you <em>will</em> be judged on whether you use
+these words precisely. Three that separate people who understand from people who
+repeat:</p>
+<p><strong>"Context window" used correctly.</strong></p>
+<blockquote>
+<p>"The context window is a hard token limit per call, covering the prompt and the
+response together. In an agent it's the binding constraint, because history grows every
+turn and the window doesn't. So each turn you're making an explicit choice about what
+to include and what to compress away — that's the actual engineering."</p>
+</blockquote>
+<p><strong>"Eval" used correctly.</strong></p>
+<blockquote>
+<p>"An eval is a repeatable measurement on a fixed set of cases with fixed metrics, so a
+change can be judged in numbers. Mine splits into a dev set I iterate on and a held-out
+set I only touch for reported results. Every change ships with before-and-after
+numbers."</p>
+</blockquote>
+<p><strong>"RAG" used correctly — and honestly.</strong></p>
+<blockquote>
+<p>"RAG is retrieve-then-generate: embed your source material, find the chunks nearest the
+query, put them in the prompt. I didn't build a document chatbot — I applied the same
+mechanics to the agent's own episode history, so it can recall what it learned in
+earlier games. Same concerns: chunking strategy, retrieval quality, and whether
+retrieval actually helps, which I measured with an ablation."</p>
+</blockquote>
+<p><strong>Follow-up: "What's the difference between fine-tuning and prompting?"</strong></p>
+<blockquote>
+<p>"Fine-tuning changes the model's weights by training on your data — expensive, needs
+hardware, and you own a new model afterwards. Prompting changes only what's in the
+context window at call time — free, instant, and reversible. I did zero training in
+this project by design; all the behaviour comes from the loop and the context, which is
+also what makes every result reproducible on a laptop."</p>
+</blockquote>
+<hr />
+<p><strong>Next:</strong> <a href="#03-what-an-llm-really-is" class="wikilink" data-target="03-what-an-llm-really-is">Study 03 — What an LLM really is: tokens and the context window</a></p><nav class="pager"><a class="pager-prev" data-target="01-what-we-are-building" href="#01-what-we-are-building" title="Study 01 — What we are building, in plain English">← <span>What we are building, in plain English</span></a><a class="pager-next" data-target="03-what-an-llm-really-is" href="#03-what-an-llm-really-is" title="Study 03 — What an LLM really is: tokens and the context window"><span>What an LLM really is: tokens and the context window</span> →</a></nav></article>
+<article class="doc" id="doc-03-what-an-llm-really-is" data-tabid="03-what-an-llm-really-is"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 03 — What an LLM really is: tokens and the context window</h1>
+<p><em>Written 2026-07-22. The most important note in the early ladder. Everything later —
+context engineering, memory, budgets, why the agent breaks — is downstream of what's
+here.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> rung 3 of the ladder.
+<strong>Assumes you read:</strong> <a href="#00-how-to-use-these-notes" class="wikilink" data-target="00-how-to-use-these-notes">Study 00</a>,
+<a href="#01-what-we-are-building" class="wikilink" data-target="01-what-we-are-building">01</a>, <a href="#02-the-words-you-need" class="wikilink" data-target="02-the-words-you-need">02</a>.
+<strong>After this you can:</strong> explain what a token is, what a context window is, why it is
+the hard constraint on every agent, and how cost, speed and quality all trace back to
+it.</p>
+</blockquote>
+<hr />
+<h2>Start with what the model actually does</h2>
+<p>Strip away everything and a large language model does exactly one thing:</p>
+<div class="callout key">
+<p><strong>Given a sequence of text, produce the text that most plausibly comes next.</strong>
+That's it. One function, from text to text. There is no memory, no goal, no plan, and
+nothing that survives between calls.</p>
+</div>
+<p>Everything that feels like more — a chatbot remembering your name, an agent pursuing a
+goal across a hundred turns — is <em>engineering built around</em> that single function. When
+ChatGPT "remembers" what you said earlier, no memory was involved: the whole
+conversation was re-sent, from the top, on every single message.</p>
+<p>Sit with that, because it explains almost everything that follows:</p>
+<ul>
+<li>The model has <strong>no memory</strong>, so <em>we</em> have to carry state (the situation as it stands)
+  forward ourselves.</li>
+<li>The model has <strong>no goal</strong>, so <em>we</em> have to restate the goal every turn.</li>
+<li>The model has <strong>no idea what happened last turn</strong> unless we tell it again.</li>
+</ul>
+<p><strong>Our agent's job is 90% deciding what to re-tell the model each turn.</strong> That is not a
+detail of the implementation. That is the work.</p>
+<hr />
+<h2>Tokens: the atoms</h2>
+<p>The model doesn't read letters, and it doesn't read words. It reads <strong>tokens</strong> — chunks
+of characters, somewhere between a letter and a word.</p>
+<p>Roughly, for ordinary English:</p>
+<table>
+<thead>
+<tr>
+<th>Text</th>
+<th>Roughly how many tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A common short word (<code>the</code>, <code>cat</code>, <code>run</code>)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>A longer or rarer word (<code>unbelievable</code>)</td>
+<td>2–4</td>
+</tr>
+<tr>
+<td>A page of prose (~500 words)</td>
+<td>~650–750</td>
+</tr>
+<tr>
+<td>A number like <code>0 0 3 0 0</code></td>
+<td>5–10</td>
+</tr>
+</tbody>
+</table>
+<div class="callout warn">
+<p>Every "roughly" above is a rule of thumb, not a measurement. Different models chop text
+differently, so the same sentence is a different number of tokens on different models.
+<strong>When a number matters, you count it with the provider's token-counting endpoint — you
+never estimate.</strong> (There's a well-known trap here: people reach for OpenAI's <code>tiktoken</code>
+library to count tokens for any model. It's the wrong tokeniser for anything but
+OpenAI's models, and undercounts Claude's tokens by roughly 15–20% on ordinary text,
+worse on code. Using the wrong counter silently corrupts every budget built on it.)</p>
+</div>
+<h3>Why tokens instead of words</h3>
+<p>Two reasons, and knowing them is a genuine interview differentiator.</p>
+<p><strong>Vocabulary size.</strong> English has millions of word forms; a model can't have a slot for
+each. Tokens give a fixed vocabulary (typically ~50k–200k chunks) that can spell
+<em>anything</em> — including words invented after training, names, typos, other languages, and
+code — by combining pieces.</p>
+<p><strong>Nothing is unrepresentable.</strong> A word the model has never seen still arrives as a
+sequence of familiar chunks, so the model can do <em>something</em> sensible with it.</p>
+<h3>The famous consequence</h3>
+<p>Ask a model how many letter <em>r</em>'s are in "strawberry" and it has historically struggled.
+Not because it's stupid — <strong>because it never saw the letters.</strong> It saw two or three
+chunks. Asking it to count letters is like asking you to count the brush strokes in a
+printed photograph of a painting: the information was thrown away before you got there.</p>
+<p>That's the shape of most "why is the AI dumb at this simple thing?" questions. Usually
+the answer is: <em>the information you're asking about isn't in the representation it
+receives.</em> It's a great thing to be able to explain calmly in an interview, because it
+shows you understand the machine rather than just its outputs.</p>
+<hr />
+<h2>The context window: the desk</h2>
+<p>Here's the constraint that shapes everything.</p>
+<div class="callout key">
+<p>The <strong>context window</strong> is the maximum number of tokens the model can consider in one
+call — your input <em>and</em> its output, counted together. Cross it and something must be
+dropped. There is no "just a bit more".</p>
+</div>
+<p>Picture a desk of fixed size. Everything the model can take into account has to fit on
+that desk at once. Anything not on the desk does not exist as far as that call is
+concerned — not "less important", <strong>nonexistent</strong>.</p>
+<h3>How big is the desk? (checked 2026-07-22)</h3>
+<p>Real numbers, from Anthropic's current model reference:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Context window</th>
+<th>Max output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Opus 4.8</td>
+<td>1,000,000 tokens</td>
+<td>128,000</td>
+</tr>
+<tr>
+<td>Claude Sonnet 5</td>
+<td>1,000,000 tokens</td>
+<td>128,000</td>
+</tr>
+<tr>
+<td>Claude Haiku 4.5</td>
+<td>200,000 tokens</td>
+<td>64,000</td>
+</tr>
+</tbody>
+</table>
+<p>A million tokens is a big desk — roughly a few thousand pages of prose. Two things stop
+that from making the problem go away:</p>
+<p><strong>1. The free models we can actually use are smaller.</strong> This project runs on free tiers
+only. The models available to us for free have smaller windows than the flagship
+figures above, and we'll record the exact numbers when we pick our model in Phase B —
+measured, not remembered.</p>
+<p><strong>2. Filling the window is not free, and not even always good.</strong> More tokens means more
+money, more waiting, and — counter-intuitively — often <em>worse</em> answers, because the
+thing that mattered is buried in noise. "It fits" and "it helps" are different
+questions, and only the eval suite (note 07) can tell them apart.</p>
+<hr />
+<h2>Making it concrete: our agent's actual problem</h2>
+<p>Now the arithmetic that makes this real, using our game.</p>
+<p>One ARC-AGI-3 frame is a <strong>64 × 64 grid</strong> = <strong>4,096 cells</strong>, each holding a number for a
+colour. (Verified from the official SDK installed on your laptop: coordinates are capped
+at 0–63, and a frame is a list of 2D integer grids.)</p>
+<p>Write that grid out as text — digits with spaces and line breaks — and you're looking at
+<strong>several thousand tokens for a single screenshot of a single moment.</strong></p>
+<div class="callout warn">
+<p>That "several thousand" is arithmetic from the grid size, <strong>not a measurement</strong>. We will
+replace it with a counted number from a real frame in Phase A, and this note gets
+updated with the real figure. Project rule: no number stands on a guess.</p>
+</div>
+<p>Now watch the problem appear:</p>
+<table>
+<thead>
+<tr>
+<th>Turn</th>
+<th>If we send every frame so far</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1 frame</td>
+<td>fine</td>
+</tr>
+<tr>
+<td>10</td>
+<td>10 frames</td>
+<td>getting heavy</td>
+</tr>
+<tr>
+<td>50</td>
+<td>50 frames</td>
+<td>probably over the window</td>
+</tr>
+<tr>
+<td>200</td>
+<td>200 frames</td>
+<td>far over, and expensive</td>
+</tr>
+</tbody>
+</table>
+<p>And a game can run many turns. So we hit the wall — not eventually, but early.</p>
+<h3>The four ways out (this is the whole field in miniature)</h3>
+<p>Every technique in agent engineering is one of these four moves:</p>
+<p><strong>1. Send less of each thing.</strong> Don't send the raw grid — send a <em>description</em>. "A 3×3
+blue square at (10,10); a red dot at (40,22); everything else empty." Thousands of
+tokens become dozens. Cheap, fast — and lossy (some information is thrown away), so if
+the discarded detail mattered, the agent goes blind. Measurable trade-off.</p>
+<p><strong>2. Send fewer things.</strong> Only the current frame and the previous one, not all 200. Most
+of the history is genuinely irrelevant; the risk is that occasionally it isn't.</p>
+<p><strong>3. Summarise the old stuff.</strong> Replace 50 old turns with a paragraph: <em>"Tried ACTION1
+and ACTION2 — no visible effect. ACTION3 moves the blue block down. Goal appears to be
+reaching the green tile."</em> Fifty frames become fifty tokens. This is the highest-value
+move in agent engineering, and the one with the sharpest failure mode: summarise away
+the one detail that mattered and the agent is confidently wrong.</p>
+<p><strong>4. Store it outside and fetch what's relevant.</strong> Keep everything in a store, and each
+turn retrieve just the pieces relevant to right now. This is <strong>retrieval</strong> — the same
+machinery as RAG (note 02, Group F), applied to the agent's own past. Note 09.</p>
+<div class="callout key">
+<p>These four moves — compress, drop, summarise, retrieve — <strong>are</strong> context engineering.
+When an interviewer asks "how do you handle long contexts?", this is the answer, and
+you now have a concrete grid-of-numbers example to hang it on.</p>
+</div>
+<hr />
+<h2>The three costs of a token</h2>
+<p>Every token you put in the window costs you three separate things. Agent engineering is
+the practice of trading them against each other on purpose.</p>
+<h3>1. Money</h3>
+<p>Models are priced per million tokens, and <strong>output is always more expensive than input</strong>
+— typically ~5× — because generating is more work than reading. Current published rates
+(checked 2026-07-22):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Input / 1M tokens</th>
+<th>Output / 1M tokens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Opus 4.8</td>
+<td>$5.00</td>
+<td>$25.00</td>
+</tr>
+<tr>
+<td>Claude Sonnet 5</td>
+<td>$3.00</td>
+<td>$15.00</td>
+</tr>
+<tr>
+<td>Claude Haiku 4.5</td>
+<td>$1.00</td>
+<td>$5.00</td>
+</tr>
+</tbody>
+</table>
+<p>Work an example. Say our agent sends 5,000 tokens of context and gets 200 tokens back,
+each turn, and plays 100 turns:</p>
+<ul>
+<li>Input: 5,000 × 100 = 500,000 tokens</li>
+<li>Output: 200 × 100 = 20,000 tokens</li>
+</ul>
+<p>On the cheapest model above, that's about <strong>$0.60 for one game</strong>. Sounds like nothing —
+until you run a 20-game eval suite after every change, several times a day. That's
+where "just send everything" quietly turns into real money.</p>
+<div class="callout note">
+<p>We pay $0 — free tiers only, by project rule. But free tiers are metered in the same
+currency: tokens per minute and per day. So the arithmetic is identical, just with
+<em>quota</em> where the dollars go. And knowing the real prices is what lets you answer
+"what would this cost in production?" — a question interviewers genuinely ask.</p>
+</div>
+<p><strong>Caching is the biggest lever here.</strong> If the front part of your prompt is <em>byte-for-byte
+identical</em> between calls, the provider can cache it: a cache read costs roughly a tenth
+of a normal input token, while writing the cache costs about 1.25×. So repeated context
+pays off from the second call onward. The catch — and this is the part people get wrong —
+<strong>caching is a prefix match: one changed byte anywhere near the front invalidates
+everything after it.</strong> Put a timestamp at the top of your system prompt and you've
+silently destroyed your cache and never see an error. This is why an agent's stable
+instructions go first and the volatile per-turn stuff goes last. (Note 10.)</p>
+<h3>2. Time</h3>
+<p>More tokens means a longer wait. Our agent makes one call per turn and a game is many
+turns, so latency multiplies: two seconds per call across 100 turns is over three
+minutes for one game — and an eval suite is many games. Speed isn't a nicety here; it
+determines how many experiments you can run in a day, which determines how fast you
+learn.</p>
+<h3>3. Attention</h3>
+<p>The subtle one. A model given 100,000 tokens does not attend to all of them equally.
+Bury the critical fact in the middle of a huge context and the model may effectively
+miss it — the well-documented "lost in the middle" effect.</p>
+<div class="callout key">
+<p><strong>More context is not monotonically better</strong> (it doesn't keep improving as you add
+more). Beyond a point, adding context makes performance <em>worse</em>. This is exactly why
+context changes have to go through the eval suite instead of being judged by intuition
+— "I gave it more information, so it should be smarter" is the intuition, and it is
+frequently false.</p>
+</div>
+<hr />
+<h2>Two more dials worth knowing</h2>
+<p><strong>Temperature — how random the model is.</strong> Near 0, it always picks its top choice:
+repeatable and predictable. Higher, it takes chances: varied and creative, less
+reliable. For us: <em>deciding the next action</em> wants low (be consistent, be debuggable);
+<em>brainstorming theories about the game</em> may want higher (explore more possibilities).
+Which is better is an empirical question, and note 07 is how we answer it.</p>
+<div class="callout note">
+<p>Worth knowing for interviews: on the newest models this dial is disappearing. Anthropic's
+current top models <strong>reject <code>temperature</code> outright</strong> — you steer behaviour with the
+prompt and an "effort" setting instead. If someone asks about temperature, the strong
+answer is: "conceptually it's the randomness dial, but on current frontier models it's
+been removed in favour of prompt-level control and thinking-effort settings" (checked
+2026-07-22).</p>
+</div>
+<p><strong>Thinking / reasoning effort.</strong> Recent models can spend extra tokens "thinking" before
+answering — visible as a real cost you pay for a real quality gain. It's the same
+trade-off as everything else in this note: tokens for quality. For an agent making
+hundreds of calls, whether to pay for thinking on <em>every</em> action or only on hard ones is
+a design decision — and, again, one the eval suite settles.</p>
+<hr />
+<h2>What to hold onto</h2>
+<ol>
+<li>A model is a fixed function from text to text — no memory, no goal, no state.</li>
+<li>It reads tokens, not words, which is why it's odd about letters and why everything is
+   billed and limited in tokens.</li>
+<li>The context window is a hard ceiling on what it can consider at once.</li>
+<li>Our agent generates far more information than the window holds, so every turn is a
+   <em>choice</em> about what goes in — and that choosing is the job.</li>
+<li>Every token costs money, time, and attention. Attention is the one people forget, and
+   the reason "more context" is not automatically better.</li>
+</ol>
+<hr />
+<h2>Say it in an interview</h2>
+<p><strong>"Explain tokens and context windows."</strong></p>
+<blockquote>
+<p>"A token is the unit the model actually reads — a chunk of characters between a letter
+and a word. It's the unit of billing, of rate limits, and of the context window, which
+is the hard cap on how much the model can consider in a single call, input and output
+together. In an agent it's <em>the</em> binding constraint, because history grows every turn
+and the window doesn't."</p>
+</blockquote>
+<p><strong>"So how did you handle it?"</strong></p>
+<blockquote>
+<p>"There are only four moves, and I used three. Compress: I never send the raw 64×64
+grid, I send a structured description of the objects in it. Drop: only the last couple
+of frames go in verbatim. Summarise: older turns collapse into a running set of beliefs
+about the game's rules. The fourth is retrieval over stored history, which I added
+later for cross-episode memory. Every one of those changed the score, and I have
+before-and-after eval numbers for each."</p>
+</blockquote>
+<p><strong>"Isn't a million-token context window enough that this doesn't matter?"</strong></p>
+<blockquote>
+<p>"It removes the hard failure, not the problem. Three things still bite: cost and
+latency scale with tokens, so a big window is a big bill on every one of hundreds of
+calls; attention degrades with length, so burying the key fact in the middle measurably
+hurts accuracy; and the free tiers I was restricted to have much smaller windows
+anyway. I treated the window as a budget to spend well, not a limit to fill."</p>
+</blockquote>
+<p><strong>"How do you count tokens?"</strong></p>
+<blockquote>
+<p>"With the provider's own token-counting endpoint, on the model I'm actually calling —
+never with an estimator and never with another vendor's tokeniser. <code>tiktoken</code> is
+OpenAI's; using it for a Claude budget undercounts by roughly 15–20% on prose and worse
+on code, and the error is silent, so every budget built on it is quietly wrong."</p>
+</blockquote>
+<p><strong>"What would you do to cut cost?"</strong></p>
+<blockquote>
+<p>"In order of impact: prompt caching first, because agents re-send a near-identical
+prefix every turn — but that needs the prompt laid out stable-first, volatile-last,
+since caching is a prefix match and one changed byte at the front invalidates
+everything after it. Then cheap-model-first routing, escalating only when the cheap
+model's answer fails a check. Then context compression, measured against the eval suite
+so I know what the saving cost me in score."</p>
+</blockquote>
+<hr />
+<p><strong>Next:</strong> <a href="#04-arc-agi-3-the-game" class="wikilink" data-target="04-arc-agi-3-the-game">Study 04 — ARC-AGI-3: the game our agent has to play</a></p><nav class="pager"><a class="pager-prev" data-target="02-the-words-you-need" href="#02-the-words-you-need" title="Study 02 — The words you need, in the order you need them">← <span>The words you need, in the order you need them</span></a><a class="pager-next" data-target="04-arc-agi-3-the-game" href="#04-arc-agi-3-the-game" title="Study 04 — ARC-AGI-3: the game our agent has to play"><span>ARC-AGI-3: the game our agent has to play</span> →</a></nav></article>
+<article class="doc" id="doc-04-arc-agi-3-the-game" data-tabid="04-arc-agi-3-the-game"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 04 — ARC-AGI-3: the game our agent has to play</h1>
+<p><em>Written 2026-07-22. Every technical detail here was read out of the official
+<code>arc-agi-3</code> SDK version 0.0.1, installed and confirmed on Chetan's laptop on
+2026-07-21 — not from memory. Facts about the competition come from note 02's
+verification pass on 2026-07-21.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> rung 4 of the ladder.
+<strong>Assumes you read:</strong> <a href="#00-how-to-use-these-notes" class="wikilink" data-target="00-how-to-use-these-notes">00</a>,
+<a href="#01-what-we-are-building" class="wikilink" data-target="01-what-we-are-building">01</a>, <a href="#02-the-words-you-need" class="wikilink" data-target="02-the-words-you-need">02</a>,
+<a href="#03-what-an-llm-really-is" class="wikilink" data-target="03-what-an-llm-really-is">03</a>.
+<strong>After this you can:</strong> describe the benchmark, the exact interface our agent talks to,
+what "score" means, and why this is hard for AI but easy for people.</p>
+</blockquote>
+<hr />
+<h2>What ARC is trying to measure</h2>
+<p>Most AI benchmarks measure <strong>knowledge or skill</strong> — can you answer these medical exam
+questions, can you write this function, can you summarise this document. Models are
+extremely good at those now, and there's a nagging doubt about why: a model trained on a
+large fraction of the internet has, in some form, seen an enormous amount of the material
+those tests draw on.</p>
+<p>ARC was built to sidestep that doubt entirely. Its target is:</p>
+<div class="callout key">
+<p><strong>Can you learn a rule you have never seen before, from a handful of examples, right
+now?</strong>
+That skill has a name — <em>fluid intelligence</em> — and it is the part of human thinking most
+obviously missing from systems that mainly recall and recombine.</p>
+</div>
+<p>Every ARC puzzle uses rules invented for that puzzle. Having seen a billion other puzzles
+doesn't tell you this one's rule. You have to work it out, on the spot, from what's in
+front of you. That's the whole design.</p>
+<h3>ARC-AGI-1, 2, 3 — three generations</h3>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Shape of the task</th>
+<th>What it added</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ARC-AGI-1</strong></td>
+<td>Static puzzles: a few input→output grid pairs, infer the transformation, apply it to a new input</td>
+<td>The original test of "learn the rule from examples"</td>
+</tr>
+<tr>
+<td><strong>ARC-AGI-2</strong></td>
+<td>Same shape, harder rules</td>
+<td>Raised the difficulty ceiling</td>
+</tr>
+<tr>
+<td><strong>ARC-AGI-3</strong></td>
+<td><strong>Interactive games</strong> — no examples at all; you must <em>act</em> to find out anything</td>
+<td>Added exploration: you have to <em>gather</em> your own evidence</td>
+</tr>
+</tbody>
+</table>
+<p>That last jump is the important one and the reason we're here.</p>
+<p>In ARC-AGI-1 you're given the evidence and must find the pattern — a pure reasoning
+problem. In ARC-AGI-3 <strong>nobody gives you evidence.</strong> You get a screen and eight buttons.
+Want to know what button 3 does? Press it and watch. You have to <em>design your own
+experiments</em>, which means the agent has to reason about what it doesn't yet know — and
+that is a strictly harder, and much more agent-shaped, problem.</p>
+<div class="callout example">
+<p>Concretely, the difference between:</p>
+<p><em>"Here are three examples of a transformation; apply it to a fourth grid."</em> — a hard
+puzzle, but everything you need is on the page.</p>
+<p>versus</p>
+<p><em>"Here is a screen. There are eight buttons. Go."</em> — you don't know the goal, the
+controls, what the shapes mean, or whether you're winning. Every fact has to be bought
+with an action.</p>
+</div>
+<hr />
+<h2>The state of play (checked 2026-07-21)</h2>
+<table>
+<thead>
+<tr>
+<th>Who</th>
+<th>Score on ARC-AGI-3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Humans</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Best frontier model (GPT-5.6 Sol)</td>
+<td>~7.8%</td>
+</tr>
+</tbody>
+</table>
+<p>Two honest notes on that gap, both mattering for how you talk about it:</p>
+<p><strong>It's moving fast.</strong> That ~7.8% was near zero a few months earlier. Any specific number
+here goes stale quickly — which is exactly why this project's rules require re-verifying
+leaderboard figures before quoting them. <em>Never</em> recite a benchmark number in an
+interview without saying when you checked it.</p>
+<p><strong>Published claims run ahead of the competition scores.</strong> A July 2026 paper (OPINE-World,
+arXiv 2607.01531) claims 78.4% on the <em>public</em> evaluation set. Public eval and the
+competition's private eval are different things, and a paper claim isn't a reproduced
+result — but the direction is clear, and pretending otherwise would be exactly the kind
+of stale-fact error this project exists to avoid.</p>
+<h3>The competition, and the choice we made</h3>
+<p>ARC Prize 2026 puts up an <strong>$850K</strong> pool: a $700K grand prize for the first agent to
+score 100%, plus top-score and milestone awards. Milestone #2 closes <strong>2026-09-30</strong>, and
+prize entries must be open-sourced.</p>
+<p>The catch, and the reason for one of this project's core decisions: <strong>prize submissions
+run on Kaggle with no internet access during evaluation.</strong> No internet means no calling a
+language model over the network — so prize-eligible agents cannot use LLMs at all.</p>
+<p>We are targeting the <strong>public leaderboard</strong>, not the prize. Recorded in the decision log
+on 2026-07-21, with the reasoning: the prize track teaches clever search programming;
+the public track teaches the LLM engineering stack that AI-engineering interviews
+actually probe. You're building a portfolio, not buying a lottery ticket.</p>
+<hr />
+<h2>The interface: exactly what our agent sees and does</h2>
+<p>This is the part worth knowing precisely, because it's what our code touches. All of it
+is read from the installed SDK.</p>
+<h3>What comes back: a frame</h3>
+<p>Every action returns a <strong><code>FrameData</code></strong> object. Its fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>game_id</code></td>
+<td>text</td>
+<td>which game</td>
+</tr>
+<tr>
+<td><code>frame</code></td>
+<td>list of 2D integer grids</td>
+<td><strong>the screen</strong> — cells hold numbers meaning colours</td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>one of four values</td>
+<td><code>NOT_PLAYED</code>, <code>NOT_FINISHED</code>, <code>WIN</code>, <code>GAME_OVER</code></td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td>integer, 0–254</td>
+<td>how well we're doing</td>
+</tr>
+<tr>
+<td><code>available_actions</code></td>
+<td>list</td>
+<td>which actions are legal right now</td>
+</tr>
+<tr>
+<td><code>action_input</code></td>
+<td>object</td>
+<td>the action that produced this frame</td>
+</tr>
+<tr>
+<td><code>guid</code></td>
+<td>text</td>
+<td>id for this particular play</td>
+</tr>
+</tbody>
+</table>
+<p>The grid is <strong>64 × 64</strong> — we know this for certain because click coordinates are
+validated to the range 0–63 — which is <strong>4,096 cells per frame</strong>. That number is the
+whole reason note 03's context-window discussion isn't theoretical for us.</p>
+<h3>What we can do: exactly eight actions</h3>
+<p>Read straight out of the SDK's action definitions:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Number</th>
+<th>Kind</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RESET</code></td>
+<td>0</td>
+<td>simple</td>
+<td>start or restart the game</td>
+</tr>
+<tr>
+<td><code>ACTION1</code>–<code>ACTION5</code></td>
+<td>1–5</td>
+<td>simple</td>
+<td>plain button presses; no parameters</td>
+</tr>
+<tr>
+<td><code>ACTION6</code></td>
+<td>6</td>
+<td><strong>complex</strong></td>
+<td>a click: carries <code>x</code> and <code>y</code>, each 0–63</td>
+</tr>
+<tr>
+<td><code>ACTION7</code></td>
+<td>7</td>
+<td>simple</td>
+<td>plain button press</td>
+</tr>
+</tbody>
+</table>
+<div class="callout key">
+<p><strong>Nothing tells you what any of them do.</strong> ACTION1 might move something up in one game,
+change a colour in another, and do nothing at all in a third. Working that out <em>is</em> the
+game. Note the asymmetry too: the six simple actions give you 6 choices, but ACTION6 —
+the click — gives you 64 × 64 = <strong>4,096</strong> distinct choices. The action space is
+overwhelmingly clicks, which makes "where should I click?" the single hardest decision
+the agent makes.</p>
+</div>
+<h3>One nice detail: the API stores your reasoning</h3>
+<p>Each action can carry a <code>reasoning</code> field — an arbitrary blob of your own data, up to
+16 KB, which the server stores and hands back verbatim. It has no effect on the game.</p>
+<p>It exists purely so you can record <strong>why</strong> the agent chose each action, attached to the
+action itself. That is a tracing feature (note 02, Group E) built into the benchmark —
+and a small sign that the people who designed this expected serious agents to care about
+explaining themselves. We will use it.</p>
+<h3>How you're scored: the scorecard</h3>
+<p>After playing, you fetch a <strong>scorecard</strong>. Per game it records: every score across
+repeated plays, every end state, how many actions each play took, how many resets. Across
+all games it computes: games won, games played, total actions, and total score.</p>
+<p>Two things to notice, because they shape our eval design in note 07:</p>
+<p><strong>Score is not the only signal.</strong> <em>Actions taken</em> is recorded too — so "won in 40 actions"
+and "won in 400 actions" are distinguishable outcomes. Efficiency is measurable, not just
+success.</p>
+<p><strong>Games can be replayed.</strong> Scores are kept as a list per game and the headline is the
+<em>best</em> run. So "how consistent is it?" is answerable from the same data — and consistency
+is often the more interesting number, since one lucky run proves very little.</p>
+<hr />
+<h2>Why this is hard for a language model</h2>
+<p>Worth having a crisp answer to, because it's the natural interview follow-up.</p>
+<p><strong>1. Its main strength is switched off.</strong> A language model is spectacular at things
+resembling text it has seen. ARC games are built so that resemblance doesn't help. The
+advantage is deliberately removed and only the measured skill is left.</p>
+<p><strong>2. Grids-as-text are an awkward fit.</strong> The model reads a wall of numbers. A human
+<em>sees</em> a blue square move down and left. Recovering that spatial intuition from a text
+table is genuinely hard — and how we render the grid into text is one of our biggest
+design levers (note 06).</p>
+<p><strong>3. Exploration is not a language skill.</strong> Working out that ACTION1 and ACTION2 are
+untested and therefore worth testing is scientific reasoning under uncertainty, not
+next-word prediction. It has to be built into the loop, deliberately.</p>
+<p><strong>4. The context problem from note 03, in full force.</strong> 4,096 numbers per frame, hundreds
+of frames per game. It cannot all be shown. Something must always be thrown away, and
+throwing away the wrong thing loses the game.</p>
+<p><strong>5. Cause and effect over gaps.</strong> Press a button now, see the consequence three turns
+later. Linking the two requires holding a hypothesis across turns — which, since the
+model has no memory (note 03), means <em>we</em> have to carry it.</p>
+<div class="callout warn">
+<p>Notice something about that list: <strong>items 3, 4 and 5 aren't limitations of the model —
+they're work the harness has to do.</strong> Which is the entire thesis of this project. The
+model is one component; the engineering around it decides whether the thing works.</p>
+</div>
+<hr />
+<h2>Say it in an interview</h2>
+<p><strong>"What is ARC-AGI-3?"</strong></p>
+<blockquote>
+<p>"It's a benchmark of small interactive games with no instructions — no stated goal, no
+documented controls, no examples. The agent gets a 64×64 grid of coloured cells and
+exactly eight actions: six plain button presses, one click with x,y coordinates, and a
+reset. It has to work out the rules by acting and observing. Every game has fresh
+rules, so memorisation doesn't transfer — it targets learning a new rule on the spot,
+which is where models are weakest. Humans score 100%; the best frontier model was
+around 7.8% when I checked in July 2026."</p>
+</blockquote>
+<p><strong>"Why is that harder than ARC-AGI-1?"</strong></p>
+<blockquote>
+<p>"ARC-AGI-1 gives you the examples — it's a pure inference problem. ARC-AGI-3 gives you
+nothing. You have to <em>generate</em> your own evidence by acting, which means reasoning
+about what you don't yet know and designing experiments to find out. That's an
+exploration problem on top of a reasoning problem, and it's what makes it an agent
+benchmark rather than a reasoning benchmark."</p>
+</blockquote>
+<p><strong>"What was the hardest engineering problem it created?"</strong></p>
+<blockquote>
+<p>"The observation is 4,096 numbers, and a game runs hundreds of turns — so full history
+never fits in a context window. Every turn is an explicit decision about what the model
+sees: which frames verbatim, what gets compressed into a description, what collapses
+into a running summary of beliefs about the rules. And the click action alone has 4,096
+possible targets, so narrowing 'where to click' is its own problem — random clicking
+effectively never hits anything."</p>
+</blockquote>
+<p><strong>"There was prize money. Why didn't you enter?"</strong></p>
+<blockquote>
+<p>"The prize track evaluates on Kaggle with no internet access, which rules out calling
+an LLM API — so a prize-eligible agent can't be LLM-driven at all. I optimised for
+learning the LLM engineering stack over lottery odds against funded teams, and I wrote
+the decision down with the reasoning at the time. The public leaderboard allows
+internet, which is where LLM agents actually compete."</p>
+</blockquote>
+<p><strong>"How do you know your agent is improving?"</strong></p>
+<blockquote>
+<p>"The scorecard gives more than a score — it records actions taken per play and keeps
+every play separately, so I can measure efficiency and consistency, not just success.
+My eval metrics are score, actions-to-first-progress, and tokens spent per game, run
+across a fixed set of games before and after every change."</p>
+</blockquote>
+<hr />
+<p><strong>Next:</strong> <a href="#05-the-agent-loop" class="wikilink" data-target="05-the-agent-loop">Study 05 — The agent loop, from first principles</a></p><nav class="pager"><a class="pager-prev" data-target="03-what-an-llm-really-is" href="#03-what-an-llm-really-is" title="Study 03 — What an LLM really is: tokens and the context window">← <span>What an LLM really is: tokens and the context window</span></a><a class="pager-next" data-target="05-the-agent-loop" href="#05-the-agent-loop" title="Study 05 — The agent loop, from first principles"><span>The agent loop, from first principles</span> →</a></nav></article>
+<article class="doc" id="doc-05-the-agent-loop" data-tabid="05-the-agent-loop"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 05 — The agent loop, from first principles</h1>
+<p><em>Written 2026-07-22. The code shown here is copied out of the <code>arc-agi-3</code> SDK v0.0.1
+installed on Chetan's laptop — it is what actually runs, not illustration. The design
+that builds on it is our plan, and is labelled as such.</em></p>
+<blockquote>
+<p><strong>You are here:</strong> rung 5 of the ladder, the last of Part 1.
+<strong>Assumes you read:</strong> <a href="#00-how-to-use-these-notes" class="wikilink" data-target="00-how-to-use-these-notes">00</a>–<a href="#04-arc-agi-3-the-game" class="wikilink" data-target="04-arc-agi-3-the-game">04</a>.
+<strong>After this you can:</strong> define an agent without hand-waving, read a real agent loop
+line by line, name the standard failure modes, and explain why we built the loop
+ourselves instead of importing a framework.</p>
+</blockquote>
+<hr />
+<h2>Deflating the word "agent"</h2>
+<p>"Agent" is the most over-inflated word in AI right now. Here is the whole of it:</p>
+<div class="callout key">
+<p>An <strong>agent</strong> is a program that repeats this cycle:
+<strong>observe → decide → act → observe → decide → act → …</strong>
+until it's done. When the <em>decide</em> step is a call to a language model, it's an LLM agent.
+That's the entire definition. There is nothing else in the box.</p>
+</div>
+<p>Judge it against things you already know:</p>
+<ul>
+<li>A <strong>thermostat</strong> — observes temperature, decides on/off, acts on the heater, repeats.
+  A genuine agent, by the definition. Its decide step is one comparison.</li>
+<li>A <strong>chess engine</strong> — observes the board, decides a move by search, acts, repeats. Also
+  an agent. Its decide step is millions of simulated positions.</li>
+<li><strong>Ours</strong> — observes a grid, decides by asking a language model, acts by sending a
+  button press, repeats. Its decide step is one LLM call.</li>
+</ul>
+<p>Same skeleton every time. <strong>All that changes is what lives inside "decide".</strong> And this
+is genuinely useful in an interview: when someone asks "what makes something agentic?",
+the crisp answer is <em>"it acts in a loop and its next action depends on the result of the
+last one"</em> — and then you can say what's inside your decide step. That's a level of
+clarity most candidates don't reach.</p>
+<hr />
+<h2>The loop, as real code</h2>
+<p>Here is the SDK's actual main loop, verbatim:</p>
+<pre><code class="language-python">def main(self) -&gt; None:
+    &quot;&quot;&quot;The main agent loop. Play the game until finished, then exit.&quot;&quot;&quot;
+    self.timer = time.time()
+    while (
+        not self.is_done(self.frames, self.frames[-1])
+        and self.action_counter &lt;= self.MAX_ACTIONS
+    ):
+        action = self.choose_action(self.frames, self.frames[-1])
+        if frame := self.take_action(action):
+            self.append_frame(frame)
+        self.action_counter += 1
+
+    self.cleanup()
+</code></pre>
+<p>Eleven lines. Read it slowly, because every serious agent in the world is a variation on
+this:</p>
+<table>
+<thead>
+<tr>
+<th>Line</th>
+<th>What it does</th>
+<th>Which arrow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>while not self.is_done(...)</code></td>
+<td>keep going until finished</td>
+<td>the loop condition</td>
+</tr>
+<tr>
+<td><code>and self.action_counter &lt;= self.MAX_ACTIONS</code></td>
+<td>...but never forever</td>
+<td><strong>the safety valve</strong></td>
+</tr>
+<tr>
+<td><code>action = self.choose_action(frames, latest)</code></td>
+<td>pick the next action</td>
+<td><strong>decide</strong> ← <em>our work goes here</em></td>
+</tr>
+<tr>
+<td><code>frame := self.take_action(action)</code></td>
+<td>send it, get the new screen</td>
+<td><strong>act</strong>, then <strong>observe</strong></td>
+</tr>
+<tr>
+<td><code>self.append_frame(frame)</code></td>
+<td>add it to history</td>
+<td>remember</td>
+</tr>
+<tr>
+<td><code>self.cleanup()</code></td>
+<td>fetch the scorecard, close out</td>
+<td>finish</td>
+</tr>
+</tbody>
+</table>
+<h3>The three parts worth pausing on</h3>
+<p><strong><code>MAX_ACTIONS</code> — the safety valve.</strong> The SDK sets this to <strong>80</strong> by default. Without a
+cap, a confused agent loops forever, burning tokens and quota with nothing to show. This
+is the simplest possible <em>guardrail</em> (note 02, Group E), and it is not optional. Every
+production agent has one. If you take one habit from this note, take that: <strong>an agent
+loop always has a hard stop that doesn't depend on the agent noticing it should stop.</strong></p>
+<p><strong><code>frames</code> — the memory that isn't the model's.</strong> The list of every frame so far. The
+model has no memory (note 03), so this list <em>is</em> the agent's memory, held by our code and
+handed to the decide step. Notice both <code>is_done</code> and <code>choose_action</code> receive the full
+history plus the latest frame — the loop's design already assumes you'll want more than
+just "right now".</p>
+<p><strong><code>is_done</code> and <code>choose_action</code> — the two holes.</strong> Everything else is plumbing. These two
+are abstract methods: the SDK deliberately leaves them empty, because they are the agent.
+Fill them in and you have one.</p>
+<hr />
+<h2>The dumbest possible agent (and why we start there)</h2>
+<p>Here is the SDK's <code>Random</code> agent, in full:</p>
+<pre><code class="language-python">def is_done(self, frames, latest_frame) -&gt; bool:
+    &quot;&quot;&quot;Done when the game is won.&quot;&quot;&quot;
+    return latest_frame.state is GameState.WIN
+
+def choose_action(self, frames, latest_frame) -&gt; GameAction:
+    &quot;&quot;&quot;Choose a random action.&quot;&quot;&quot;
+    if latest_frame.state in [GameState.NOT_PLAYED, GameState.GAME_OVER]:
+        action = GameAction.RESET
+    else:
+        action = random.choice([a for a in GameAction if a is not GameAction.RESET])
+
+    if action.is_complex():
+        action.set_data({&quot;x&quot;: random.randint(0, 63), &quot;y&quot;: random.randint(0, 63)})
+    return action
+</code></pre>
+<p>That is a complete, working agent. It plays the game. It will also score approximately
+nothing.</p>
+<div class="callout key">
+<p><strong>And that is exactly why we run it first.</strong> It is our <strong>baseline</strong> (note 02, Group D) —
+the number that makes every later number mean something. "Our agent scored 3" is
+meaningless on its own. "Random scores 0.2, ours scores 3" is a result.</p>
+</div>
+<p>Starting with the dumb version also does two other jobs on day one: it proves the whole
+pipeline works end to end (key → API → game → scorecard) <em>before</em> any cleverness can hide
+a plumbing bug, and it gives us a real scorecard to look at, which tells us what our eval
+suite has to consume.</p>
+<hr />
+<h2>What we put in the hole</h2>
+<p>Now the design. <strong>This is our plan for Phase B, not code that exists yet</strong> — it will be
+built, measured, and this note updated with what actually happened, including the parts
+that don't work.</p>
+<p>Our <code>choose_action</code> becomes roughly:</p>
+<pre><code class="language-text">1. Look at the latest frame, and the one before it.
+2. Compute what changed between them.
+3. Update beliefs:
+     - if the last action produced the change we predicted → belief confirmed
+     - if it didn't → belief was wrong, drop it
+4. Build the context:  the goal, the eight legal actions, a compact description
+   of the current grid, what changed, the beliefs so far, and what's been tried.
+5. Ask the model: what should we do next, and why?
+6. Parse the reply into one legal action. Reject anything illegal.
+7. Record everything — the exact context sent, the exact reply, tokens, time, cost.
+8. Return the action.
+</code></pre>
+<p>Every step there is a named concept from the earlier notes:</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What it really is</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2–3</td>
+<td>hypothesis testing — the scientific method in a loop</td>
+<td>01</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>context engineering</strong> — the highest-leverage work</td>
+<td>03, 06</td>
+</tr>
+<tr>
+<td>5</td>
+<td>the LLM call — one inference</td>
+<td>02, 03</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>guardrail</strong> — never trust the model's output shape</td>
+<td>02</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>tracing</strong> — the receipts</td>
+<td>08</td>
+</tr>
+</tbody>
+</table>
+<div class="callout warn">
+<p>Step 6 is not paranoia. The model <em>will</em> eventually reply "press ACTION9", or return
+prose where you asked for JSON, or invent a coordinate of 200 on a 0–63 grid. Every one
+of those crashes an agent that assumes good output. Validating the model's reply against
+the legal action set — and having a defined fallback when it fails — is a load-bearing
+part of the loop, not an edge case. In our case validation is easy and total: there are
+exactly eight legal actions and coordinates are capped at 63.</p>
+</div>
+<hr />
+<h2>The failure modes (the useful part)</h2>
+<p>Agents fail in recognisable ways. Being able to name them is one of the most senior-
+sounding things a junior candidate can do, because it shows you've watched one run rather
+than only read about it.</p>
+<p><strong>1. The stuck loop.</strong> Presses ACTION1, nothing happens, presses ACTION1 again, forever.
+It has no working notion of "I already tried that."
+<em>Fix:</em> track attempted actions and their outcomes; put "already tried, no effect" into
+the context explicitly.</p>
+<p><strong>2. Hypothesis lock-in.</strong> Decides early that ACTION3 moves the blue block, then keeps
+believing it even as evidence piles up against it. (Humans do this too — it's
+confirmation bias, mechanised.)
+<em>Fix:</em> beliefs carry a confidence; contradicting evidence lowers it; below a threshold
+the belief is dropped. Make the update rule explicit rather than hoping the model does it.</p>
+<p><strong>3. Context blindness.</strong> The one fact that mattered was compressed away three turns ago,
+so the agent now reasons confidently from an incomplete picture.
+<em>Fix:</em> this is the summarisation trade-off from note 03, and it can only be tuned against
+the eval suite — there is no principled way to pick what to keep by intuition.</p>
+<p><strong>4. Goal drift.</strong> Starts optimising something that isn't the goal — tidily rearranging
+squares because it looks like progress. Especially likely when the real goal was never
+stated (which, here, it never is).
+<em>Fix:</em> re-anchor on the actual reward signal — the score — every turn.</p>
+<p><strong>5. Flailing.</strong> No strategy at all: random-ish actions dressed up in confident
+explanations. Usually a sign the context isn't giving the model enough to reason from —
+the words look like thinking, but the behaviour is noise.
+<em>Fix:</em> look at the traces. This one is only visible if you're reading what the model
+actually saw.</p>
+<div class="callout key">
+<p>Notice that <strong>not one of those five is fixed by a better model.</strong> Every fix is a change to
+the harness: what we track, what we show, what we validate, what we measure. That's the
+thesis of the project, arrived at from the bottom up.</p>
+</div>
+<hr />
+<h2>Why we're not using a framework</h2>
+<p>There are libraries — LangGraph, smolagents, others — that hand you an agent loop for
+free. The official SDK even ships templates for some of them. We're deliberately writing
+our own. Three reasons, in order of how much they matter:</p>
+<p><strong>1. You can't explain what you didn't write.</strong> The interview question is <em>"walk me
+through your agent loop."</em> "I called <code>graph.run()</code>" is not an answer. Eleven lines you
+wrote yourself is.</p>
+<p><strong>2. The framework hides exactly the interesting parts.</strong> Context assembly, retry policy,
+what happens on a malformed reply — those are the decisions worth discussing, and they're
+the ones frameworks bury behind defaults. Our whole project <em>is</em> those decisions.</p>
+<p><strong>3. Our loop is genuinely small.</strong> Look at it again — eleven lines. The framework isn't
+saving us meaningful work; it's adding a dependency and a layer of indirection.</p>
+<div class="callout note">
+<p>The senior version of this answer is not "frameworks are bad." It's: <em>"I built it by hand
+because understanding the loop was the point, and my loop is small enough that a framework
+would have been overhead. For a team shipping many agents with shared infrastructure, the
+framework's abstractions earn their keep."</em> Knowing when a tool is right and choosing not
+to use it beats never having considered it.</p>
+</div>
+<hr />
+<h2>Say it in an interview</h2>
+<p><strong>"What is an agent?"</strong></p>
+<blockquote>
+<p>"A program that runs an observe–decide–act loop, where the next action depends on the
+result of the last one. When the decide step is an LLM call, it's an LLM agent. A
+thermostat fits the definition — the loop is the same, only what's inside 'decide'
+changes."</p>
+</blockquote>
+<p><strong>"Walk me through your loop."</strong></p>
+<blockquote>
+<p>"The outer loop runs until the game is won or a hard action cap is hit — that cap is
+non-negotiable, because a confused agent will otherwise loop forever burning quota.
+Each turn I diff the current frame against the previous one, update my beliefs about
+what each action does based on whether the change matched my prediction, assemble a
+context containing the goal, the legal actions, a compact description of the grid, the
+diff, the surviving beliefs, and what's already been tried. Then one model call, then I
+validate the reply against the eight legal actions and reject anything malformed, then
+I log the full trace — context in, reply out, tokens, latency, cost — and act."</p>
+</blockquote>
+<p><strong>"What did you find hardest?"</strong></p>
+<blockquote>
+<p>"Getting it to stop repeating dead actions. My first version had no notion of 'already
+tried', so it would press the same ineffective button for twenty turns. The fix wasn't a
+better prompt in the abstract — it was putting the tried-actions-and-their-outcomes list
+into the context explicitly. I only saw the problem at all because I was reading the
+traces; from the score alone it just looked bad."</p>
+</blockquote>
+<p><strong>"What are the common agent failure modes?"</strong></p>
+<blockquote>
+<p>"Five I saw repeatedly: stuck loops from no memory of what's been tried; hypothesis
+lock-in, holding a belief past the evidence; context blindness, where the compression
+step threw away the thing that mattered; goal drift, optimising a proxy instead of the
+real signal; and flailing, which is confident-sounding output with no strategy behind
+it. I bucketed real traces into those categories with counts, and each bucket became an
+eval case, so a fix is verified rather than assumed."</p>
+</blockquote>
+<p><strong>"Why not use LangGraph?"</strong></p>
+<blockquote>
+<p>"Because understanding the loop was the point of the project, and mine is about eleven
+lines — a framework would have been overhead plus a dependency, and it would have hidden
+exactly the decisions I wanted to be able to defend: context assembly, retry policy,
+malformed-output handling. For a team running many agents on shared infrastructure the
+abstractions pay for themselves; for one agent I own end to end, they didn't."</p>
+</blockquote>
+<hr />
+<h2>End of Part 1</h2>
+<p>You've now got the whole ground floor: what we're building and why, the vocabulary, how
+language models actually work, the benchmark, and the loop.</p>
+<p>Part 2 — context engineering, evals, tracing, memory, budgets — gets written as each piece
+is built, because a note about an unbuilt component would be guesswork, and this project
+doesn't publish guesswork.</p>
+<p><strong>What happens next, and it needs you:</strong> nothing can be built until the agent can talk to
+a real game, and that needs a free API key.
+→ <a href="#01-get-your-arc-api-key" class="wikilink" data-target="01-get-your-arc-api-key">How-to 01 — Get your ARC-AGI-3 API key, step by step</a></p><nav class="pager"><a class="pager-prev" data-target="04-arc-agi-3-the-game" href="#04-arc-agi-3-the-game" title="Study 04 — ARC-AGI-3: the game our agent has to play">← <span>ARC-AGI-3: the game our agent has to play</span></a><a class="pager-next" data-target="01-get-your-arc-api-key" href="#01-get-your-arc-api-key" title="How-to 01 — Get your ARC-AGI-3 API key (step by step)"><span>Get your ARC-AGI-3 API key (step by step)</span> →</a></nav></article>
+<article class="doc" id="doc-01-get-your-arc-api-key" data-tabid="01-get-your-arc-api-key"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-1" href="#sec-1">Do this — step by step</a></nav><h1>How-to 01 — Get your ARC-AGI-3 API key (step by step)</h1>
+<p><em>Written 2026-07-22. The sign-up flow below was checked against the official ARC Prize
+documentation (<a href="https://docs.arcprize.org/api-keys">docs.arcprize.org/api-keys</a>) on
+2026-07-22. The commands were written against the <code>arc-agi-3</code> SDK v0.0.1 installed on
+your laptop, and the exact file it reads was confirmed by reading the SDK's source.</em></p>
+<blockquote>
+<p><strong>Time needed:</strong> about 5 minutes.
+<strong>You need:</strong> a web browser, and a Google <strong>or</strong> GitHub account.
+<strong>Cost:</strong> free. No card, no payment, no trial.</p>
+</blockquote>
+<hr />
+<h2>Why you're doing this</h2>
+<p>Right now our code can't talk to a real game. The ARC Prize servers refuse anyone without
+a key — they need to know who's asking so they can attach scores to an account.</p>
+<p>Until this key exists, <strong>nothing else in the project can move</strong>: no game, no scorecard, no
+numbers, and this project doesn't write notes about numbers it hasn't measured. This is
+the one blocking task, and it's yours because it needs your identity, not the code's.</p>
+<div class="callout warn">
+<p><strong>The one safety rule.</strong> An API key is a password. Anyone who has it can use your quota
+and act as you. So:
+- Never paste it into a chat, an email, a screenshot, or a file that goes to GitHub.
+- It goes in exactly one place: a file called <code>.env</code> in the project folder, which is
+  already listed in <code>.gitignore</code> so Git will never upload it.
+- If you ever think it leaked, delete the key on the website and make a new one. That's
+  all it takes — old key dead, new key works.</p>
+<p><strong>Including me:</strong> don't paste the key into our chat. Step 6 tells you what to send
+instead.</p>
+</div>
+<hr />
+<h2>Step 1 — Open the ARC Prize platform</h2>
+<ol>
+<li>Open your web browser.</li>
+<li>Go to: <strong>https://arcprize.org/platform</strong></li>
+</ol>
+<p>You should land on the ARC Prize platform page with a way to log in.</p>
+<p><strong>If you see a page that isn't a login or dashboard:</strong> try <strong>https://three.arcprize.org</strong>
+instead — that's the ARC-AGI-3 host, and it links to the same account system. Either
+route ends up in the same place.</p>
+<hr />
+<h2>Step 2 — Log in with Google or GitHub</h2>
+<p>There is <strong>no email-and-password sign-up.</strong> You log in with an account you already have.</p>
+<ol>
+<li>Click <strong>Log in</strong> (or <strong>Sign in</strong> / <strong>Sign up</strong> — the wording may vary; they all go to
+   the same place).</li>
+<li>Choose either:
+   - <strong>Google</strong> — pick your Google account and approve, or
+   - <strong>GitHub</strong> — approve access when GitHub asks.</li>
+<li>You'll be returned to the ARC Prize platform, now logged in.</li>
+</ol>
+<p><strong>Which should you pick?</strong> Either is fine. Use GitHub if you'd rather keep this tied to
+the same identity as your <code>chetan110801</code> repo; Google if that's simply fewer clicks.
+Whichever you pick, <strong>remember it</strong> — you'll need the same one to log back in later.</p>
+<div class="callout warn">
+<p><strong>If nothing happens when you click Google or GitHub:</strong> it's almost always a blocked
+pop-up. Look for a small icon at the right-hand end of your browser's address bar saying
+a pop-up was blocked, click it, and choose to allow pop-ups for this site. Then click the
+login button again.</p>
+</div>
+<hr />
+<h2>Step 3 — Create the API key</h2>
+<ol>
+<li>Look at the <strong>top-right corner</strong> of the page. There will be your <strong>user profile</strong> —
+   your name, your avatar picture, or a small circle icon.</li>
+<li><strong>Click it.</strong> A menu opens.</li>
+<li>In that menu, find and click <strong>API Keys</strong>.</li>
+<li>On the API Keys page, click the button to <strong>create a new key</strong>. (Labels vary a little —
+   look for <em>Create</em>, <em>New key</em>, <em>Generate</em>, or a <strong>+</strong> button.)</li>
+<li>If it asks you to name the key, type: <code>project-agent</code> — the name is only a label to
+   help you recognise it later; it changes nothing.</li>
+<li><strong>The key now appears on screen.</strong> It will be a long string of letters and numbers.</li>
+</ol>
+<div class="callout warn">
+<p><strong>Copy it now.</strong> Many key systems show the full key exactly once and only a masked
+version afterwards. Click the copy button next to it (or select the text and press
+<code>Ctrl+C</code>) <strong>before you navigate away</strong>.</p>
+<p>If you lose it, don't panic — you delete that key and create another. Nothing breaks.</p>
+</div>
+<p>Paste it somewhere safe for the next 60 seconds — Notepad is fine. <strong>Don't save that
+Notepad file</strong>; you'll paste the key into its proper home in Step 4 and then close
+Notepad without saving.</p>
+<hr />
+<h2>Step 4 — Put the key in your project</h2>
+<p>The key must live in a file called <code>.env</code> inside the project folder.</p>
+<p>Windows File Explorer makes filenames that start with a dot awkward to create, so we'll
+use PowerShell. This is copy-paste — you don't need to understand it.</p>
+<p><strong>4a. Open PowerShell in the right folder.</strong></p>
+<ol>
+<li>Press the <strong>Windows key</strong>, type <code>powershell</code>, and press <strong>Enter</strong>. A dark blue window
+   opens.</li>
+<li>Copy this line, paste it into that window (right-click pastes in PowerShell), and press
+   <strong>Enter</strong>:</li>
+</ol>
+<pre><code class="language-powershell">cd &quot;C:\Users\cheta\OneDrive\project-agent&quot;
+</code></pre>
+<p>The prompt at the left of the window should now end with <code>project-agent&gt;</code>. That means
+you're in the right folder — this matters, because the tool looks for <code>.env</code> <strong>in the
+folder you're standing in</strong>, and nowhere else.</p>
+<p><strong>4b. Create the <code>.env</code> file with your key in it.</strong></p>
+<p>Copy the line below, but <strong>replace <code>PASTE_YOUR_KEY_HERE</code> with the actual key you
+copied</strong> — keep the quotes, delete the placeholder text between them:</p>
+<pre><code class="language-powershell">Set-Content -Path .env -Value 'ARC_API_KEY=PASTE_YOUR_KEY_HERE' -Encoding utf8
+</code></pre>
+<p>Press <strong>Enter</strong>. Nothing visible happens. That's correct — this command is silent when it
+works.</p>
+<p><strong>4c. Check it worked.</strong></p>
+<p>Paste this and press <strong>Enter</strong>:</p>
+<pre><code class="language-powershell">Get-Content .env
+</code></pre>
+<p>You should see one line:</p>
+<pre><code>ARC_API_KEY=abc123...whatever-your-key-is
+</code></pre>
+<div class="callout warn">
+<p><strong>If you see <code>ARC_API_KEY=PASTE_YOUR_KEY_HERE</code></strong> — you pasted the command without
+swapping in your real key. Just run the 4b command again with the key in place; it
+overwrites the file.</p>
+<p><strong>If you see an error about the path not existing</strong> — the folder path in step 4a was
+wrong. Check the spelling, and confirm the folder exists by running <code>ls</code> in PowerShell.</p>
+<p><strong>If you see nothing at all</strong> — the file wasn't created. Make sure you pressed Enter on
+the 4b command and that no error text appeared.</p>
+</div>
+<hr />
+<h2>Step 5 — Run a real game</h2>
+<p>This is the payoff. Still in the same PowerShell window, in the same folder, paste:</p>
+<pre><code class="language-powershell">arc-agi-3 --agent=random --game=ls20
+</code></pre>
+<p>Press <strong>Enter</strong>.</p>
+<p><strong>What should happen:</strong> lines start scrolling — the tool connects, starts the game, and
+plays it with the random agent (the deliberately dumb baseline from
+<a href="#05-the-agent-loop" class="wikilink" data-target="05-the-agent-loop">Study 05</a>). Each line shows an action, a count, and a
+score. It'll run up to 80 actions and then stop.</p>
+<p>At the end it prints a <strong>scorecard</strong> — a block of JSON with the score and action counts —
+and a <strong>web link</strong> where you can view the same result in your browser.</p>
+<div class="callout note">
+<p><strong>Expect the score to be zero or near zero, and that is the correct outcome.</strong> The random
+agent presses buttons at random; it isn't supposed to win. What we're proving here is
+that the <em>pipeline</em> works: your key is accepted, a real game ran, and a scorecard came
+back. That's the entire goal of this step. The score becomes meaningful in the next phase,
+as the baseline everything else is compared against.</p>
+</div>
+<h3>If it doesn't work</h3>
+<table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>What it means</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>401</code> or <code>Unauthorized</code> or <code>Invalid API key</code></td>
+<td>The key isn't reaching the tool</td>
+<td>Re-run <code>Get-Content .env</code> and check the line reads <code>ARC_API_KEY=</code> followed by your real key — no spaces around the <code>=</code>, no quotes around the key</td>
+</tr>
+<tr>
+<td><code>arc-agi-3 : The term ... is not recognized</code></td>
+<td>The tool isn't on your command path</td>
+<td>Run it this way instead: <code>py -m arc_agi_3._cli --agent=random --game=ls20</code></td>
+</tr>
+<tr>
+<td><code>404</code> or <code>game not found</code></td>
+<td>The game id <code>ls20</code> isn't available on your account</td>
+<td>Run <code>arc-agi-3 --agent=random</code> with no <code>--game</code> — it plays whatever games your key can reach</td>
+</tr>
+<tr>
+<td>Connection / timeout errors</td>
+<td>Network or server issue</td>
+<td>Check you're online, wait a minute, try again</td>
+</tr>
+<tr>
+<td>It runs but you're not sure it worked</td>
+<td>—</td>
+<td>That's fine — send me the output (Step 6) and I'll read it</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Step 6 — Tell me it's done</h2>
+<p>Come back to our chat and send me <strong>either</strong>:</p>
+<ul>
+<li>the last ~20 lines of output (select them in PowerShell, press <code>Ctrl+C</code> to copy, paste
+  into chat), <strong>or</strong></li>
+<li>the scorecard link it printed, <strong>or</strong></li>
+<li>simply: <em>"key is in, ls20 ran, score was 0"</em></li>
+</ul>
+<div class="callout warn">
+<p><strong>Do not paste the key itself.</strong> I don't need it and shouldn't have it — the code reads it
+from <code>.env</code> on your machine at run time. If a key ever does end up in our chat by
+accident, say so and delete it on the website; making a fresh one takes ten seconds.</p>
+</div>
+<p>Once you confirm, I can start Phase A properly: record that run as a committed artifact,
+count the tokens in a real frame (which replaces the estimate in
+<a href="#03-what-an-llm-really-is" class="wikilink" data-target="03-what-an-llm-really-is">Study 03</a> with a measured number), and begin
+building the loop.</p>
+<hr />
+<h2>What just happened, in one line</h2>
+<p>You created an identity with ARC Prize, generated a secret that proves you're you, stored
+it in the one file Git is configured to ignore, and used it to play a real game
+end-to-end. That last part — a full round trip through the real system with the simplest
+possible agent — is exactly how you should start every integration: <strong>prove the pipeline
+before you add the cleverness</strong>, so that when something breaks later you already know the
+plumbing was fine.</p>
+<hr />
+<p><strong>Sources checked 2026-07-22:</strong>
+- <a href="https://docs.arcprize.org/api-keys">docs.arcprize.org/api-keys</a> — sign-up flow, Google/GitHub login, profile → API Keys, the <code>ARC_API_KEY</code> variable name
+- The installed <code>arc-agi-3</code> SDK v0.0.1 source — confirms it reads <code>.env</code> from the current
+  working directory and sends the key as the <code>X-API-Key</code> header</p><nav class="pager"><a class="pager-prev" data-target="05-the-agent-loop" href="#05-the-agent-loop" title="Study 05 — The agent loop, from first principles">← <span>The agent loop, from first principles</span></a><a class="pager-next" data-target="01-project-definition" href="#01-project-definition" title="Study note 1 — What this project is, and why it exists"><span>What this project is, and why it exists</span> →</a></nav></article>
+<article class="doc" id="doc-01-project-definition" data-tabid="01-project-definition"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Study note 1 — What this project is, and why it exists</h1>
 <p><em>Written 2026-07-21. Plain language on purpose: if you can't say it simply, you don't understand it yet.</em></p>
 <hr />
 <h2>The decision (locked 2026-07-21)</h2>
@@ -534,8 +2515,8 @@ end-to-end on free GPUs, then published the ablation the paper didn't: the
 accuracy-vs-thinking-depth curve. Then I used what that taught me to build an agent
 for ARC-AGI-3 — the benchmark where humans score 100% and frontier models under 1% —
 and put it on the public leaderboard. Every number I just said, you can re-run."</p>
-</blockquote><nav class="pager"><span class="pager-spacer"></span><a class="pager-next" data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it"><span>Phase 0: checking the ground before building on it</span> →</a></nav></article>
-<article class="doc" id="doc-02-phase0-verification" data-tabid="02-phase0-verification"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Study notes</a></nav><h1>Study note 2 — Phase 0: checking the ground before building on it</h1>
+</blockquote><nav class="pager"><a class="pager-prev" data-target="01-get-your-arc-api-key" href="#01-get-your-arc-api-key" title="How-to 01 — Get your ARC-AGI-3 API key (step by step)">← <span>Get your ARC-AGI-3 API key (step by step)</span></a><a class="pager-next" data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it"><span>Phase 0: checking the ground before building on it</span> →</a></nav></article>
+<article class="doc" id="doc-02-phase0-verification" data-tabid="02-phase0-verification"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Study note 2 — Phase 0: checking the ground before building on it</h1>
 <p><em>Written 2026-07-21, from live sources checked today. Phase 0's whole job is to catch
 the facts that moved between "when we planned" and "when we build." Two did.</em></p>
 <hr />
@@ -658,7 +2639,7 @@ verification saved weeks. That is what Phase 0 is <em>for</em>.</p>
 <li>Kaggle docs / community posts on GPU quota</li>
 <li>ARC-AGI-3 leaderboard trackers (llm-stats.com, benchlm.ai) + arXiv 2607.01531</li>
 </ul><nav class="pager"><a class="pager-prev" data-target="01-project-definition" href="#01-project-definition" title="Study note 1 — What this project is, and why it exists">← <span>What this project is, and why it exists</span></a><a class="pager-next" data-target="03-agent-harness-spec" href="#03-agent-harness-spec" title="Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3"><span>The project, take two: an agent you can trust, on ARC-AGI-3</span> →</a></nav></article>
-<article class="doc" id="doc-03-agent-harness-spec" data-tabid="03-agent-harness-spec"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Study notes</a></nav><h1>Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3</h1>
+<article class="doc" id="doc-03-agent-harness-spec" data-tabid="03-agent-harness-spec"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3</h1>
 <p><em>Written 2026-07-21, evening — the day the project pivoted. Supersedes the plan in
 note 01; the DECISIONS.md evening entry records why. Plain language, as always.</em></p>
 <hr />
@@ -784,9 +2765,50 @@ TRM reproduction is parked in <code>trm-reproduction/</code> for project-asi.</p
 <p>Phase A: install the <code>arc-agi-3</code> SDK, register the free API key (three.arcprize.org),
 run a scripted agent on one public game, pull the scorecard. First study note after
 that: <strong>tokens, context windows, and why they are the physics of this whole project.</strong></p><nav class="pager"><a class="pager-prev" data-target="02-phase0-verification" href="#02-phase0-verification" title="Study note 2 — Phase 0: checking the ground before building on it">← <span>Phase 0: checking the ground before building on it</span></a><a class="pager-next" data-target="decisions" href="#decisions" title="Decision log"><span>Decision log</span> →</a></nav></article>
-<article class="doc" id="doc-decisions" data-tabid="decisions"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Study notes</a></nav><h1>Decision log</h1>
+<article class="doc" id="doc-decisions" data-tabid="decisions"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Decision log</h1>
 <p>One entry per decision that shaped the project. Newest first.
 Format: date · decision · why · what was rejected.</p>
+<hr />
+<h2>2026-07-22 — Study notes become a structured course for a zero-knowledge reader; step-by-step walkthroughs are mandatory</h2>
+<p><strong>Decision:</strong> Three new hard rules, written into <code>CLAUDE.md</code> (§6A, §6B) so every future
+session and model obeys them:</p>
+<ol>
+<li><strong>Study notes are a course, not a pile.</strong> They live in <code>notes/study/</code>, are numbered,
+   and are read in order. Every note declares <em>You are here</em> / <em>Assumes you read</em> /
+   <em>After this you can</em>, defines every term at first use, <strong>makes no forward references</strong>,
+   gives overview before detail, anchors abstract ideas in something concrete, and ends
+   with <strong>Say it in an interview</strong>. Non-basic English gets a short inline gloss.</li>
+<li><strong>Anything Chetan must do himself gets a numbered, click-by-click walkthrough</strong> in
+   <code>notes/howto/</code> — exact clicks, exact commands, exact expected output, what can go
+   wrong, and how to report back. Never a one-line instruction.</li>
+<li><strong>Rechecks are separate single-focus passes</strong> (flow / jargon / closure / truth), not
+   one combined skim.</li>
+</ol>
+<p>Written this session: <code>notes/study/00</code>–<code>05</code> (how to use the notes; the project in plain
+English; the vocabulary in dependency order; tokens &amp; context windows; ARC-AGI-3 and its
+exact interface; the agent loop) and <code>notes/howto/01-get-your-arc-api-key.md</code>.
+Notes 06–11 (context engineering, evals, traces, memory, budgets, the interview story)
+are listed in the ladder and get written <strong>as each component is built</strong> — a note about an
+unbuilt component would be guesswork.</p>
+<p><strong>Why:</strong> Chetan stated plainly that he has <strong>zero</strong> technical knowledge of this stack and
+cannot learn from notes that assume any. He also cannot act on instructions like "get an
+API key" without a walkthrough. Both were previously implicit-at-best; interview fluency
+is the project's whole purpose, so failing at them fails the project regardless of how
+good the agent gets.</p>
+<p><strong>Rejected:</strong> writing all of notes 06–11 now (would violate the no-unverified-claims rule
+— they'd describe components that don't exist); keeping the course inside <code>notes/</code>
+alongside the project record (mixes teaching with history and breaks the reading order).</p>
+<p><strong>Also decided (reader/site):</strong> <code>build_site.py</code> now groups documents into <em>Learn from
+zero</em> → <em>Do this — step by step</em> → <em>Project record</em> → <em>Project</em> → <em>Deferred: TRM</em>, which
+is the reading order, and renders <code>::: key/example/warn/note</code> callout boxes. Reader-shell
+fixes for iPhone: the menu and home buttons moved into one fixed flex row so they can
+never overlap at any inset or font size; corner buttons stay faintly visible on touch
+devices (which have no hover, so they were invisible forever after the load hint faded);
+phone padding cut from 3.4rem/4.5rem to 3.05rem/1.6rem so text fills the screen
+vertically; and the JS viewport-height override now only runs where CSS <code>dvh</code> is
+unsupported — a stale <code>innerHeight</code> in an in-app browser (e.g. opening the file from the
+OneDrive app) is the most likely cause of the dead band Chetan saw at the bottom.
+<strong>Untested on the actual iPhone</strong> — needs his confirmation.</p>
 <hr />
 <h2>2026-07-21 (evening) — PIVOT: the project is an LLM-driven ARC-AGI-3 agent judged by its engineering harness; TRM deferred to project-asi</h2>
 <p><strong>Decision:</strong> project-agent is re-centered on one build: an <strong>LLM-driven agent for
@@ -866,7 +2888,7 @@ targets, held-out tests, one-command reruns, written experiment records.</p>
 <p><strong>Why:</strong> It is the same discipline interviewers probe in applied-science loops
 (how do you know your result is real?), and it is timeless scientific method rather
 than a tooling stack.</p><nav class="pager"><a class="pager-prev" data-target="03-agent-harness-spec" href="#03-agent-harness-spec" title="Study note 3 — The project, take two: an agent you can trust, on ARC-AGI-3">← <span>The project, take two: an agent you can trust, on ARC-AGI-3</span></a><a class="pager-next" data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project"><span>binding rules for every Claude session in this project</span> →</a></nav></article>
-<article class="doc" id="doc-claude" data-tabid="claude"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-1" href="#sec-1">Project</a></nav><h1>CLAUDE.md — binding rules for every Claude session in this project</h1>
+<article class="doc" id="doc-claude" data-tabid="claude"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-3" href="#sec-3">Project</a></nav><h1>CLAUDE.md — binding rules for every Claude session in this project</h1>
 <p>These rules apply to ANY Claude model working here (Opus, Fable, or later models).
 They exist because sessions and models change but quality must not. Treat every rule
 as hard unless Chetan explicitly overrides it in-session — and if he does, record the
@@ -932,6 +2954,60 @@ override in <code>notes/DECISIONS.md</code>.</p>
   agent loop, evaluation design, exploration, budgets); tools and vendors appear only
   as implementations of those concepts.</li>
 </ul>
+<h2>6A. The study-notes standard — HARD RULE (set 2026-07-22 at Chetan's instruction)</h2>
+<p>Chetan's exact framing: <em>"I don't have any idea of what the project is about… zero
+technical knowledge of the technical terms… you need to make me understand through
+those study notes… a flow, incremental learning… first the basics and the overview,
+then detail later, building on the earlier files."</em> This binds every session and every
+model. Violating it is a defect on the level of a wrong number.</p>
+<p><strong>Who the reader is.</strong> A working data scientist (~2.5 years) who is a <strong>complete
+beginner in LLMs, agents, and this whole stack</strong>. English is not his first language;
+his working vocabulary is everyday Indian English. He must be able to <em>say these
+things out loud in an interview</em>, not merely recognise them.</p>
+<p><strong>The ladder (non-negotiable shape).</strong> Study notes are a <strong>course</strong>, not a pile.
+They live in <code>notes/study/</code>, numbered, and are read in order:</p>
+<ol>
+<li>Every note declares, at the top: <strong>You are here</strong>, <strong>Assumes you read</strong> (which
+   earlier notes), and <strong>After this you can</strong> (what he'll be able to say).</li>
+<li><strong>No forward references.</strong> A note may only use terms already defined in an earlier
+   note or defined on the spot. If you need a term early, teach it early — never write
+   "we'll explain later" and move on.</li>
+<li><strong>Overview before detail.</strong> The first notes give the whole picture in plain words;
+   depth arrives only after the map exists.</li>
+<li><strong>Every term is defined at first use</strong>, in one plain sentence, before it is used to
+   explain anything else.</li>
+<li><strong>Gloss non-basic English inline</strong> — a short <code>(…)</code> meaning of ≈2–5 words, once per
+   note, at first appearance. Over-glossing is not a defect; under-glossing is. Leave
+   bare only everyday high-frequency words.</li>
+<li><strong>Concrete before abstract.</strong> Every hard idea gets a worked picture or a real case
+   showing what it is <em>for</em>. A definition with no cash value is a defect.</li>
+<li><strong>Every note ends with <code>Say it in an interview</code></strong> — 3–6 lines he can actually speak,
+   plus the follow-up questions an interviewer would ask and how to answer them.</li>
+<li><strong>Closure.</strong> No idea may be left half-open. If a note leans on an earlier one, carry
+   a one-line gist so he is never stranded.</li>
+</ol>
+<p><strong>Recheck passes (separate reads, one question each — not one combined skim):</strong>
+(1) <em>flow</em> — does it read as one continuous line with no jump where he falls off?
+(2) <em>jargon</em> — is every technical term defined before use, and every non-basic word
+glossed? (3) <em>closure</em> — does every idea land and finish? (4) <em>truth</em> — does every
+claim survive rule 3 above (run artifact or checked source)?</p>
+<p><strong>When the project changes, the course changes with it.</strong> A session that adds a
+capability but leaves the ladder unable to explain it is unfinished.</p>
+<h2>6B. Anything Chetan must do himself gets a step-by-step — HARD RULE (2026-07-22)</h2>
+<p>Chetan cannot be handed a task like "get an API key" or "install X" as a one-liner.
+Any action outside what Claude does in-session gets a <strong>numbered, click-by-click
+walkthrough</strong>, written before he is asked to do it:</p>
+<ul>
+<li>Numbered steps, one action each, in the order he performs them.</li>
+<li>Say <strong>exactly what to click / type</strong>, what the screen should look like, and where he
+  is (browser? PowerShell? which folder?).</li>
+<li>Give the <strong>exact command text</strong> to paste, and the <strong>exact expected output</strong>, so he
+  can tell success from failure.</li>
+<li>List what can go wrong and what to do about it (<strong>If you see X, do Y</strong>).</li>
+<li>Say <strong>why</strong> he is doing it — one line — so it isn't a ritual.</li>
+<li>End with <strong>how he tells Claude it's done</strong> (what to paste back).</li>
+</ul>
+<p>These walkthroughs live in <code>notes/howto/</code> so they survive the chat window.</p>
 <h2>7. Hard constraints</h2>
 <ul>
 <li><strong>Free tiers only.</strong> No paid APIs, no paid infra, no "small" spend. If a free tier
@@ -941,7 +3017,7 @@ override in <code>notes/DECISIONS.md</code>.</p>
   <code>.gitignore</code> current before any commit that could touch them.</li>
 <li>Repo: <code>github.com/chetan110801/project-agent</code>, branch <code>main</code>.</li>
 </ul><nav class="pager"><a class="pager-prev" data-target="decisions" href="#decisions" title="Decision log">← <span>Decision log</span></a><a class="pager-next" data-target="readme" href="#readme" title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><span>⏸ DEFERRED (2026-07-21)</span> →</a></nav></article>
-<article class="doc" id="doc-readme" data-tabid="readme"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Deferred: TRM</a></nav><h1>TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)</h1>
+<article class="doc" id="doc-readme" data-tabid="readme"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-4" href="#sec-4">Deferred: TRM</a></nav><h1>TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)</h1>
 <blockquote>
 <p><strong>Status: deferred to project-asi's research track</strong> (see
 <a href="#decisions" class="wikilink" data-target="decisions">notes/DECISIONS.md</a>, evening entry). project-agent pivoted to
@@ -1023,7 +3099,7 @@ cannot disappear, then clone the fork inside Kaggle notebooks.</p>
 <p>Reproduction target stated before running (87% Sudoku). Never tune on the scored
 split. Every claim traces to a run artifact (config + seed + checkpoint + log).
 Negative results get written up with the same care.</p><nav class="pager"><a class="pager-prev" data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project">← <span>binding rules for every Claude session in this project</span></a><a class="pager-next" data-target="ablation-plan" href="#ablation-plan" title="The recursion-depth ablation — experiment design"><span>experiment design</span> →</a></nav></article>
-<article class="doc" id="doc-ablation-plan" data-tabid="ablation-plan"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Deferred: TRM</a></nav><h1>The recursion-depth ablation — experiment design</h1>
+<article class="doc" id="doc-ablation-plan" data-tabid="ablation-plan"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-4" href="#sec-4">Deferred: TRM</a></nav><h1>The recursion-depth ablation — experiment design</h1>
 <p><em>Drafted 2026-07-21, before any run. Written down now so we can't quietly move the
 goalposts later — that's what a pre-registration is for.</em></p>
 <h2>Question</h2>
@@ -1080,7 +3156,7 @@ question, setup, curve, what we now believe that we didn't before.</p><nav class
 
 <script>
 (function(){
-  var INITIAL = "01-project-definition";
+  var INITIAL = "00-how-to-use-these-notes";
   var root = document.documentElement, body = document.body;
   var content = document.getElementById('content');
   var LS = window.localStorage;
@@ -1103,20 +3179,27 @@ question, setup, curve, what we now believe that we didn't before.</p><nav class
   var fullw = LS.getItem('pa-fullwidth')==='1';
   var edges = LS.getItem('pa-edgetap')!=='0';              // edge-tap paging, on by default
 
-  // ---- exact app height (iOS Safari: 100vh is taller than what you can actually see) ----
-  // Measure the real visible height and pin the shell to it, so the text is never clipped at the
-  // top or bottom, and re-measure when the toolbars slide away or the device rotates.
-  var lastH = 0;
-  function setAppHeight(){
-    var h = Math.round(window.innerHeight);
-    if(!h || Math.abs(h - lastH) < 2) return;      // ignore no-ops / 1px jitter
-    lastH = h; root.style.setProperty('--app-h', h + 'px');
+  // ---- exact app height (iOS Safari: 100vh is TALLER than what you can actually see) ----
+  // `dvh` is the CSS unit built for exactly this: it tracks the visible area as the browser's
+  // toolbars slide in and out, with no JS at all. Where it exists, trust it and stay out of the
+  // way — a JS measurement that disagrees (innerHeight is stale in some in-app browsers, e.g.
+  // opening the file from the OneDrive app) is what leaves a band of dead space at the bottom.
+  // Only older engines without dvh fall back to measuring.
+  var hasDvh = !!(window.CSS && CSS.supports && CSS.supports('height', '100dvh'));
+  if(!hasDvh){
+    var lastH = 0;
+    var setAppHeight = function(){
+      var vv = window.visualViewport;
+      var h = Math.round((vv && vv.height) || window.innerHeight);
+      if(!h || Math.abs(h - lastH) < 2) return;      // ignore no-ops / 1px jitter
+      lastH = h; root.style.setProperty('--app-h', h + 'px');
+    };
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 250); });
+    window.addEventListener('pageshow', setAppHeight);
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
   }
-  setAppHeight();
-  window.addEventListener('resize', setAppHeight);
-  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 250); });
-  window.addEventListener('pageshow', setAppHeight);
-  if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
 
   // Reading-first: the menu is an overlay drawer, so it always starts CLOSED, on every device.
   body.classList.add('sidebar-collapsed');

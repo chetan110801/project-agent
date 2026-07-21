@@ -36,11 +36,19 @@ NUM_RE = re.compile(r"^(\d+)")
 # Document collection (ours)
 # --------------------------------------------------------------------------- #
 def collect_docs() -> list[tuple[str, Path]]:
-    """(section label, file path) in sidebar order. New notes are picked up automatically."""
+    """(section label, file path) in sidebar order. New notes are picked up automatically.
+
+    Order is the reading order: the zero-knowledge course first, then the things Chetan
+    has to do himself, then the project record, then rules, then the deferred TRM work.
+    """
     docs: list[tuple[str, Path]] = []
+    for p in sorted((ROOT / "notes" / "study").glob("[0-9]*.md")):
+        docs.append(("Learn from zero", p))
+    for p in sorted((ROOT / "notes" / "howto").glob("[0-9]*.md")):
+        docs.append(("Do this — step by step", p))
     for p in sorted((ROOT / "notes").glob("[0-9]*.md")):
-        docs.append(("Study notes", p))
-    docs.append(("Study notes", ROOT / "notes" / "DECISIONS.md"))
+        docs.append(("Project record", p))
+    docs.append(("Project record", ROOT / "notes" / "DECISIONS.md"))
     docs.append(("Project", ROOT / "CLAUDE.md"))
     for name in ("README.md", "ablation-plan.md"):
         p = ROOT / "trm-reproduction" / name
@@ -70,11 +78,45 @@ def doc_title(text: str, fallback: str) -> str:
 
 
 def short_title(full: str) -> str:
-    """'Study note 3 — The project, take two' -> 'The project, take two'."""
-    t = re.sub(r"^Study note \d+\s*—\s*", "", full)
+    """'Study 03 — Tokens and context windows' -> 'Tokens and context windows'."""
+    t = re.sub(r"^(Study note|Study|How-to)\s*\d+\s*—\s*", "", full)
     if t == full and "—" in full:
         t = full.split("—", 1)[1].strip()
     return t.strip() or full
+
+
+CALLOUT_OPEN_RE = re.compile(r"^:::\s*([a-zA-Z][\w-]*)\s*(.*?)\s*$")
+
+
+def expand_callouts(text: str) -> str:
+    """Turn `::: key` … `:::` fences into the styled boxes the reader shell renders.
+
+    `key` / `example` / `warn` / `note` become coloured <div class="callout …"> blocks —
+    they break up a long note visually so a beginner can see what to slow down on.
+    Inner markdown still renders, via the md_in_html extension.
+    """
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = CALLOUT_OPEN_RE.match(lines[i])
+        if m:
+            cls = m.group(1).lower()
+            j = i + 1
+            body: list[str] = []
+            while j < len(lines) and lines[j].strip() != ":::":
+                body.append(lines[j])
+                j += 1
+            out.append(f'<div class="callout {cls}" markdown="1">')
+            out.append("")
+            out.extend(body)
+            out.append("")
+            out.append("</div>")
+            i = j + 1
+        else:
+            out.append(lines[i])
+            i += 1
+    return "\n".join(out)
 
 
 def build_metas() -> list[dict]:
@@ -99,7 +141,7 @@ def build_metas() -> list[dict]:
 # Markdown rendering (plain; internal .md links become in-page links)
 # --------------------------------------------------------------------------- #
 def render_markdown(md, text: str, ids_by_basename: dict[str, str]) -> str:
-    body = md.reset().convert(text)
+    body = md.reset().convert(expand_callouts(text))
 
     def fix_link(m: re.Match) -> str:
         target = m.group(2).split("#")[0]
@@ -242,7 +284,7 @@ def main() -> None:
     if not metas:
         sys.exit(f"No documents found under {ROOT}")
     ids_by_basename = {m["path"].name: m["tabid"] for m in metas}
-    md = md_lib.Markdown(extensions=["extra", "sane_lists"])
+    md = md_lib.Markdown(extensions=["extra", "sane_lists", "md_in_html"])
 
     # groups in first-seen section order
     groups, order = [], []
@@ -309,14 +351,17 @@ html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--ui-font);
   display:flex;flex-direction:column;height:var(--app-h);overflow:hidden}
 
-/* floating hamburger + home — present but invisible while reading; reveal on hover / focus */
-.hamburger,.homebtn{position:fixed;top:env(safe-area-inset-top);z-index:50;width:46px;height:46px;
+/* menu + home live in ONE fixed flex row, so the browser lays them out side by side and
+   they can never overlap — whatever the safe-area inset, font size or device is. (They
+   used to be two independently positioned buttons whose gap was a hardcoded 46px.) */
+.navbtns{position:fixed;top:env(safe-area-inset-top);left:env(safe-area-inset-left);
+  z-index:50;display:flex;align-items:center;gap:.25rem}
+.hamburger,.homebtn{flex:0 0 auto;width:46px;height:46px;
   border:0;background:transparent;color:var(--muted);font-size:1.2rem;line-height:1;cursor:pointer;
   display:flex;align-items:center;justify-content:center;opacity:0;
   transition:opacity .25s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
   text-shadow:0 0 5px var(--bg),0 0 5px var(--bg),0 0 5px var(--bg)}
-.hamburger{left:env(safe-area-inset-left)}
-.homebtn{left:calc(46px + env(safe-area-inset-left));font-size:1.15rem}  /* sits beside the menu */
+.homebtn{font-size:1.15rem}
 .hamburger:hover,.hamburger:focus-visible,
 .homebtn:hover,.homebtn:focus-visible{opacity:.85;outline:none}
 .hamburger.hint,.homebtn.hint{opacity:.55}                   /* brief "I'm here" hint on load */
@@ -575,8 +620,11 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
   .closeSidebar{font-size:1.7rem;padding:.1rem .5rem}
   .tab{padding:.6rem .6rem}                          /* easier to tap */
   .group>summary{padding:.55rem .55rem}
-  .content{padding:calc(3.4rem + env(safe-area-inset-top)) max(.95rem,env(safe-area-inset-right))
-                   calc(4.5rem + env(safe-area-inset-bottom)) max(.95rem,env(safe-area-inset-left))}
+  /* Give the text as much of the screen as the fixed corner buttons allow. Top clears the
+     46px button row and nothing more; bottom is just breathing room + the home-bar inset.
+     (Was 3.4rem / 4.5rem — ~70px of dead space on a phone screen.) */
+  .content{padding:calc(3.05rem + env(safe-area-inset-top)) max(.9rem,env(safe-area-inset-right))
+                   calc(1.6rem + env(safe-area-inset-bottom)) max(.9rem,env(safe-area-inset-left))}
   .cards{grid-template-columns:1fr;gap:.7rem}             /* one clean column on a phone */
   .content .home-h{font-size:1.7rem}
   .content a.card{padding:.9rem 1rem 1rem}
@@ -588,12 +636,23 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
   .pager{flex-wrap:wrap;gap:.6rem}
   .pager a{max-width:100%;flex:1 1 100%}
   .pager .pager-next{margin-left:0;justify-content:flex-end}
+  .content h2{margin-top:2em}                        /* less air between sections on a phone */
+}
+
+/* Touch devices have no hover, so buttons that only appear on hover are invisible forever
+   after the load hint fades. Keep them faintly but permanently visible there instead —
+   still out of the way while reading, but always findable. The drawer-open rule above
+   still wins (higher specificity), so they stay hidden behind the scrim. */
+@media (hover:none){
+  .hamburger,.homebtn,.backbtn{opacity:.5}
 }
 </style>
 </head>
 <body class="sidebar-collapsed">
-<button class="hamburger" id="toggleSidebar" aria-label="Open menu" title="Menu">☰</button>
-<button class="homebtn" id="homeBtn" aria-label="Home" title="Home" hidden>⌂</button>
+<div class="navbtns">
+  <button class="hamburger" id="toggleSidebar" aria-label="Open menu" title="Menu">☰</button>
+  <button class="homebtn" id="homeBtn" aria-label="Home" title="Home" hidden>⌂</button>
+</div>
 <button class="backbtn" id="backBtn" aria-label="Back" title="Back" hidden>←</button>
 
 <div class="shell">
@@ -684,20 +743,27 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
   var fullw = LS.getItem('pa-fullwidth')==='1';
   var edges = LS.getItem('pa-edgetap')!=='0';              // edge-tap paging, on by default
 
-  // ---- exact app height (iOS Safari: 100vh is taller than what you can actually see) ----
-  // Measure the real visible height and pin the shell to it, so the text is never clipped at the
-  // top or bottom, and re-measure when the toolbars slide away or the device rotates.
-  var lastH = 0;
-  function setAppHeight(){
-    var h = Math.round(window.innerHeight);
-    if(!h || Math.abs(h - lastH) < 2) return;      // ignore no-ops / 1px jitter
-    lastH = h; root.style.setProperty('--app-h', h + 'px');
+  // ---- exact app height (iOS Safari: 100vh is TALLER than what you can actually see) ----
+  // `dvh` is the CSS unit built for exactly this: it tracks the visible area as the browser's
+  // toolbars slide in and out, with no JS at all. Where it exists, trust it and stay out of the
+  // way — a JS measurement that disagrees (innerHeight is stale in some in-app browsers, e.g.
+  // opening the file from the OneDrive app) is what leaves a band of dead space at the bottom.
+  // Only older engines without dvh fall back to measuring.
+  var hasDvh = !!(window.CSS && CSS.supports && CSS.supports('height', '100dvh'));
+  if(!hasDvh){
+    var lastH = 0;
+    var setAppHeight = function(){
+      var vv = window.visualViewport;
+      var h = Math.round((vv && vv.height) || window.innerHeight);
+      if(!h || Math.abs(h - lastH) < 2) return;      // ignore no-ops / 1px jitter
+      lastH = h; root.style.setProperty('--app-h', h + 'px');
+    };
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 250); });
+    window.addEventListener('pageshow', setAppHeight);
+    if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
   }
-  setAppHeight();
-  window.addEventListener('resize', setAppHeight);
-  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight, 250); });
-  window.addEventListener('pageshow', setAppHeight);
-  if(window.visualViewport) window.visualViewport.addEventListener('resize', setAppHeight);
 
   // Reading-first: the menu is an overlay drawer, so it always starts CLOSED, on every device.
   body.classList.add('sidebar-collapsed');

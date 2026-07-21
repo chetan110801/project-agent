@@ -67,6 +67,67 @@ Before ending any turn that produced content, do an explicit self-review pass:
   agent loop, evaluation design, exploration, budgets); tools and vendors appear only
   as implementations of those concepts.
 
+## 6A. The study-notes standard — HARD RULE (set 2026-07-22 at Chetan's instruction)
+
+Chetan's exact framing: *"I don't have any idea of what the project is about… zero
+technical knowledge of the technical terms… you need to make me understand through
+those study notes… a flow, incremental learning… first the basics and the overview,
+then detail later, building on the earlier files."* This binds every session and every
+model. Violating it is a defect on the level of a wrong number.
+
+**Who the reader is.** A working data scientist (~2.5 years) who is a **complete
+beginner in LLMs, agents, and this whole stack**. English is not his first language;
+his working vocabulary is everyday Indian English. He must be able to *say these
+things out loud in an interview*, not merely recognise them.
+
+**The ladder (non-negotiable shape).** Study notes are a **course**, not a pile.
+They live in `notes/study/`, numbered, and are read in order:
+
+1. Every note declares, at the top: **You are here**, **Assumes you read** (which
+   earlier notes), and **After this you can** (what he'll be able to say).
+2. **No forward references.** A note may only use terms already defined in an earlier
+   note or defined on the spot. If you need a term early, teach it early — never write
+   "we'll explain later" and move on.
+3. **Overview before detail.** The first notes give the whole picture in plain words;
+   depth arrives only after the map exists.
+4. **Every term is defined at first use**, in one plain sentence, before it is used to
+   explain anything else.
+5. **Gloss non-basic English inline** — a short `(…)` meaning of ≈2–5 words, once per
+   note, at first appearance. Over-glossing is not a defect; under-glossing is. Leave
+   bare only everyday high-frequency words.
+6. **Concrete before abstract.** Every hard idea gets a worked picture or a real case
+   showing what it is *for*. A definition with no cash value is a defect.
+7. **Every note ends with `Say it in an interview`** — 3–6 lines he can actually speak,
+   plus the follow-up questions an interviewer would ask and how to answer them.
+8. **Closure.** No idea may be left half-open. If a note leans on an earlier one, carry
+   a one-line gist so he is never stranded.
+
+**Recheck passes (separate reads, one question each — not one combined skim):**
+(1) *flow* — does it read as one continuous line with no jump where he falls off?
+(2) *jargon* — is every technical term defined before use, and every non-basic word
+glossed? (3) *closure* — does every idea land and finish? (4) *truth* — does every
+claim survive rule 3 above (run artifact or checked source)?
+
+**When the project changes, the course changes with it.** A session that adds a
+capability but leaves the ladder unable to explain it is unfinished.
+
+## 6B. Anything Chetan must do himself gets a step-by-step — HARD RULE (2026-07-22)
+
+Chetan cannot be handed a task like "get an API key" or "install X" as a one-liner.
+Any action outside what Claude does in-session gets a **numbered, click-by-click
+walkthrough**, written before he is asked to do it:
+
+- Numbered steps, one action each, in the order he performs them.
+- Say **exactly what to click / type**, what the screen should look like, and where he
+  is (browser? PowerShell? which folder?).
+- Give the **exact command text** to paste, and the **exact expected output**, so he
+  can tell success from failure.
+- List what can go wrong and what to do about it (**If you see X, do Y**).
+- Say **why** he is doing it — one line — so it isn't a ritual.
+- End with **how he tells Claude it's done** (what to paste back).
+
+These walkthroughs live in `notes/howto/` so they survive the chat window.
+
 ## 7. Hard constraints
 
 - **Free tiers only.** No paid APIs, no paid infra, no "small" spend. If a free tier

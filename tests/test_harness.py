@@ -24,9 +24,16 @@ from harness.frames import (  # noqa: E402
     render_grid,
     render_objects,
 )
+from harness.budget import LIMITS, BudgetExhausted, Limits, RateLimiter  # noqa: E402
+from harness.llm import ScriptedClient  # noqa: E402
 from harness.loop import run_episode  # noqa: E402
 from harness.mock_game import AGENT, MockGame, WIN_SCORE  # noqa: E402
-from harness.policies import RandomPolicy, legal_actions  # noqa: E402
+from harness.policies import (  # noqa: E402
+    LLMPolicy,
+    RandomPolicy,
+    legal_actions,
+    parse_action,
+)
 from harness.tokens import measure  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 from scripts.analyze_run import load as load_recording  # noqa: E402
@@ -390,6 +397,128 @@ class TestRecordingEnv(unittest.TestCase):
             env.close()
             frames, _ = load_recording(path)
             self.assertEqual(len(frames), 4)  # reset + 3 steps, flushed as they happened
+
+
+class TestParseAction(unittest.TestCase):
+    def test_plain_replies(self):
+        self.assertEqual(parse_action("ACTION3").kind, GameAction.ACTION3)
+        self.assertEqual(parse_action("action3\nbecause it moves left").kind, GameAction.ACTION3)
+
+    def test_models_wrap_things_in_junk_and_we_cope(self):
+        for text in (
+            "```\nACTION2\n```",
+            "Action: ACTION2 — moving down",
+            "I'll press ACTION 2 now.",
+            "**ACTION2**",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(parse_action(text).kind, GameAction.ACTION2)
+
+    def test_complex_action_coordinates(self):
+        for text in ("ACTION6 x=12 y=40", "ACTION6 x: 12, y: 40", "ACTION6 (12, 40)"):
+            with self.subTest(text=text):
+                a = parse_action(text)
+                self.assertEqual((a.kind, a.x, a.y), (GameAction.ACTION6, 12, 40))
+
+    def test_out_of_range_coordinates_are_rejected_not_clamped(self):
+        """A clamp would turn a wrong answer into a plausible one and hide it from evals."""
+        self.assertIsNone(parse_action("ACTION6 x=99 y=99"))
+
+    def test_nonsense_returns_none(self):
+        for text in ("", "I refuse", "ACTION9", "ACTION6 with no coordinates"):
+            with self.subTest(text=text):
+                self.assertIsNone(parse_action(text))
+
+
+class TestLLMPolicy(unittest.TestCase):
+    def test_a_good_reply_becomes_that_action(self):
+        client = ScriptedClient(["ACTION1\nmoving up"])
+        policy = LLMPolicy(client)
+        g = MockGame()
+        frame = g.reset()
+        action = policy.choose([frame], frame)
+        self.assertEqual(action.kind, GameAction.ACTION1)
+        self.assertEqual(policy.parse_failures, 0)
+
+    def test_the_prompt_carries_screen_feedback_and_legal_options(self):
+        client = ScriptedClient(["ACTION1"])
+        g = MockGame(available=[GameAction.ACTION1, GameAction.ACTION2])
+        frame = g.reset()
+        prompt = LLMPolicy(client).build_prompt([frame], frame)
+        self.assertIn("grid 16x16", prompt)          # the encoded screen
+        self.assertIn("first frame", prompt)          # feedback slot filled
+        self.assertIn("ACTION1, ACTION2", prompt)     # only the legal buttons
+        self.assertNotIn("ACTION5", prompt)
+
+    def test_unparseable_replies_fall_back_and_are_counted(self):
+        policy = LLMPolicy(ScriptedClient(["I'd rather not."]))
+        r = run_episode(MockGame(), policy, max_actions=5)
+        self.assertEqual(policy.parse_failures, 5)
+        self.assertEqual(r.actions_taken, 5)          # the episode still ran
+        self.assertEqual(r.rejected_actions, 0)       # the fallback is always legal
+
+    def test_client_errors_do_not_end_the_episode(self):
+        policy = LLMPolicy(ScriptedClient([RuntimeError("429 quota")]))
+        r = run_episode(MockGame(), policy, max_actions=4)
+        self.assertEqual(policy.client_errors, 4)
+        self.assertEqual(r.actions_taken, 4)
+        self.assertIn("client error", r.steps[0].reasoning)
+
+    def test_an_illegal_choice_is_still_stopped_by_the_loop(self):
+        """Prompt says which buttons are legal; the guard guarantees it."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        policy = LLMPolicy(ScriptedClient(["ACTION4"]))
+        r = run_episode(g, policy, max_actions=3)
+        self.assertEqual(r.rejected_actions, 3)
+
+
+class TestRateLimiter(unittest.TestCase):
+    def _limiter(self, limits, headroom: float = 1.0):
+        self.slept: list[float] = []
+        self.now = [0.0]
+
+        def sleep(s):
+            self.slept.append(s)
+            self.now[0] += s
+
+        return RateLimiter(
+            limits, sleep=sleep, clock=lambda: self.now[0], headroom=headroom
+        )
+
+    def test_rpm_makes_the_caller_wait(self):
+        lim = self._limiter(Limits("t", rpm=3, tpm=10_000, rpd=100))
+        for _ in range(3):
+            lim.acquire(tokens=10)
+        self.assertEqual(self.slept, [])
+        lim.acquire(tokens=10)          # the fourth call in a minute
+        self.assertEqual(len(self.slept), 1)
+        self.assertAlmostEqual(self.slept[0], 60.0)
+
+    def test_tpm_binds_before_rpm_on_big_prompts(self):
+        lim = self._limiter(Limits("t", rpm=100, tpm=1_000, rpd=100))
+        lim.acquire(tokens=600)
+        lim.acquire(tokens=600)         # 1,200 > 1,000 in the same minute
+        self.assertEqual(len(self.slept), 1)
+
+    def test_daily_limit_raises_rather_than_sleeping_until_tomorrow(self):
+        lim = self._limiter(Limits("t", rpm=100, tpm=10_000, rpd=2))
+        lim.acquire()
+        lim.acquire()
+        with self.assertRaises(BudgetExhausted):
+            lim.acquire()
+
+    def test_headroom_paces_below_the_stated_limit(self):
+        """Pacing at exactly the limit still produced 429s on 3 of 80 real calls."""
+        lim = self._limiter(Limits("t", rpm=10, tpm=10_000, rpd=100), headroom=0.8)
+        for _ in range(8):
+            lim.acquire()
+        self.assertEqual(self.slept, [])
+        lim.acquire()  # the 9th call, though the stated limit is 10
+        self.assertEqual(len(self.slept), 1)
+
+    def test_measured_limits_are_present_for_the_model_we_use(self):
+        self.assertIn("gemini-3.5-flash-lite", LIMITS)
+        self.assertEqual(LIMITS["gemini-3.5-flash-lite"].rpd, 500)
 
 
 if __name__ == "__main__":

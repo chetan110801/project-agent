@@ -5,6 +5,88 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 (night) — Phase B part 2: an LLM plays a real game, and it is worse than a coin flip
+
+**Decision:** `harness/llm.py` (provider behind a one-method interface + client-side rate
+limiting) and `harness/policies.py::LLMPolicy` are the decide step. `scripts/run_agent.py
+--policy llm` runs it. 57 tests, all offline — `ScriptedClient` fakes the model the same way
+`mock_game.py` fakes the environment, so policy and parser tests cost nothing and need no key.
+
+**The free tier, measured** (Chetan's dashboard, 2026-07-22, in `harness/budget.py`):
+
+| model | RPM | TPM | RPD |
+|---|---:|---:|---:|
+| gemini-3.5-flash-lite / 3.1-flash-lite | 15 | 250K | **500** |
+| gemini-2.5-flash-lite | 10 | 250K | 20 |
+| gemini-2.5/3/3.5/3.6-flash | 5 | 250K | 20 |
+| gemma-4-31b-it / 26b-a4b-it | 30 | **16K** | **14,400** |
+
+**What that buys** (`scripts/budget_report.py` → `artifacts/llm-budget.json`, at one model
+call per action and 80 actions per game):
+
+- **gemma-4-31b + object encoding: 180 games/day, 2.9 min/game.**
+- gemini-3.5-flash-lite: **6.25 games/day**, 5.3 min/game.
+- every other Flash: **0.25 games/day** — one game every four days. Unusable for evals.
+- On Gemma, **TPM binds**, so the encoding choice is worth **7×** in throughput (2.9 vs 20.6
+  min/game). On Flash-Lite, **RPM binds**, so encoding changes throughput by **nothing**. The
+  same compression decision is worth 7× on one model and 0× on the other — which is why the
+  encoding and the model cannot be chosen separately.
+
+**Phase C's eval suite therefore runs on Gemma-4 with the object encoding** (180 games/day
+makes a suite possible at all), with Flash-Lite as a scarce, better-model arm. Not final —
+it becomes final when the bake-off has quality numbers, not just throughput ones.
+
+**The first LLM run, reported as it happened** (80 actions, `gemini-3.5-flash-lite`, objects;
+`artifacts/comparison.json`):
+
+| | SDK random | our loop, random | our loop, **LLM** |
+|---|---|---|---|
+| actions not available | 38 (47.5%) | 0 | **0** |
+| actions that changed nothing | 38 (47.5%) | 0 | **0** |
+| final score | 0 | 0 | **0** |
+| most-repeated action | 20% | 27% | **70%** |
+| longest identical streak | — | — | **41 actions** |
+
+**The model is no better than random on score and markedly worse on exploration.** It chose
+`ACTION3` for 57 of 80 actions and repeated one action 41 times in a row, narrating fresh
+justifications each turn ("repeating it continues the progress"). Every reply parsed — 0
+unparseable in 105 live calls — so this is not a formatting failure. It is the stuck-loop
+failure mode from study note 05, arriving exactly where that note predicted, and the
+`nothing changed` feedback did not prevent it because the screen *was* changing by 2 cells
+per press while going nowhere.
+
+That is the finding: **"the screen changed" is not the same signal as "you made progress",
+and the current prompt only carries the first.** Phase C's first real experiment is a
+context change that gives the model its own recent action history, so it can see that it has
+pressed the same button forty times.
+
+**Also decided / recorded:**
+
+- **Client-side pacing at exactly the stated limit is not enough.** Measured: a limiter
+  running at the dashboard's 15 RPM still collected `429 RESOURCE_EXHAUSTED` on **3 of 80**
+  calls. Fixed with `HEADROOM = 0.8` plus a single 429-only retry; a 25-action re-run came
+  back **0 errors in 25 calls**. Retrying only 429 is deliberate — retrying everything would
+  hide real bugs.
+- **Rate limits are enforced, not discovered.** A 429 mid-game costs a turn and puts a
+  failure in the trace that isn't the agent's. The limiter also makes the cost visible: the
+  80-action LLM run took **309 s wall, 189 s of it asleep** on the rate limit, against 38 s
+  for the same game with a random policy.
+- **Coordinates out of range are rejected, never clamped** (`parse_action`). Clamping would
+  turn a wrong answer into a plausible one, which is precisely what an eval must be able to
+  see.
+- **The prompt states the legal actions and the loop still guards them.** A prompt is a
+  request; a guard is a guarantee. Both.
+- `StepRecord` now carries `reasoning`, so a trace answers *why* and not only *what*. A test
+  written against a field that didn't exist is what surfaced the gap.
+- Windows rejects `:` in filenames, so run names are sanitised — `llm:model:encoder` produced
+  an `Errno 22` that named the path but not the reason.
+
+**Rejected:** raising on client errors (an agent that dies on a 429 measures nothing);
+letting the policy parse strictly (measures our prompt's obedience, not the model's play);
+choosing the model by reputation rather than by the throughput table plus a quality bake-off.
+
+---
+
 ## 2026-07-22 (evening) — CORRECTION: study note 06's headline number was a fact about the wrong tokeniser
 
 **What happened:** Chetan's Gemini key arrived. `scripts/measure_tokens.py` re-measured the

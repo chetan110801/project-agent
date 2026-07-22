@@ -1,0 +1,134 @@
+{
+  "generated": "2026-07-22T07:01:47+00:00",
+  "game_id": "ls20-9607627b",
+  "agent": "our loop (llm:gemini-3.5-flash-lite:objects policy)",
+  "policy": "llm:gemini-3.5-flash-lite:objects",
+  "actions": 6,
+  "final_score": 0,
+  "final_state": "NOT_FINISHED",
+  "stopped_because": "max_actions",
+  "actions_not_available": 0,
+  "transitions_no_change": 0,
+  "dead_action_rate": 0.0,
+  "wall_seconds": 10.7991,
+  "latency_ms_median": 573.448,
+  "latency_ms_max": 581.728,
+  "actions_sent_histogram": {
+    "ACTION2": 6
+  },
+  "run_id": "d78c5362-1d76-4c19-a971-c366fa899b73",
+  "recording": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.6.d78c5362-1d76-4c19-a971-c366fa899b73.recording.jsonl",
+  "trace": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.6.d78c5362-1d76-4c19-a971-c366fa899b73.trace.jsonl",
+  "mock": false,
+  "seed": 0,
+  "max_actions": 6,
+  "stuck_limit": null,
+  "scorecard_url": "https://three.arcprize.org/scorecards/1a66d271-e9eb-4142-b3b2-fc72a412e37b",
+  "scorecard_card": {
+    "actions": [
+      6
+    ],
+    "actions_by_level": [
+      []
+    ],
+    "game_id": "ls20-9607627b",
+    "guids": [
+      "2c7f5b4c-3571-49ac-9b5a-bad0ea969e29"
+    ],
+    "levels_completed": [
+      0
+    ],
+    "resets": [
+      0
+    ],
+    "states": [
+      "NOT_FINISHED"
+    ],
+    "total_actions": 6,
+    "total_plays": 1
+  },
+  "scorecard_closed": {
+    "card_id": "1a66d271-e9eb-4142-b3b2-fc72a412e37b",
+    "environments": [
+      {
+        "actions": 6,
+        "completed": false,
+        "id": "ls20-9607627b",
+        "level_count": 7,
+        "levels_completed": 0,
+        "resets": 0,
+        "runs": [
+          {
+            "actions": 6,
+            "completed": false,
+            "guid": "2c7f5b4c-3571-49ac-9b5a-bad0ea969e29",
+            "level_actions": [
+              6,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "level_baseline_actions": [
+              22,
+              123,
+              73,
+              84,
+              96,
+              192,
+              186
+            ],
+            "level_scores": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "levels_completed": 0,
+            "resets": 0,
+            "score": 0.0,
+            "state": "NOT_FINISHED"
+          }
+        ],
+        "score": 0.0
+      }
+    ],
+    "score": 0.0,
+    "tags": [
+      "project-agent",
+      "llm-smoke",
+      "agent"
+    ],
+    "tags_scores": [
+      {
+        "actions": 6,
+        "id": "keyboard",
+        "levels_completed": 0,
+        "number_of_environments": 1,
+        "number_of_levels": 7,
+        "score": 0.0
+      }
+    ],
+    "total_actions": 6,
+    "total_environments": 1,
+    "total_environments_completed": 0,
+    "total_levels": 7,
+    "total_levels_completed": 0
+  },
+  "llm": {
+    "model": "gemini-3.5-flash-lite",
+    "encoder": "objects",
+    "calls": 6,
+    "parse_failures": 0,
+    "client_errors": 0,
+    "requests_used": 6,
+    "seconds_waited_on_rate_limit": 0.0,
+    "daily_request_limit": 500,
+    "usable_reply_rate": 1.0
+  }
+}

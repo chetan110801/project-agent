@@ -36,7 +36,18 @@ ROWS = [
     ("  as % of budget", lambda r: _pct(r["transitions_no_change"], r["actions"])),
     ("GAME_OVER frames", lambda r: r.get("game_over_frames", "n/a")),
     ("RESETs sent", lambda r: r.get("resets_sent", "n/a")),
+    ("distinct actions used", lambda r: len(r.get("actions_sent_histogram", {}))),
+    ("most-repeated action", lambda r: _mode(r.get("actions_sent_histogram", {}))),
 ]
+
+
+def _mode(hist: dict) -> str:
+    """The action the agent leant on hardest — a cheap read on a stuck policy."""
+    if not hist:
+        return "n/a"
+    key, n = max(hist.items(), key=lambda kv: kv[1])
+    total = sum(hist.values())
+    return f"id {key}: {n}/{total} ({100 * n / total:.0f}%)"
 
 
 def _pct(n: int, total: int) -> str:

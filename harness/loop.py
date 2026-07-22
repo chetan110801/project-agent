@@ -58,6 +58,10 @@ class StepRecord:
     cells_changed: int
     latency_ms: float
     note: str = ""
+    # Why the policy chose this. Empty for a coin flip; for an LLM it is the model's own
+    # words, which is the only thing that makes a trace answer "why did it do that?"
+    # rather than just "what did it do?".
+    reasoning: str = ""
 
 
 @dataclass
@@ -132,6 +136,7 @@ def run_episode(
             break
 
         action = policy.choose(frames, frame)
+        reasoning = str(action.reasoning or "")
 
         # Guard 2: never send an action the frame says is not available.
         allowed = legal_actions(frame)
@@ -164,6 +169,7 @@ def run_episode(
             cells_changed=changed,
             latency_ms=round(latency_ms, 3),
             note=note,
+            reasoning=reasoning,
         )
         steps.append(rec)
         if tracer:

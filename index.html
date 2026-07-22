@@ -3583,6 +3583,142 @@ that: <strong>tokens, context windows, and why they are the physics of this whol
 <p>One entry per decision that shaped the project. Newest first.
 Format: date · decision · why · what was rejected.</p>
 <hr />
+<h2>2026-07-22 (night) — Phase B part 2: an LLM plays a real game, and it is worse than a coin flip</h2>
+<p><strong>Decision:</strong> <code>harness/llm.py</code> (provider behind a one-method interface + client-side rate
+limiting) and <code>harness/policies.py::LLMPolicy</code> are the decide step. <code>scripts/run_agent.py
+--policy llm</code> runs it. 57 tests, all offline — <code>ScriptedClient</code> fakes the model the same way
+<code>mock_game.py</code> fakes the environment, so policy and parser tests cost nothing and need no key.</p>
+<p><strong>The free tier, measured</strong> (Chetan's dashboard, 2026-07-22, in <code>harness/budget.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>model</th>
+<th style="text-align: right;">RPM</th>
+<th style="text-align: right;">TPM</th>
+<th style="text-align: right;">RPD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gemini-3.5-flash-lite / 3.1-flash-lite</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">250K</td>
+<td style="text-align: right;"><strong>500</strong></td>
+</tr>
+<tr>
+<td>gemini-2.5-flash-lite</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">250K</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>gemini-2.5/3/3.5/3.6-flash</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">250K</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>gemma-4-31b-it / 26b-a4b-it</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;"><strong>16K</strong></td>
+<td style="text-align: right;"><strong>14,400</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>What that buys</strong> (<code>scripts/budget_report.py</code> → <code>artifacts/llm-budget.json</code>, at one model
+call per action and 80 actions per game):</p>
+<ul>
+<li><strong>gemma-4-31b + object encoding: 180 games/day, 2.9 min/game.</strong></li>
+<li>gemini-3.5-flash-lite: <strong>6.25 games/day</strong>, 5.3 min/game.</li>
+<li>every other Flash: <strong>0.25 games/day</strong> — one game every four days. Unusable for evals.</li>
+<li>On Gemma, <strong>TPM binds</strong>, so the encoding choice is worth <strong>7×</strong> in throughput (2.9 vs 20.6
+  min/game). On Flash-Lite, <strong>RPM binds</strong>, so encoding changes throughput by <strong>nothing</strong>. The
+  same compression decision is worth 7× on one model and 0× on the other — which is why the
+  encoding and the model cannot be chosen separately.</li>
+</ul>
+<p><strong>Phase C's eval suite therefore runs on Gemma-4 with the object encoding</strong> (180 games/day
+makes a suite possible at all), with Flash-Lite as a scarce, better-model arm. Not final —
+it becomes final when the bake-off has quality numbers, not just throughput ones.</p>
+<p><strong>The first LLM run, reported as it happened</strong> (80 actions, <code>gemini-3.5-flash-lite</code>, objects;
+<code>artifacts/comparison.json</code>):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>SDK random</th>
+<th>our loop, random</th>
+<th>our loop, <strong>LLM</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>actions not available</td>
+<td>38 (47.5%)</td>
+<td>0</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>actions that changed nothing</td>
+<td>38 (47.5%)</td>
+<td>0</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>final score</td>
+<td>0</td>
+<td>0</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>most-repeated action</td>
+<td>20%</td>
+<td>27%</td>
+<td><strong>70%</strong></td>
+</tr>
+<tr>
+<td>longest identical streak</td>
+<td>—</td>
+<td>—</td>
+<td><strong>41 actions</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The model is no better than random on score and markedly worse on exploration.</strong> It chose
+<code>ACTION3</code> for 57 of 80 actions and repeated one action 41 times in a row, narrating fresh
+justifications each turn ("repeating it continues the progress"). Every reply parsed — 0
+unparseable in 105 live calls — so this is not a formatting failure. It is the stuck-loop
+failure mode from study note 05, arriving exactly where that note predicted, and the
+<code>nothing changed</code> feedback did not prevent it because the screen <em>was</em> changing by 2 cells
+per press while going nowhere.</p>
+<p>That is the finding: <strong>"the screen changed" is not the same signal as "you made progress",
+and the current prompt only carries the first.</strong> Phase C's first real experiment is a
+context change that gives the model its own recent action history, so it can see that it has
+pressed the same button forty times.</p>
+<p><strong>Also decided / recorded:</strong></p>
+<ul>
+<li><strong>Client-side pacing at exactly the stated limit is not enough.</strong> Measured: a limiter
+  running at the dashboard's 15 RPM still collected <code>429 RESOURCE_EXHAUSTED</code> on <strong>3 of 80</strong>
+  calls. Fixed with <code>HEADROOM = 0.8</code> plus a single 429-only retry; a 25-action re-run came
+  back <strong>0 errors in 25 calls</strong>. Retrying only 429 is deliberate — retrying everything would
+  hide real bugs.</li>
+<li><strong>Rate limits are enforced, not discovered.</strong> A 429 mid-game costs a turn and puts a
+  failure in the trace that isn't the agent's. The limiter also makes the cost visible: the
+  80-action LLM run took <strong>309 s wall, 189 s of it asleep</strong> on the rate limit, against 38 s
+  for the same game with a random policy.</li>
+<li><strong>Coordinates out of range are rejected, never clamped</strong> (<code>parse_action</code>). Clamping would
+  turn a wrong answer into a plausible one, which is precisely what an eval must be able to
+  see.</li>
+<li><strong>The prompt states the legal actions and the loop still guards them.</strong> A prompt is a
+  request; a guard is a guarantee. Both.</li>
+<li><code>StepRecord</code> now carries <code>reasoning</code>, so a trace answers <em>why</em> and not only <em>what</em>. A test
+  written against a field that didn't exist is what surfaced the gap.</li>
+<li>Windows rejects <code>:</code> in filenames, so run names are sanitised — <code>llm:model:encoder</code> produced
+  an <code>Errno 22</code> that named the path but not the reason.</li>
+</ul>
+<p><strong>Rejected:</strong> raising on client errors (an agent that dies on a 429 measures nothing);
+letting the policy parse strictly (measures our prompt's obedience, not the model's play);
+choosing the model by reputation rather than by the throughput table plus a quality bake-off.</p>
+<hr />
 <h2>2026-07-22 (evening) — CORRECTION: study note 06's headline number was a fact about the wrong tokeniser</h2>
 <p><strong>What happened:</strong> Chetan's Gemini key arrived. <code>scripts/measure_tokens.py</code> re-measured the
 exact strings note 06 was built on, using <code>count_tokens</code> on <code>gemini-3.5-flash-lite</code> — the

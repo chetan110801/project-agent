@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -49,14 +50,34 @@ from harness.actions import Action  # noqa: E402
 from harness.arc_env import ArcApiError, ArcEnv  # noqa: E402
 from harness.loop import EpisodeResult, run_episode  # noqa: E402
 from harness.mock_game import MockGame  # noqa: E402
-from harness.policies import RandomPolicy  # noqa: E402
+from harness.policies import LLMPolicy, RandomPolicy  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = ROOT / "runs"
 ARTIFACTS = ROOT / "artifacts"
 
-POLICIES = {"random": lambda args: RandomPolicy(seed=args.seed)}
+def _llm_policy(args):
+    from harness.frames import main_grid, render_grid, render_objects
+    from harness.llm import GeminiClient
+
+    encoders = {
+        "objects": lambda frame: render_objects(main_grid(frame)),
+        "grid": lambda frame: render_grid(main_grid(frame)),
+    }
+    client = GeminiClient(model=args.model)
+    return LLMPolicy(
+        client,
+        encoder=encoders[args.encoder],
+        name=f"llm:{args.model}:{args.encoder}",
+        fallback_seed=args.seed,
+    )
+
+
+POLICIES = {
+    "random": lambda args: RandomPolicy(seed=args.seed),
+    "llm": _llm_policy,
+}
 
 
 class RecordingEnv:
@@ -164,6 +185,13 @@ def main(argv: list[str]) -> int:
     )
     p.add_argument("--mock", action="store_true", help="offline mock game: no key, no quota")
     p.add_argument("--list", action="store_true", help="print the game ids and exit")
+    p.add_argument("--model", default="gemini-3.5-flash-lite", help="for --policy llm")
+    p.add_argument(
+        "--encoder",
+        default="objects",
+        choices=["objects", "grid"],
+        help="how the screen is written for the model (study note 06)",
+    )
     p.add_argument("--tag", action="append", default=[], help="scorecard tag (repeatable)")
     p.add_argument("--out", default=None, help="artifacts/<name>.json (default: derived)")
     args = p.parse_args(argv)
@@ -187,7 +215,10 @@ def main(argv: list[str]) -> int:
         game_id = resolve_game(inner, args.game)
         inner.game_id = game_id
 
-    stem = f"{game_id}.{policy.name}.{args.max_actions}.{run_id}"
+    # Policy names carry colons (`llm:gemini-3.5-flash-lite:objects`) and Windows rejects
+    # those in filenames — with an Errno 22 that names the path but not the reason.
+    safe_policy = re.sub(r"[^A-Za-z0-9._-]+", "-", policy.name)
+    stem = f"{game_id}.{safe_policy}.{args.max_actions}.{run_id}"
     env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl")
     trace_path = RUNS / f"{stem}.trace.jsonl"
 
@@ -234,6 +265,31 @@ def main(argv: list[str]) -> int:
     print(f"rejected  : {result.rejected_actions} illegal actions (never sent)")
     print(f"dead      : {result.no_change_actions} of {result.actions_taken} changed nothing")
 
+    llm: dict[str, Any] = {}
+    if isinstance(policy, LLMPolicy):
+        client = policy.client
+        llm = {
+            "model": getattr(client, "model", getattr(client, "name", "?")),
+            "encoder": args.encoder,
+            "calls": policy.calls,
+            "parse_failures": policy.parse_failures,
+            "client_errors": policy.client_errors,
+            "requests_used": getattr(client, "calls_made", None),
+            "seconds_waited_on_rate_limit": getattr(client, "seconds_waited", None),
+            "daily_request_limit": getattr(getattr(client, "limits", None), "rpd", None),
+        }
+        usable = policy.calls - policy.parse_failures - policy.client_errors
+        llm["usable_reply_rate"] = round(usable / policy.calls, 4) if policy.calls else None
+        print(
+            f"llm       : {llm['calls']} calls, {llm['parse_failures']} unparseable, "
+            f"{llm['client_errors']} errors "
+            f"({llm['usable_reply_rate']:.0%} usable)" if policy.calls else "llm: no calls"
+        )
+        print(
+            f"budget    : {llm['requests_used']}/{llm['daily_request_limit']} requests today, "
+            f"{llm['seconds_waited_on_rate_limit']:.0f}s asleep on the rate limit"
+        )
+
     report = summarise(
         result,
         {
@@ -247,6 +303,7 @@ def main(argv: list[str]) -> int:
             "scorecard_url": scorecard_url,
             "scorecard_card": card,
             "scorecard_closed": closed,
+            "llm": llm or None,
         },
     )
     ARTIFACTS.mkdir(exist_ok=True)

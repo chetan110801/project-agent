@@ -30,18 +30,18 @@
       "resets_sent": 1
     },
     {
-      "report": "run-report-ourloop-400",
-      "agent": "our loop (random policy, seed 1, 400-action budget)",
-      "recording": "ls20-9607627b.random.400.74fbdcbe-88aa-49e3-8f97-4f8b9da30363.recording.jsonl",
-      "actions": 400,
+      "report": "run-report-llm-80",
+      "agent": "our loop (LLM: gemini-3.5-flash-lite, objects encoding)",
+      "recording": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.80.9669d0d5-f392-44d3-8064-31e06c9c2c7d.recording.jsonl",
+      "actions": 80,
       "final_score": 0,
       "final_state": "NOT_FINISHED",
       "actions_not_available": 0,
       "actions_not_available_pct": "0.0%",
-      "transitions_no_change": 1,
-      "transitions_no_change_pct": "0.2%",
-      "game_over_frames": 3,
-      "resets_sent": 4
+      "transitions_no_change": 0,
+      "transitions_no_change_pct": "0.0%",
+      "game_over_frames": 0,
+      "resets_sent": 1
     }
   ]
 }

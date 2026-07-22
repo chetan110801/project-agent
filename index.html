@@ -2209,11 +2209,13 @@ inside it, were built and tested offline against a fake local game — no key, n
 That work, with its measurements, is the next note.
 → <a href="#06-context-engineering" class="wikilink" data-target="06-context-engineering">Study 06 — Context engineering</a></p><nav class="pager"><a class="pager-prev" data-target="04-arc-agi-3-the-game" href="#04-arc-agi-3-the-game" title="Study 04 — ARC-AGI-3: the game our agent has to play">← <span>ARC-AGI-3: the game our agent has to play</span></a><a class="pager-next" data-target="06-context-engineering" href="#06-context-engineering" title="Study 06 — Context engineering: choosing what the model gets to see"><span>Context engineering: choosing what the model gets to see</span> →</a></nav></article>
 <article class="doc" id="doc-06-context-engineering" data-tabid="06-context-engineering"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 06 — Context engineering: choosing what the model gets to see</h1>
-<p><em>Written 2026-07-22, the day the agent first played a real game. Every number here was
-measured on this laptop that day. The real-frame numbers come from
-<code>scripts/analyze_run.py</code> reading the recording committed in <code>runs/</code>; the worst-case
-numbers come from <code>scripts/measure_encodings.py</code>, which builds its grid by hand and says
-so. Results are saved in <code>artifacts/</code>. The code is <code>harness/</code> and it was run: 35 tests
+<p><em>Written 2026-07-22, the day the agent first played a real game; </em><em>corrected the same
+evening</em><em>, when a key for the model we actually call arrived and its own tokeniser
+disagreed with the offline one by up to 2.8×. Every number here was measured on this
+laptop. Real-frame numbers come from <code>scripts/analyze_run.py</code> reading the recording
+committed in <code>runs/</code>; the two-tokeniser table comes from <code>scripts/measure_tokens.py</code> →
+<code>artifacts/tokens-by-tokeniser.json</code>; the worst-case grid is built by hand in
+<code>scripts/measure_encodings.py</code> and says so. The code is <code>harness/</code> and it was run: 42 tests
 pass.</em></p>
 <blockquote>
 <p><strong>You are here:</strong> rung 6, the first note of Part 2 — the engineering.
@@ -2221,9 +2223,10 @@ pass.</em></p>
 especially <a href="#03-what-an-llm-really-is" class="wikilink" data-target="03-what-an-llm-really-is">03</a> (tokens, the context window, the four ways
 out) and <a href="#05-the-agent-loop" class="wikilink" data-target="05-the-agent-loop">05</a> (the loop, and the hole called <em>decide</em>).
 <strong>After this you can:</strong> say what context engineering actually is, show four real
-encodings of the same screen with their measured costs, explain why format alone
-multiplied one bill by 5.6×, name the case where compression makes things <em>worse</em>, and
-tell the story of the three assumptions that real data destroyed.</p>
+encodings of the same screen with their measured costs, explain why format alone doubles
+a bill, name the case where compression makes things <em>worse</em>, tell the story of the three
+assumptions that real data destroyed — and explain why the same measurement gave 5.6× on
+one tokeniser and 2.0× on another, which is the most useful thing in this note.</p>
 </blockquote>
 <hr />
 <h2>Where we are</h2>
@@ -2292,8 +2295,10 @@ recording of the first live run:</p>
 <tr>
 <th>Encoding</th>
 <th style="text-align: right;">Characters</th>
-<th style="text-align: right;">Tokens</th>
-<th style="text-align: right;">Size vs packed</th>
+<th style="text-align: right;">OpenAI tokens</th>
+<th style="text-align: right;"><strong>Gemini tokens</strong></th>
+<th style="text-align: right;">vs packed (OpenAI)</th>
+<th style="text-align: right;"><strong>vs packed (Gemini)</strong></th>
 </tr>
 </thead>
 <tbody>
@@ -2301,25 +2306,33 @@ recording of the first live run:</p>
 <td>raw grid, hex-packed (<code>0440</code>)</td>
 <td style="text-align: right;">4,159</td>
 <td style="text-align: right;">1,471</td>
+<td style="text-align: right;">4,130</td>
+<td style="text-align: right;">1.00×</td>
 <td style="text-align: right;">1.00×</td>
 </tr>
 <tr>
 <td>raw grid, decimal, space-separated (<code>0 4 4 0</code>)</td>
 <td style="text-align: right;">8,243</td>
 <td style="text-align: right;">8,191</td>
+<td style="text-align: right;">8,244</td>
 <td style="text-align: right;"><strong>5.57×</strong></td>
+<td style="text-align: right;"><strong>2.00×</strong></td>
 </tr>
 <tr>
 <td>objects</td>
 <td style="text-align: right;">1,085</td>
 <td style="text-align: right;">468</td>
+<td style="text-align: right;">573</td>
 <td style="text-align: right;">0.32×</td>
+<td style="text-align: right;"><strong>0.14×</strong></td>
 </tr>
 <tr>
 <td>diff vs the previous frame</td>
 <td style="text-align: right;">66</td>
 <td style="text-align: right;"><strong>22</strong></td>
+<td style="text-align: right;"><strong>28</strong></td>
 <td style="text-align: right;">0.015×</td>
+<td style="text-align: right;">0.007×</td>
 </tr>
 </tbody>
 </table>
@@ -2330,8 +2343,10 @@ checkerboard, every other cell filled, i.e. 2,048 separate one-cell objects:</p>
 <tr>
 <th>Encoding (worst case, synthetic)</th>
 <th style="text-align: right;">Characters</th>
-<th style="text-align: right;">Tokens</th>
-<th style="text-align: right;">Size vs packed</th>
+<th style="text-align: right;">OpenAI tokens</th>
+<th style="text-align: right;"><strong>Gemini tokens</strong></th>
+<th style="text-align: right;">vs packed (OpenAI)</th>
+<th style="text-align: right;"><strong>vs packed (Gemini)</strong></th>
 </tr>
 </thead>
 <tbody>
@@ -2339,19 +2354,25 @@ checkerboard, every other cell filled, i.e. 2,048 separate one-cell objects:</p>
 <td>raw grid, hex-packed</td>
 <td style="text-align: right;">4,159</td>
 <td style="text-align: right;">1,471</td>
+<td style="text-align: right;">4,160</td>
+<td style="text-align: right;">1.00×</td>
 <td style="text-align: right;">1.00×</td>
 </tr>
 <tr>
 <td>objects, uncapped</td>
 <td style="text-align: right;">62,886</td>
 <td style="text-align: right;"><strong>30,735</strong></td>
+<td style="text-align: right;"><strong>36,243</strong></td>
 <td style="text-align: right;"><strong>20.9×</strong></td>
+<td style="text-align: right;"><strong>8.71×</strong></td>
 </tr>
 <tr>
 <td>objects, with our cap</td>
 <td style="text-align: right;">1,266</td>
 <td style="text-align: right;">626</td>
+<td style="text-align: right;">702</td>
 <td style="text-align: right;">0.43×</td>
+<td style="text-align: right;">0.17×</td>
 </tr>
 </tbody>
 </table>
@@ -2360,34 +2381,68 @@ checkerboard, every other cell filled, i.e. 2,048 separate one-cell objects:</p>
 from a real game. The second is deliberately synthetic — real recordings happen to contain
 no adversarial (worst-case, chosen to break it) frame, and that is luck rather than
 safety, so the worst case is constructed by hand.</p>
-<p>The token counts use <code>tiktoken</code>'s <code>o200k_base</code> — <strong>an OpenAI tokeniser.</strong> As note 03
-warned, that is the wrong counter for a Claude or Gemini budget. It is used here for one
-legitimate job: comparing encodings against each other under one consistent ruler. Every
-token number in this repo travels with the name of the tokeniser that produced it. The
-character counts are exact and depend on no vendor at all.</p>
+<p><strong>Two tokeniser columns, because one of them was misleading me.</strong> The OpenAI column is
+<code>tiktoken/o200k_base</code>. The Gemini column was measured on 2026-07-22 by asking
+<code>gemini-3.5-flash-lite</code> to count the exact same strings — the model this project actually
+calls. Both are in <code>artifacts/tokens-by-tokeniser.json</code>, produced by
+<code>scripts/measure_tokens.py</code>. The character counts are exact and depend on no vendor at all.</p>
+</div>
+<div class="callout key">
+<p><strong>Read the two ratio columns against each other. They disagree, and that is the lesson of
+this note.</strong> The same two strings are 5.57× apart under OpenAI's tokeniser and 2.00× apart
+under Gemini's. A ratio between encodings is <strong>not portable across tokenisers</strong> — it is a
+fact about a specific model's tokeniser, not about your data.</p>
 </div>
 <hr />
 <h2>Finding 1 — format costs tokens even when it carries no information</h2>
-<p>Same 4,096 cells, same information, written two ways: <strong>1,471 tokens versus 8,191.</strong>
-Putting a space between the numbers multiplied the cost by <strong>5.6×</strong> and told the model
-nothing new.</p>
+<p>Same 4,096 cells, same information, written two ways. Under OpenAI's tokeniser: <strong>1,471
+tokens versus 8,191</strong> — putting a space between the numbers multiplied the cost by <strong>5.6×</strong>
+and told the model nothing new.</p>
 <p>Why? Tokens are chunks, not characters (note 03). Checked directly with the tokeniser:</p>
 <pre><code class="language-text">'00000000'         → 3 tokens:  ['000', '000', '00']
 '0 0 0 0 0 0 0 0'  → 15 tokens: ['0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0']
 </code></pre>
-<p>The tokeniser packs runs of digits three-to-a-token for free. Put a separator between them
+<p>That tokeniser packs runs of digits three-to-a-token for free. Put a separator between them
 and every character becomes its own token; the compression you were getting for nothing is
 destroyed by the space you added "for readability".</p>
+<h3>…and then I measured it on the model I actually call, and the number halved</h3>
+<p>The day the Gemini key arrived, the same two strings were counted by Gemini's own tokeniser:
+<strong>4,130 versus 8,244 — a ratio of 2.00×, not 5.57×.</strong></p>
+<p>Look at the <code>chars</code> column and it's obvious what happened. Gemini charged 4,130 tokens for
+4,159 characters: almost exactly <strong>one token per character</strong>. It does not pack digit runs
+the way <code>o200k_base</code> does, so the hex trick buys nothing beyond what it buys in characters —
+and 8,243 ÷ 4,159 = 1.98, which is the whole of the 2.00×.</p>
+<div class="callout key">
+<p><strong>The 5.6× was real, reproducible, and about the wrong model.</strong> Both numbers are correct
+measurements. Only one of them is a fact about the system I am building. This is why every
+token number in this repo travels with the name of the tokeniser that produced it — the
+caveat wasn't decoration, it was the thing that stopped a wrong number becoming a claim.</p>
+</div>
+<div class="callout warn">
+<p><strong>What survives, and what doesn't.</strong></p>
+<ul>
+<li><strong>Doesn't survive:</strong> the specific 5.6×, and the digit-packing explanation, for Gemini.</li>
+<li><strong>Survives, and is now stronger:</strong> format is a cost decision. Under Gemini the spaced
+  version still costs <strong>2× more for identical information</strong> — you still pay double for a
+  space you added for readability. The direction of every finding held; only the magnitude
+  moved.</li>
+<li><strong>Survives everywhere:</strong> if you cannot name the tokeniser, you do not have a number.</li>
+</ul>
+</div>
 <div class="callout key">
 <p><strong>Prompt format is a cost decision, not a style decision.</strong> Pretty-printing data for a
-model can multiply your token bill several-fold for zero information gained, and it never
-shows up as an error — just as a bill. You find it in ten minutes by encoding the same
-content two ways and counting.</p>
+model can multiply your token bill for zero information gained, and it never shows up as an
+error — just as a bill. You find it in ten minutes by encoding the same content two ways
+and counting, <strong>with the counter belonging to the model you're calling.</strong></p>
 </div>
 <hr />
-<h2>Finding 2 — the object view saves ~3×, and my first estimate was 4× too optimistic</h2>
-<p>On the real frame: 1,471 tokens → 468. Roughly a <strong>3× saving</strong>, at the cost of exact
-pixel detail.</p>
+<h2>Finding 2 — the object view saves 3× or 7×, depending on who counts, and my first estimate was 4× too optimistic</h2>
+<p>On the real frame: 1,471 tokens → 468 under OpenAI's counter, a <strong>3× saving</strong>, at the cost
+of exact pixel detail.</p>
+<p>Under Gemini's counter — the one that matters for our bill — it is <strong>4,130 → 573, a 7.2×
+saving</strong>. Same encoder, same frame; compression looks more than twice as valuable on the
+model we actually call, for the same reason the last finding shrank: Gemini charges the raw
+grid by the character, so there is far more fat to cut.</p>
 <p>Worth telling honestly, because it is the more useful lesson: <strong>before the real frames
 arrived I measured this same encoder on a grid I invented, and got a 14× saving.</strong> My
 made-up screen had a few tidy shapes on a big empty field. Real game screens are busier,
@@ -2398,14 +2453,15 @@ produces a number that is real, reproducible, and misleading. This is the common
 benchmarks lie, and it is worth being able to describe: my synthetic 14× would have been a
 completely honest number to put in a README, and it would have been wrong by 4×.</p>
 </div>
-<p>And even the 3× is only the <em>cost</em> side. Whether the discarded detail mattered — whether
-the agent still plays as well — is a question about behaviour, and behaviour is measured
-by the eval suite in note 07. <strong>Cost is knowable today; benefit is not.</strong></p>
+<p>And the saving is only the <em>cost</em> side. Whether the discarded detail mattered — whether the
+agent still plays as well — is a question about behaviour, and behaviour needs a baseline
+(<a href="#07-baselines-and-controlled-experiments" class="wikilink" data-target="07-baselines-and-controlled-experiments">note 07</a>) and then an eval suite (note 08).
+<strong>Cost is knowable today; benefit is not.</strong></p>
 <hr />
 <h2>Finding 3 — compression can invert, and the worst case is the one that bites</h2>
 <p>The checkerboard row is the one I'd put on a slide. On that grid the object description is
-<strong>21× larger than the pixels it replaced.</strong> The compression scheme became a decompression
-scheme.</p>
+<strong>21× larger than the pixels it replaced</strong> (8.7× under Gemini's counter — smaller, still
+catastrophic). The compression scheme became a decompression scheme.</p>
 <p>That is the shape of a real outage:</p>
 <ol>
 <li>You measure your clever encoding on a few normal screens. It looks like a win.</li>
@@ -2417,7 +2473,9 @@ scheme.</p>
 </ol>
 <p>So <code>render_objects</code> carries a guardrail (notes 02 and 05): a cap that truncates the list
 and <em>says in the output that it truncated</em>. With the cap, that checkerboard costs 626
-tokens instead of 30,735.</p>
+tokens instead of 30,735 — 702 instead of 36,243 in Gemini's units. <strong>Both tokenisers
+agree about the shape of the danger</strong>, which is what you'd hope: the disagreement is about
+magnitudes, never about which encoding is bigger.</p>
 <div class="callout key">
 <p>Truncating loses information — but <strong>loudly and boundedly</strong>, at a place we chose, instead
 of silently and without limit. That is the entire difference between a guardrail and a
@@ -2430,7 +2488,8 @@ of three friendly ones.</p>
 press ACTION1 again, forever, because nothing in the context says the last press did
 nothing.</p>
 <p>Diffing the previous frame against the current one and saying <code>nothing changed</code> costs
-<strong>two tokens</strong>. Two. It is free.</p>
+<strong>two tokens</strong>. Two. It is free. (The full diff line for a frame that <em>did</em> change: 22
+tokens under OpenAI's counter, 28 under Gemini's. Still free.)</p>
 <p>Generalise it, because this travels well past this project: <strong>the highest-value thing you
 can put in an agent's context is usually not more description of the world — it's feedback
 about the agent's own last action.</strong> Cheap to produce, tiny to send, and it addresses the
@@ -2563,10 +2622,14 @@ specific, checkable thing to bring to an interview.</p>
 <ol>
 <li>The model can't see a grid — only text. Someone chooses that text. That choice is
    context engineering, and it's the job.</li>
-<li>Format is a cost: identical information, spaced out for readability, cost <strong>5.6×</strong> more
-   tokens.</li>
-<li>Compression is a trade, not a free win: ~3× smaller on a real frame, at the price of
-   detail — and <strong>21× bigger</strong> on the worst case, so it needs a guardrail.</li>
+<li>Format is a cost: identical information, spaced out for readability, cost <strong>2× more
+   tokens on the model we call</strong> (5.6× on a different vendor's tokeniser — see 2b).
+2b. <strong>A ratio between encodings is a fact about a tokeniser, not about your data.</strong> The
+   same pair of strings measured 5.57× apart under OpenAI's counter and 2.00× under
+   Gemini's. Name the tokeniser or you don't have a number.</li>
+<li>Compression is a trade, not a free win: 3–7× smaller on a real frame depending who
+   counts, at the price of detail — and <strong>21× bigger</strong> on the worst case, so it needs a
+   guardrail.</li>
 <li>Feedback about the agent's own last action is the cheapest valuable context there is:
    "nothing changed" costs 2 tokens and kills the commonest failure mode.</li>
 <li>Read what the environment already tells you before adding intelligence: <strong>47% of the
@@ -2587,22 +2650,22 @@ eleven lines; the context is what I control."</p>
 </blockquote>
 <p><strong>"Give me a concrete result."</strong></p>
 <blockquote>
-<p>"Two. First, writing the grid with separators instead of packed cost 5.6× the tokens for
-identical information — 8,191 versus 1,471 — because the tokeniser packs digit runs three
-to a token and a separator defeats that. Formatting a prompt 'for readability' can
-multiply your bill several-fold and it never surfaces as an error. Second, and bigger:
-the environment advertises which actions are legal in every frame, and the stock baseline
-ignored it — 38 of its 80 actions were buttons that didn't exist, and those were exactly
-the 38 that changed nothing. Reading a field that was in every response was worth 47% of
-the action budget, before any model was involved."</p>
+<p>"Two. First, writing the grid with separators instead of packed costs 2× the tokens for
+identical information — 8,244 against 4,130 on the model I call. Formatting a prompt 'for
+readability' doubles that part of your bill and it never surfaces as an error. Second, and
+bigger: the environment advertises which actions are legal in every frame, and the stock
+baseline ignored it — 38 of its 80 actions were buttons that didn't exist, and those were
+exactly the 38 that changed nothing. Reading a field that was in every response was worth
+47% of the action budget, before any model was involved."</p>
 </blockquote>
 <p><strong>"Did compression work?"</strong></p>
 <blockquote>
-<p>"About 3× on a real frame, and it's lossy. But the number I'd actually report is the
-failure case: on a checkerboard — 2,048 one-cell objects — the 'compressed' form was 21×
-<em>larger</em> than the raw grid. So the encoder caps its output and states that it truncated.
-A compression scheme has to be measured on its adversarial input, because it'll meet that
-input exactly when the state gets complicated, which is when you least want it to fail."</p>
+<p>"7× on a real frame in the units that bill me, and it's lossy. But the number I'd actually
+report is the failure case: on a checkerboard — 2,048 one-cell objects — the 'compressed'
+form was 21× <em>larger</em> than the raw grid. So the encoder caps its output and states that it
+truncated. A compression scheme has to be measured on its adversarial input, because it'll
+meet that input exactly when the state gets complicated, which is when you least want it
+to fail."</p>
 </blockquote>
 <p><strong>"Tell me about something you got wrong."</strong></p>
 <blockquote>
@@ -2618,11 +2681,27 @@ end-to-end: it scored zero and paid for itself three times over."</p>
 </blockquote>
 <p><strong>"How are you counting tokens?"</strong></p>
 <blockquote>
-<p>"Characters where I can, since those are exact and vendor-independent, and tokens with
-the tokeniser named next to every number. Those counts are OpenAI's <code>o200k_base</code>, which
-is the wrong counter for a Claude or Gemini bill — I used it only to compare encodings
-under one consistent ruler. A real budget gets counted with the provider's own endpoint
-on the model I'm actually calling."</p>
+<p>"Characters where I can, since those are exact and vendor-independent, and tokens with the
+tokeniser named next to every number. I started with OpenAI's <code>o200k_base</code> because it runs
+offline, and I labelled every number with it rather than calling it 'the' token count. Once
+I had a key for the model I actually call, I re-measured the same strings with the
+provider's own <code>count_tokens</code> endpoint and kept both columns in the artifact."</p>
+</blockquote>
+<p><strong>"Did that labelling ever actually matter?"</strong> <em>(the answer to lead with — it's the strongest
+thing in this note)</em></p>
+<blockquote>
+<p>"It saved me from publishing a wrong headline. My best number was that spacing out a grid
+cost 5.6× the tokens for identical information, and I had a clean mechanism for it —
+OpenAI's tokeniser packs digit runs three to a token, and a separator defeats that. Then I
+measured the same two strings with Gemini's counter and the ratio was 2.0×, because Gemini
+charges those grids at almost exactly one token per character, so there's no packing to
+defeat. Both measurements were correct. Only one was a fact about my system. Every
+conclusion held in <em>direction</em> — spacing still costs double, the object encoding is still
+a win, the checkerboard is still a disaster — but the magnitudes moved by up to 2.8×, and
+if I'd written '5.6×' as a bare fact I'd have been defending a number about a model I
+don't use. So the rule I'd take anywhere: a ratio between prompt encodings is a property
+of a tokeniser, not of your data. If you can't name the tokeniser, you don't have a
+number."</p>
 </blockquote>
 <hr />
 <p><strong>Next:</strong> <a href="#07-baselines-and-controlled-experiments" class="wikilink" data-target="07-baselines-and-controlled-experiments">note 07</a> — baselines: how you know a
@@ -3031,27 +3110,34 @@ GEMINI_API_KEY=AIza…
 </ol>
 <pre><code class="language-powershell">py scripts/check_llm_key.py
 </code></pre>
-<p>Expect roughly:</p>
-<pre><code class="language-text">key found      : AIza…7Xk2 (39 chars)
-models visible : 47 (12 with 'flash' in the name)
-round trip     : 812 ms, model said 'ready'
+<p>Real output from 2026-07-22:</p>
+<pre><code class="language-text">key found      : AQ.A…Ygqg (53 chars)
+models visible : 56 (25 with 'flash' in the name)
+model          : gemini-3.5-flash-lite
+round trip     : 964 ms, model said 'ready'
 
 encoding                       chars  tiktoken   gemini
-raw grid, hex packed           4,159      1471     ....
-objects                        1,083       468     ....
+raw grid, hex packed           4,159      1473     4152
+objects                        1,083       468      571
 </code></pre>
-<p>The last two lines are the point: what one real <code>ls20</code> screen costs in <strong>Gemini's own
-tokens</strong>. Every token number in this project so far came from an OpenAI counter, which only
-ever compared our encodings with each other.</p>
+<p>The checker tries several models and reports the first that answers — a model being
+<em>listed</em> by the API does not mean your account may call it. Pass one explicitly if you
+want: <code>py scripts/check_llm_key.py gemini-3.6-flash</code>.</p>
+<p>Those last two lines are the point: what one real <code>ls20</code> screen costs in <strong>Gemini's own
+tokens</strong>. They already overturned a headline number in study note 06 — for the full
+two-tokeniser table, run <code>py scripts/measure_tokens.py</code>.</p>
 <h2>Get your rate limits — I can't look these up for you</h2>
 <ol start="8">
-<li>Open <strong>https://aistudio.google.com/rate-limit</strong>, find the <strong>Gemini 2.5 Flash</strong> row, and
-   note three numbers: <strong>RPM</strong> (requests/minute), <strong>TPM</strong> (tokens/minute), <strong>RPD</strong>
-   (requests/day).</li>
+<li>Open <strong>https://aistudio.google.com/rate-limit</strong>, click <strong>See more</strong> to expand the model
+   list, find the row for the model the checker picked in step 7 (currently
+   <strong><code>gemini-3.5-flash-lite</code></strong>), and note three numbers: <strong>RPM</strong> (requests/minute), <strong>TPM</strong>
+   (tokens/minute), <strong>RPD</strong> (requests/day).</li>
 </ol>
-<p>Google no longer publishes these — they're per-account, so any number I wrote here would be
-invented. They decide real things: how fast the agent can play, whether it can afford to
-think twice per move, how many eval runs fit in a day.</p>
+<p>The dashboard shows them as <code>used / limit</code> — the limit is the number after the slash.</p>
+<p>Google no longer publishes these — they're per-account and per-model, so any number I wrote
+here would be invented. They decide real things: the <code>gemini-2.5-flash</code> row shows <strong>20 RPD</strong>,
+and if Flash-Lite is similar then <strong>one 80-action game cannot make one model call per
+action</strong> and the whole loop design changes.</p>
 <h2>Report back</h2>
 <ol start="9">
 <li>Paste me the step 7 output <strong>and</strong> the three numbers from step 8. Never the key.</li>
@@ -3077,6 +3163,10 @@ think twice per move, how many eval runs fit in a day.</p>
 <tr>
 <td><code>FAILED to list models</code> — 400 or 403</td>
 <td>Key wrong, or brand new. Re-copy it; wait a minute; retry</td>
+</tr>
+<tr>
+<td>every candidate prints <code>unavailable</code></td>
+<td>Models get retired for new accounts. Run <code>py scripts/check_llm_key.py &lt;name&gt;</code> with one from the printed flash list</td>
 </tr>
 <tr>
 <td><code>429</code> or "quota"</td>
@@ -3492,6 +3582,94 @@ that: <strong>tokens, context windows, and why they are the physics of this whol
 <article class="doc" id="doc-decisions" data-tabid="decisions"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Decision log</h1>
 <p>One entry per decision that shaped the project. Newest first.
 Format: date · decision · why · what was rejected.</p>
+<hr />
+<h2>2026-07-22 (evening) — CORRECTION: study note 06's headline number was a fact about the wrong tokeniser</h2>
+<p><strong>What happened:</strong> Chetan's Gemini key arrived. <code>scripts/measure_tokens.py</code> re-measured the
+exact strings note 06 was built on, using <code>count_tokens</code> on <code>gemini-3.5-flash-lite</code> — the
+model we actually call — alongside the offline <code>tiktoken/o200k_base</code>. They disagree by up to
+2.8×, and the note's headline claim did not survive
+(<code>artifacts/tokens-by-tokeniser.json</code>):</p>
+<table>
+<thead>
+<tr>
+<th>encoding (real <code>ls20</code> frame)</th>
+<th style="text-align: right;">chars</th>
+<th style="text-align: right;">tiktoken</th>
+<th style="text-align: right;">Gemini</th>
+<th style="text-align: right;">×  tik</th>
+<th style="text-align: right;">× gem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>raw grid, hex packed</td>
+<td style="text-align: right;">4,159</td>
+<td style="text-align: right;">1,471</td>
+<td style="text-align: right;">4,130</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr>
+<td>raw grid, decimal spaced</td>
+<td style="text-align: right;">8,243</td>
+<td style="text-align: right;">8,191</td>
+<td style="text-align: right;">8,244</td>
+<td style="text-align: right;"><strong>5.57</strong></td>
+<td style="text-align: right;"><strong>2.00</strong></td>
+</tr>
+<tr>
+<td>objects (cap 40)</td>
+<td style="text-align: right;">1,085</td>
+<td style="text-align: right;">468</td>
+<td style="text-align: right;">573</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;"><strong>0.14</strong></td>
+</tr>
+<tr>
+<td>diff vs previous</td>
+<td style="text-align: right;">66</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0.007</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Gemini charges these grids at ~1 token per character</strong> (4,130 tokens for 4,159 chars). It
+does not pack digit runs the way <code>o200k_base</code> does, so the hex trick buys only what it buys
+in characters and the celebrated "5.6× for identical information" is <strong>2.00× on the model we
+use</strong> — which is just the character ratio, 8,243 ÷ 4,159 = 1.98.</p>
+<p><strong>Every conclusion held in direction; only magnitudes moved.</strong> Spacing still costs double.
+The object encoding is still a win — a <em>bigger</em> one, 7.2× rather than 3× — because there is
+more fat to cut when the raw grid is billed by the character. The checkerboard still
+inverts (8.7× instead of 20.9×), so the truncation cap still earns its place.</p>
+<p><strong>Decision:</strong> note 06 now carries <strong>both tokeniser columns</strong> in both tables, and states as
+its central lesson that <em>a ratio between encodings is a property of a tokeniser, not of your
+data</em>. The interview answers were rewritten around the correction rather than around the
+retired number — it is the strongest story in the note.</p>
+<p><strong>Why this is a win, not an embarrassment:</strong> the rule from Phase A that every token number
+travels with the name of the tokeniser that produced it is exactly what made this a
+correction instead of a wrong claim defended in an interview. A number labelled "OpenAI's
+counter, used only to compare encodings" was honest when written and is still honest now.</p>
+<p><strong>Also decided / recorded:</strong></p>
+<ul>
+<li><strong><code>models.list()</code> is not an availability check.</strong> Measured: the API listed
+  <code>gemini-2.5-flash</code> with <code>generateContent</code> among its supported actions, and calling it
+  returned <code>404 … no longer available to new users</code>. <code>scripts/check_llm_key.py</code> now probes an
+  ordered candidate list and reports the first model that actually answers.</li>
+<li><strong>First working model: <code>gemini-3.5-flash-lite</code></strong> (~964 ms round trip). Flash-Lite is the
+  right default for one call per game action; the <code>-latest</code> aliases are the fallback because
+  they survive retirements — at the cost of not being pinned, which matters for evals and
+  not for smoke tests. <strong>This is not the model decision</strong>; that is still made by measurement.</li>
+<li>Measurement scripts pin the recording (last by filename) and the frame (the middle one)
+  deliberately, so the figures the notes quote reproduce. "Whatever I recorded most
+  recently" would not.</li>
+</ul>
+<p><strong>Open, and blocking budget design:</strong> Chetan's dashboard shows free-tier limits <em>per model</em>,
+and the row he sent is for the retired <code>gemini-2.5-flash</code>: <strong>5 RPM / 250K TPM / 20 RPD</strong>. If
+the limit for <code>gemini-3.5-flash-lite</code> is of that order, <strong>20 requests per day cannot support
+an 80-action game</strong>, and the loop must batch decisions, cache, or use a smaller number of
+model calls per episode. The real row is needed before Phase C's budget is designed.</p>
 <hr />
 <h2>2026-07-22 (afternoon) — OVERRIDE: how-to walkthroughs are step lists, not essays</h2>
 <p><strong>Decision:</strong> Chetan's instruction in-session, verbatim: <em>"make those howto notes much

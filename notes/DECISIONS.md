@@ -5,6 +5,63 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 (evening) — CORRECTION: study note 06's headline number was a fact about the wrong tokeniser
+
+**What happened:** Chetan's Gemini key arrived. `scripts/measure_tokens.py` re-measured the
+exact strings note 06 was built on, using `count_tokens` on `gemini-3.5-flash-lite` — the
+model we actually call — alongside the offline `tiktoken/o200k_base`. They disagree by up to
+2.8×, and the note's headline claim did not survive
+(`artifacts/tokens-by-tokeniser.json`):
+
+| encoding (real `ls20` frame) | chars | tiktoken | Gemini | ×  tik | × gem |
+|---|---:|---:|---:|---:|---:|
+| raw grid, hex packed | 4,159 | 1,471 | 4,130 | 1.00 | 1.00 |
+| raw grid, decimal spaced | 8,243 | 8,191 | 8,244 | **5.57** | **2.00** |
+| objects (cap 40) | 1,085 | 468 | 573 | 0.32 | **0.14** |
+| diff vs previous | 66 | 22 | 28 | 0.015 | 0.007 |
+
+**Gemini charges these grids at ~1 token per character** (4,130 tokens for 4,159 chars). It
+does not pack digit runs the way `o200k_base` does, so the hex trick buys only what it buys
+in characters and the celebrated "5.6× for identical information" is **2.00× on the model we
+use** — which is just the character ratio, 8,243 ÷ 4,159 = 1.98.
+
+**Every conclusion held in direction; only magnitudes moved.** Spacing still costs double.
+The object encoding is still a win — a *bigger* one, 7.2× rather than 3× — because there is
+more fat to cut when the raw grid is billed by the character. The checkerboard still
+inverts (8.7× instead of 20.9×), so the truncation cap still earns its place.
+
+**Decision:** note 06 now carries **both tokeniser columns** in both tables, and states as
+its central lesson that *a ratio between encodings is a property of a tokeniser, not of your
+data*. The interview answers were rewritten around the correction rather than around the
+retired number — it is the strongest story in the note.
+
+**Why this is a win, not an embarrassment:** the rule from Phase A that every token number
+travels with the name of the tokeniser that produced it is exactly what made this a
+correction instead of a wrong claim defended in an interview. A number labelled "OpenAI's
+counter, used only to compare encodings" was honest when written and is still honest now.
+
+**Also decided / recorded:**
+
+- **`models.list()` is not an availability check.** Measured: the API listed
+  `gemini-2.5-flash` with `generateContent` among its supported actions, and calling it
+  returned `404 … no longer available to new users`. `scripts/check_llm_key.py` now probes an
+  ordered candidate list and reports the first model that actually answers.
+- **First working model: `gemini-3.5-flash-lite`** (~964 ms round trip). Flash-Lite is the
+  right default for one call per game action; the `-latest` aliases are the fallback because
+  they survive retirements — at the cost of not being pinned, which matters for evals and
+  not for smoke tests. **This is not the model decision**; that is still made by measurement.
+- Measurement scripts pin the recording (last by filename) and the frame (the middle one)
+  deliberately, so the figures the notes quote reproduce. "Whatever I recorded most
+  recently" would not.
+
+**Open, and blocking budget design:** Chetan's dashboard shows free-tier limits *per model*,
+and the row he sent is for the retired `gemini-2.5-flash`: **5 RPM / 250K TPM / 20 RPD**. If
+the limit for `gemini-3.5-flash-lite` is of that order, **20 requests per day cannot support
+an 80-action game**, and the loop must batch decisions, cache, or use a smaller number of
+model calls per episode. The real row is needed before Phase C's budget is designed.
+
+---
+
 ## 2026-07-22 (afternoon) — OVERRIDE: how-to walkthroughs are step lists, not essays
 
 **Decision:** Chetan's instruction in-session, verbatim: *"make those howto notes much

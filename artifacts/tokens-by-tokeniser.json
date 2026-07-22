@@ -1,0 +1,92 @@
+{
+  "generated": "2026-07-22T06:30:46+00:00",
+  "source_recording": "ls20-9607627b.random.80.e37062d0-f857-4ecd-abb5-5a8f2af3de6a.recording.jsonl",
+  "gemini_model": "gemini-3.5-flash-lite",
+  "note": "Two tokenisers, same strings. tiktoken/o200k_base is OpenAI's and is only valid for comparing our encodings with each other; the Gemini column is the one that maps to a real context window and a real bill for the model we call.",
+  "encodings": [
+    {
+      "label": "real frame / raw grid, hex packed",
+      "chars": 4159,
+      "lines": 64,
+      "tokens": 1471,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 4130,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.007,
+      "x_vs_hex_packed_tiktoken": 1.0,
+      "x_vs_hex_packed_gemini": 1.0
+    },
+    {
+      "label": "real frame / raw grid, decimal space-separated",
+      "chars": 8243,
+      "lines": 64,
+      "tokens": 8191,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 8244,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.0,
+      "x_vs_hex_packed_tiktoken": 5.568,
+      "x_vs_hex_packed_gemini": 1.996
+    },
+    {
+      "label": "real frame / objects (cap 40)",
+      "chars": 1085,
+      "lines": 20,
+      "tokens": 468,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 573,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.894,
+      "x_vs_hex_packed_tiktoken": 0.318,
+      "x_vs_hex_packed_gemini": 0.139
+    },
+    {
+      "label": "real frame / diff vs previous frame",
+      "chars": 66,
+      "lines": 1,
+      "tokens": 22,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 28,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 2.357,
+      "x_vs_hex_packed_tiktoken": 0.015,
+      "x_vs_hex_packed_gemini": 0.007
+    },
+    {
+      "label": "synthetic checkerboard / raw grid, hex packed",
+      "chars": 4159,
+      "lines": 64,
+      "tokens": 1471,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 4160,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.0,
+      "x_vs_hex_packed_tiktoken": 1.0,
+      "x_vs_hex_packed_gemini": 1.0
+    },
+    {
+      "label": "synthetic checkerboard / objects (uncapped)",
+      "chars": 62886,
+      "lines": 2049,
+      "tokens": 30735,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 36243,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.735,
+      "x_vs_hex_packed_tiktoken": 20.894,
+      "x_vs_hex_packed_gemini": 8.712
+    },
+    {
+      "label": "synthetic checkerboard / objects (cap 40)",
+      "chars": 1266,
+      "lines": 42,
+      "tokens": 626,
+      "tokenizer": "tiktoken/o200k_base",
+      "gemini_tokens": 702,
+      "gemini_model": "gemini-3.5-flash-lite",
+      "chars_per_gemini_token": 1.803,
+      "x_vs_hex_packed_tiktoken": 0.426,
+      "x_vs_hex_packed_gemini": 0.169
+    }
+  ]
+}

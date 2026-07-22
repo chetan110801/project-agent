@@ -1,10 +1,12 @@
 # Study 06 — Context engineering: choosing what the model gets to see
 
-*Written 2026-07-22, the day the agent first played a real game. Every number here was
-measured on this laptop that day. The real-frame numbers come from
-`scripts/analyze_run.py` reading the recording committed in `runs/`; the worst-case
-numbers come from `scripts/measure_encodings.py`, which builds its grid by hand and says
-so. Results are saved in `artifacts/`. The code is `harness/` and it was run: 35 tests
+*Written 2026-07-22, the day the agent first played a real game; **corrected the same
+evening**, when a key for the model we actually call arrived and its own tokeniser
+disagreed with the offline one by up to 2.8×. Every number here was measured on this
+laptop. Real-frame numbers come from `scripts/analyze_run.py` reading the recording
+committed in `runs/`; the two-tokeniser table comes from `scripts/measure_tokens.py` →
+`artifacts/tokens-by-tokeniser.json`; the worst-case grid is built by hand in
+`scripts/measure_encodings.py` and says so. The code is `harness/` and it was run: 42 tests
 pass.*
 
 > **You are here:** rung 6, the first note of Part 2 — the engineering.
@@ -12,9 +14,10 @@ pass.*
 > especially [03](03-what-an-llm-really-is.md) (tokens, the context window, the four ways
 > out) and [05](05-the-agent-loop.md) (the loop, and the hole called *decide*).
 > **After this you can:** say what context engineering actually is, show four real
-> encodings of the same screen with their measured costs, explain why format alone
-> multiplied one bill by 5.6×, name the case where compression makes things *worse*, and
-> tell the story of the three assumptions that real data destroyed.
+> encodings of the same screen with their measured costs, explain why format alone doubles
+> a bill, name the case where compression makes things *worse*, tell the story of the three
+> assumptions that real data destroyed — and explain why the same measurement gave 5.6× on
+> one tokeniser and 2.0× on another, which is the most useful thing in this note.
 
 ---
 
@@ -113,21 +116,21 @@ the board. Extremely valuable *next to* one of the others.
 This table is one real 64 × 64 frame from the `ls20` game, taken from the committed
 recording of the first live run:
 
-| Encoding | Characters | Tokens | Size vs packed |
-|---|---:|---:|---:|
-| raw grid, hex-packed (`0440`) | 4,159 | 1,471 | 1.00× |
-| raw grid, decimal, space-separated (`0 4 4 0`) | 8,243 | 8,191 | **5.57×** |
-| objects | 1,085 | 468 | 0.32× |
-| diff vs the previous frame | 66 | **22** | 0.015× |
+| Encoding | Characters | OpenAI tokens | **Gemini tokens** | vs packed (OpenAI) | **vs packed (Gemini)** |
+|---|---:|---:|---:|---:|---:|
+| raw grid, hex-packed (`0440`) | 4,159 | 1,471 | 4,130 | 1.00× | 1.00× |
+| raw grid, decimal, space-separated (`0 4 4 0`) | 8,243 | 8,191 | 8,244 | **5.57×** | **2.00×** |
+| objects | 1,085 | 468 | 573 | 0.32× | **0.14×** |
+| diff vs the previous frame | 66 | **22** | **28** | 0.015× | 0.007× |
 
 And one grid that no real frame produced, built by hand to break the object encoding — a
 checkerboard, every other cell filled, i.e. 2,048 separate one-cell objects:
 
-| Encoding (worst case, synthetic) | Characters | Tokens | Size vs packed |
-|---|---:|---:|---:|
-| raw grid, hex-packed | 4,159 | 1,471 | 1.00× |
-| objects, uncapped | 62,886 | **30,735** | **20.9×** |
-| objects, with our cap | 1,266 | 626 | 0.43× |
+| Encoding (worst case, synthetic) | Characters | OpenAI tokens | **Gemini tokens** | vs packed (OpenAI) | **vs packed (Gemini)** |
+|---|---:|---:|---:|---:|---:|
+| raw grid, hex-packed | 4,159 | 1,471 | 4,160 | 1.00× | 1.00× |
+| objects, uncapped | 62,886 | **30,735** | **36,243** | **20.9×** | **8.71×** |
+| objects, with our cap | 1,266 | 626 | 702 | 0.43× | 0.17× |
 
 ::: warn
 **Where these numbers come from, exactly.** The first table is measured on a real frame
@@ -135,20 +138,27 @@ from a real game. The second is deliberately synthetic — real recordings happe
 no adversarial (worst-case, chosen to break it) frame, and that is luck rather than
 safety, so the worst case is constructed by hand.
 
-The token counts use `tiktoken`'s `o200k_base` — **an OpenAI tokeniser.** As note 03
-warned, that is the wrong counter for a Claude or Gemini budget. It is used here for one
-legitimate job: comparing encodings against each other under one consistent ruler. Every
-token number in this repo travels with the name of the tokeniser that produced it. The
-character counts are exact and depend on no vendor at all.
+**Two tokeniser columns, because one of them was misleading me.** The OpenAI column is
+`tiktoken/o200k_base`. The Gemini column was measured on 2026-07-22 by asking
+`gemini-3.5-flash-lite` to count the exact same strings — the model this project actually
+calls. Both are in `artifacts/tokens-by-tokeniser.json`, produced by
+`scripts/measure_tokens.py`. The character counts are exact and depend on no vendor at all.
+:::
+
+::: key
+**Read the two ratio columns against each other. They disagree, and that is the lesson of
+this note.** The same two strings are 5.57× apart under OpenAI's tokeniser and 2.00× apart
+under Gemini's. A ratio between encodings is **not portable across tokenisers** — it is a
+fact about a specific model's tokeniser, not about your data.
 :::
 
 ---
 
 ## Finding 1 — format costs tokens even when it carries no information
 
-Same 4,096 cells, same information, written two ways: **1,471 tokens versus 8,191.**
-Putting a space between the numbers multiplied the cost by **5.6×** and told the model
-nothing new.
+Same 4,096 cells, same information, written two ways. Under OpenAI's tokeniser: **1,471
+tokens versus 8,191** — putting a space between the numbers multiplied the cost by **5.6×**
+and told the model nothing new.
 
 Why? Tokens are chunks, not characters (note 03). Checked directly with the tokeniser:
 
@@ -157,23 +167,56 @@ Why? Tokens are chunks, not characters (note 03). Checked directly with the toke
 '0 0 0 0 0 0 0 0'  → 15 tokens: ['0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0',' ','0']
 ```
 
-The tokeniser packs runs of digits three-to-a-token for free. Put a separator between them
+That tokeniser packs runs of digits three-to-a-token for free. Put a separator between them
 and every character becomes its own token; the compression you were getting for nothing is
 destroyed by the space you added "for readability".
 
+### …and then I measured it on the model I actually call, and the number halved
+
+The day the Gemini key arrived, the same two strings were counted by Gemini's own tokeniser:
+**4,130 versus 8,244 — a ratio of 2.00×, not 5.57×.**
+
+Look at the `chars` column and it's obvious what happened. Gemini charged 4,130 tokens for
+4,159 characters: almost exactly **one token per character**. It does not pack digit runs
+the way `o200k_base` does, so the hex trick buys nothing beyond what it buys in characters —
+and 8,243 ÷ 4,159 = 1.98, which is the whole of the 2.00×.
+
+::: key
+**The 5.6× was real, reproducible, and about the wrong model.** Both numbers are correct
+measurements. Only one of them is a fact about the system I am building. This is why every
+token number in this repo travels with the name of the tokeniser that produced it — the
+caveat wasn't decoration, it was the thing that stopped a wrong number becoming a claim.
+:::
+
+::: warn
+**What survives, and what doesn't.**
+
+- **Doesn't survive:** the specific 5.6×, and the digit-packing explanation, for Gemini.
+- **Survives, and is now stronger:** format is a cost decision. Under Gemini the spaced
+  version still costs **2× more for identical information** — you still pay double for a
+  space you added for readability. The direction of every finding held; only the magnitude
+  moved.
+- **Survives everywhere:** if you cannot name the tokeniser, you do not have a number.
+:::
+
 ::: key
 **Prompt format is a cost decision, not a style decision.** Pretty-printing data for a
-model can multiply your token bill several-fold for zero information gained, and it never
-shows up as an error — just as a bill. You find it in ten minutes by encoding the same
-content two ways and counting.
+model can multiply your token bill for zero information gained, and it never shows up as an
+error — just as a bill. You find it in ten minutes by encoding the same content two ways
+and counting, **with the counter belonging to the model you're calling.**
 :::
 
 ---
 
-## Finding 2 — the object view saves ~3×, and my first estimate was 4× too optimistic
+## Finding 2 — the object view saves 3× or 7×, depending on who counts, and my first estimate was 4× too optimistic
 
-On the real frame: 1,471 tokens → 468. Roughly a **3× saving**, at the cost of exact
-pixel detail.
+On the real frame: 1,471 tokens → 468 under OpenAI's counter, a **3× saving**, at the cost
+of exact pixel detail.
+
+Under Gemini's counter — the one that matters for our bill — it is **4,130 → 573, a 7.2×
+saving**. Same encoder, same frame; compression looks more than twice as valuable on the
+model we actually call, for the same reason the last finding shrank: Gemini charges the raw
+grid by the character, so there is far more fat to cut.
 
 Worth telling honestly, because it is the more useful lesson: **before the real frames
 arrived I measured this same encoder on a grid I invented, and got a 14× saving.** My
@@ -187,17 +230,18 @@ benchmarks lie, and it is worth being able to describe: my synthetic 14× would 
 completely honest number to put in a README, and it would have been wrong by 4×.
 :::
 
-And even the 3× is only the *cost* side. Whether the discarded detail mattered — whether
-the agent still plays as well — is a question about behaviour, and behaviour is measured
-by the eval suite in note 07. **Cost is knowable today; benefit is not.**
+And the saving is only the *cost* side. Whether the discarded detail mattered — whether the
+agent still plays as well — is a question about behaviour, and behaviour needs a baseline
+([note 07](07-baselines-and-controlled-experiments.md)) and then an eval suite (note 08).
+**Cost is knowable today; benefit is not.**
 
 ---
 
 ## Finding 3 — compression can invert, and the worst case is the one that bites
 
 The checkerboard row is the one I'd put on a slide. On that grid the object description is
-**21× larger than the pixels it replaced.** The compression scheme became a decompression
-scheme.
+**21× larger than the pixels it replaced** (8.7× under Gemini's counter — smaller, still
+catastrophic). The compression scheme became a decompression scheme.
 
 That is the shape of a real outage:
 
@@ -210,7 +254,9 @@ That is the shape of a real outage:
 
 So `render_objects` carries a guardrail (notes 02 and 05): a cap that truncates the list
 and *says in the output that it truncated*. With the cap, that checkerboard costs 626
-tokens instead of 30,735.
+tokens instead of 30,735 — 702 instead of 36,243 in Gemini's units. **Both tokenisers
+agree about the shape of the danger**, which is what you'd hope: the disagreement is about
+magnitudes, never about which encoding is bigger.
 
 ::: key
 Truncating loses information — but **loudly and boundedly**, at a place we chose, instead
@@ -228,7 +274,8 @@ press ACTION1 again, forever, because nothing in the context says the last press
 nothing.
 
 Diffing the previous frame against the current one and saying `nothing changed` costs
-**two tokens**. Two. It is free.
+**two tokens**. Two. It is free. (The full diff line for a frame that *did* change: 22
+tokens under OpenAI's counter, 28 under Gemini's. Still free.)
 
 Generalise it, because this travels well past this project: **the highest-value thing you
 can put in an agent's context is usually not more description of the world — it's feedback
@@ -330,10 +377,14 @@ specific, checkable thing to bring to an interview.
 
 1. The model can't see a grid — only text. Someone chooses that text. That choice is
    context engineering, and it's the job.
-2. Format is a cost: identical information, spaced out for readability, cost **5.6×** more
-   tokens.
-3. Compression is a trade, not a free win: ~3× smaller on a real frame, at the price of
-   detail — and **21× bigger** on the worst case, so it needs a guardrail.
+2. Format is a cost: identical information, spaced out for readability, cost **2× more
+   tokens on the model we call** (5.6× on a different vendor's tokeniser — see 2b).
+2b. **A ratio between encodings is a fact about a tokeniser, not about your data.** The
+   same pair of strings measured 5.57× apart under OpenAI's counter and 2.00× under
+   Gemini's. Name the tokeniser or you don't have a number.
+3. Compression is a trade, not a free win: 3–7× smaller on a real frame depending who
+   counts, at the price of detail — and **21× bigger** on the worst case, so it needs a
+   guardrail.
 4. Feedback about the agent's own last action is the cheapest valuable context there is:
    "nothing changed" costs 2 tokens and kills the commonest failure mode.
 5. Read what the environment already tells you before adding intelligence: **47% of the
@@ -354,21 +405,21 @@ specific, checkable thing to bring to an interview.
 > eleven lines; the context is what I control."
 
 **"Give me a concrete result."**
-> "Two. First, writing the grid with separators instead of packed cost 5.6× the tokens for
-> identical information — 8,191 versus 1,471 — because the tokeniser packs digit runs three
-> to a token and a separator defeats that. Formatting a prompt 'for readability' can
-> multiply your bill several-fold and it never surfaces as an error. Second, and bigger:
-> the environment advertises which actions are legal in every frame, and the stock baseline
-> ignored it — 38 of its 80 actions were buttons that didn't exist, and those were exactly
-> the 38 that changed nothing. Reading a field that was in every response was worth 47% of
-> the action budget, before any model was involved."
+> "Two. First, writing the grid with separators instead of packed costs 2× the tokens for
+> identical information — 8,244 against 4,130 on the model I call. Formatting a prompt 'for
+> readability' doubles that part of your bill and it never surfaces as an error. Second, and
+> bigger: the environment advertises which actions are legal in every frame, and the stock
+> baseline ignored it — 38 of its 80 actions were buttons that didn't exist, and those were
+> exactly the 38 that changed nothing. Reading a field that was in every response was worth
+> 47% of the action budget, before any model was involved."
 
 **"Did compression work?"**
-> "About 3× on a real frame, and it's lossy. But the number I'd actually report is the
-> failure case: on a checkerboard — 2,048 one-cell objects — the 'compressed' form was 21×
-> *larger* than the raw grid. So the encoder caps its output and states that it truncated.
-> A compression scheme has to be measured on its adversarial input, because it'll meet that
-> input exactly when the state gets complicated, which is when you least want it to fail."
+> "7× on a real frame in the units that bill me, and it's lossy. But the number I'd actually
+> report is the failure case: on a checkerboard — 2,048 one-cell objects — the 'compressed'
+> form was 21× *larger* than the raw grid. So the encoder caps its output and states that it
+> truncated. A compression scheme has to be measured on its adversarial input, because it'll
+> meet that input exactly when the state gets complicated, which is when you least want it
+> to fail."
 
 **"Tell me about something you got wrong."**
 > "I built the encoders before I had real data, against grids I made up, and the first real
@@ -382,11 +433,26 @@ specific, checkable thing to bring to an interview.
 > end-to-end: it scored zero and paid for itself three times over."
 
 **"How are you counting tokens?"**
-> "Characters where I can, since those are exact and vendor-independent, and tokens with
-> the tokeniser named next to every number. Those counts are OpenAI's `o200k_base`, which
-> is the wrong counter for a Claude or Gemini bill — I used it only to compare encodings
-> under one consistent ruler. A real budget gets counted with the provider's own endpoint
-> on the model I'm actually calling."
+> "Characters where I can, since those are exact and vendor-independent, and tokens with the
+> tokeniser named next to every number. I started with OpenAI's `o200k_base` because it runs
+> offline, and I labelled every number with it rather than calling it 'the' token count. Once
+> I had a key for the model I actually call, I re-measured the same strings with the
+> provider's own `count_tokens` endpoint and kept both columns in the artifact."
+
+**"Did that labelling ever actually matter?"** *(the answer to lead with — it's the strongest
+thing in this note)*
+> "It saved me from publishing a wrong headline. My best number was that spacing out a grid
+> cost 5.6× the tokens for identical information, and I had a clean mechanism for it —
+> OpenAI's tokeniser packs digit runs three to a token, and a separator defeats that. Then I
+> measured the same two strings with Gemini's counter and the ratio was 2.0×, because Gemini
+> charges those grids at almost exactly one token per character, so there's no packing to
+> defeat. Both measurements were correct. Only one was a fact about my system. Every
+> conclusion held in *direction* — spacing still costs double, the object encoding is still
+> a win, the checkerboard is still a disaster — but the magnitudes moved by up to 2.8×, and
+> if I'd written '5.6×' as a bare fact I'd have been defending a number about a model I
+> don't use. So the rule I'd take anywhere: a ratio between prompt encodings is a property
+> of a tokeniser, not of your data. If you can't name the tokeniser, you don't have a
+> number."
 
 ---
 

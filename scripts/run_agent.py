@@ -163,9 +163,17 @@ def main(argv: list[str]) -> int:
         help="stop after N consecutive no-change actions (default: never)",
     )
     p.add_argument("--mock", action="store_true", help="offline mock game: no key, no quota")
+    p.add_argument("--list", action="store_true", help="print the game ids and exit")
     p.add_argument("--tag", action="append", default=[], help="scorecard tag (repeatable)")
     p.add_argument("--out", default=None, help="artifacts/<name>.json (default: derived)")
     args = p.parse_args(argv)
+
+    if args.list:
+        # Ids carry a version suffix that changes when the platform updates a game, so the
+        # list is asked for rather than remembered.
+        for game in ArcEnv("").list_games():
+            print(game)
+        return 0
 
     policy = POLICIES[args.policy](args)
     run_id = str(uuid.uuid4())

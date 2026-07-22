@@ -5,6 +5,30 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 (afternoon) — OVERRIDE: how-to walkthroughs are step lists, not essays
+
+**Decision:** Chetan's instruction in-session, verbatim: *"make those howto notes much
+thinner ans sharper and crisp, just the steps"*. `notes/howto/` is now **numbered steps,
+exact commands, expected output, and a troubleshooting table** — nothing else. Cut: the
+"why you're doing this" essays, the closing reflections, the multi-paragraph warning boxes,
+the long source lists. 01 went from 263 lines to 106, 02 from 252 to 116.
+
+**This overrides the reading of CLAUDE.md §6B** that produced the long form. §6B still
+binds on substance — exact clicks, exact commands, exact expected output, what can go
+wrong, and how to report back are all still mandatory. What it no longer licenses is prose
+around them.
+
+**Kept deliberately, in one line each, because losing them costs real damage:** use
+`Add-Content` and never `Set-Content` (it replaces `.env` and deletes the other key);
+free-tier Gemini prompts may be used by Google for product improvement; never paste a key
+into chat; and step 8 of how-to 02, where he reads his own rate limits, because Google
+doesn't publish them and a number invented here would be a lie with a citation-shaped hole.
+
+**Also:** `scripts/run_agent.py --list` added, so "which games exist?" is a flag rather
+than an error message with the answer buried in it.
+
+---
+
 ## 2026-07-22 (afternoon) — Phase B part 1: our loop plays real games; the guard recovers 47.5% of the budget and changes nothing about the score
 
 **Decision:** `scripts/run_agent.py` is the project's runner, and `harness/arc_env.py` is no

@@ -390,6 +390,9 @@ specific, checkable thing to bring to an interview.
 
 ---
 
-**Next:** note 07 — evals: how you know a change helped instead of believing it did. It
-gets written when the eval suite exists, because the entire point of that note is that
-claims arrive with numbers.
+**Next:** [note 07](07-baselines-and-controlled-experiments.md) — baselines: how you know a
+change helped instead of believing it did. It takes the 47% figure above and turns it into
+a controlled comparison against a real run — including the part where the fix worked and
+the score still didn't move. (Evals, the suite that runs this on every change, became note
+08; it gets written when the suite exists, because the entire point of that note is that
+claims arrive with numbers.)

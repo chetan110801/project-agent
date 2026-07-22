@@ -1,9 +1,15 @@
 """Read a real ARC-AGI-3 recording and turn it into facts we can cite.
 
-    py scripts/analyze_run.py [path/to/*.recording.jsonl]
+    py scripts/analyze_run.py [path/to/*.recording.jsonl] [--out NAME] [--agent LABEL]
 
-Defaults to the newest recording in `runs/`. Writes `artifacts/run-report.json` and
-prints a summary.
+Defaults to the newest recording in `runs/`. Writes `artifacts/<NAME>.json` (default
+`run-report`) and prints a summary.
+
+It refuses to overwrite a report that was generated from a *different* recording unless
+you pass `--force`. That guard exists because the mistake has already been made once, in
+the session that added it: analysing a throwaway mock run silently replaced the committed
+baseline report that three study notes quote. A number's provenance is worthless if the
+file holding it can be swapped by a stray command.
 
 Every number the study notes quote about *real* frames comes from here, so this script is
 the provenance for them: rerun it and you get the same numbers, because the recording is
@@ -16,6 +22,7 @@ scorecard.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from collections import Counter
@@ -51,14 +58,36 @@ def screen(frame: dict) -> list[list[int]]:
 
 
 def main(argv: list[str]) -> int:
-    if argv:
-        path = Path(argv[0])
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("path", nargs="?", help="a *.recording.jsonl (default: newest in runs/)")
+    ap.add_argument("--out", default="run-report", help="artifacts/<NAME>.json")
+    ap.add_argument(
+        "--agent",
+        default="unlabelled — pass --agent",
+        help="who played, e.g. 'sdk random baseline' or 'our loop (random policy)'",
+    )
+    ap.add_argument("--force", action="store_true", help="overwrite a report from another recording")
+    args = ap.parse_args(argv)
+
+    if args.path:
+        path = Path(args.path)
     else:
         candidates = sorted((ROOT / "runs").glob("*.recording.jsonl"))
         if not candidates:
             print("no recordings in runs/ — run the agent first")
             return 1
         path = candidates[-1]
+
+    out = ARTIFACTS / f"{args.out}.json"
+    if out.exists() and not args.force:
+        try:
+            existing = json.loads(out.read_text(encoding="utf-8")).get("recording")
+        except (json.JSONDecodeError, OSError):
+            existing = None
+        if existing and existing != path.name:
+            print(f"refusing to overwrite {out.name}: it was made from {existing}")
+            print(f"pass --out <other-name> to write elsewhere, or --force to replace it")
+            return 2
 
     frames, scorecard = load(path)
     if not frames:
@@ -75,6 +104,13 @@ def main(argv: list[str]) -> int:
     # -- what the agent did ------------------------------------------------ #
     sent = Counter(f["action_input"]["id"] for f in frames)
     illegal = [f for f in frames if f["action_input"]["id"] not in available_set | {0}]
+    states = Counter(f["state"] for f in frames)
+
+    # How long the agent stays alive between deaths. Frame 0 is the reset, so a GAME_OVER
+    # at frame i is the outcome of action i. The gaps are what "it survived N actions"
+    # means — a number worth having in the artifact rather than recounted by hand later.
+    game_over_at = [i for i, f in enumerate(frames) if f["state"] == "GAME_OVER"]
+    survived = [b - a for a, b in zip([0] + game_over_at, game_over_at)]
 
     dead = changed = 0
     dead_and_illegal = 0
@@ -108,7 +144,7 @@ def main(argv: list[str]) -> int:
     report = {
         "recording": path.name,
         "game_id": frames[0]["game_id"],
-        "agent": "sdk random baseline (arc-agi-3 --agent=random)",
+        "agent": args.agent,
         "frames": len(frames),
         "actions": len(frames) - 1,
         "final_state": frames[-1]["state"],
@@ -121,6 +157,11 @@ def main(argv: list[str]) -> int:
         "cell_value_max": max(values),
         "available_actions_sets": {str(list(k)): v for k, v in avail.items()},
         "actions_sent_histogram": {str(k): v for k, v in sorted(sent.items())},
+        "states_histogram": dict(sorted(states.items())),
+        "game_over_frames": states.get("GAME_OVER", 0),
+        "game_over_at_action": game_over_at,
+        "actions_survived_between_deaths": survived,
+        "resets_sent": sent.get(0, 0),
         "actions_not_available": len(illegal),
         "transitions": len(frames) - 1,
         "transitions_no_change": dead,
@@ -134,7 +175,6 @@ def main(argv: list[str]) -> int:
     }
 
     ARTIFACTS.mkdir(exist_ok=True)
-    out = ARTIFACTS / "run-report.json"
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
     print(f"recording      : {path.name}")

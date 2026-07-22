@@ -57,6 +57,13 @@
     "6": 11,
     "7": 11
   },
+  "states_histogram": {
+    "NOT_FINISHED": 81
+  },
+  "game_over_frames": 0,
+  "game_over_at_action": [],
+  "actions_survived_between_deaths": [],
+  "resets_sent": 1,
   "actions_not_available": 38,
   "transitions": 80,
   "transitions_no_change": 38,

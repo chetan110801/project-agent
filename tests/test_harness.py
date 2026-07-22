@@ -26,9 +26,11 @@ from harness.frames import (  # noqa: E402
 )
 from harness.loop import run_episode  # noqa: E402
 from harness.mock_game import AGENT, MockGame, WIN_SCORE  # noqa: E402
-from harness.policies import RandomPolicy  # noqa: E402
+from harness.policies import RandomPolicy, legal_actions  # noqa: E402
 from harness.tokens import measure  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
+from scripts.analyze_run import load as load_recording  # noqa: E402
+from scripts.run_agent import RecordingEnv, resolve_game  # noqa: E402
 
 
 class TestAction(unittest.TestCase):
@@ -312,6 +314,82 @@ class TestTracer(unittest.TestCase):
             path = Path(d) / "broken.jsonl"
             path.write_text('{"kind": "ok"}\nnot json\n\n{"kind": "ok2"}\n', encoding="utf-8")
             self.assertEqual([r["kind"] for r in Tracer.read(path)], ["ok", "ok2"])
+
+
+class TestLegalActions(unittest.TestCase):
+    def test_reset_is_legal_even_when_the_frame_omits_it(self):
+        """Real frames advertise `[1, 2, 3, 4]` and never list RESET, but RESET is what
+        the loop falls back to — so without this it would reject its own fallback."""
+        g = MockGame(available=[GameAction.ACTION1])
+        frame = g.reset()
+        self.assertNotIn(GameAction.RESET, frame.available_actions)
+        self.assertIn(GameAction.RESET, legal_actions(frame))
+
+    def test_empty_available_actions_falls_back_to_all_eight(self):
+        g = MockGame(available=[])
+        self.assertEqual(len(legal_actions(g.reset())), len(list(GameAction)))
+
+
+class _FakeGameList:
+    """Stands in for ArcEnv in resolve_game — only list_games is consulted."""
+
+    def __init__(self, games: list[str]) -> None:
+        self._games = games
+
+    def list_games(self) -> list[str]:
+        return self._games
+
+
+class TestResolveGame(unittest.TestCase):
+    GAMES = ["ls20-9607627b", "lp85-305b61c3", "ls21-aaaaaaaa"]
+
+    def test_prefix_resolves_to_the_versioned_id(self):
+        self.assertEqual(resolve_game(_FakeGameList(self.GAMES), "ls20"), "ls20-9607627b")
+
+    def test_exact_id_passes_through(self):
+        self.assertEqual(
+            resolve_game(_FakeGameList(self.GAMES), "ls20-9607627b"), "ls20-9607627b"
+        )
+
+    def test_ambiguous_and_unknown_prefixes_raise(self):
+        with self.assertRaises(Exception):
+            resolve_game(_FakeGameList(self.GAMES), "ls")  # matches ls20 and ls21
+        with self.assertRaises(Exception):
+            resolve_game(_FakeGameList(self.GAMES), "zz99")
+
+
+class TestRecordingEnv(unittest.TestCase):
+    def test_recording_round_trips_through_the_analyser(self):
+        """The point of matching the SDK's format: one analyser reads both our runs and
+        the SDK baseline, so a before/after comparison can't be an artefact of two
+        different readers."""
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "x.recording.jsonl"
+            env = RecordingEnv(MockGame(), path)
+            result = run_episode(env, RandomPolicy(seed=2), max_actions=9)
+            env.record_scorecard({"mock01": {"total_plays": 1, "actions": [9]}})
+            env.close()
+
+            frames, scorecard = load_recording(path)
+            self.assertEqual(len(frames), result.actions_taken + 1)  # +1 for the reset
+            self.assertEqual(scorecard, {"mock01": {"total_plays": 1, "actions": [9]}})
+            self.assertTrue(all("action_input" in f for f in frames))
+
+    def test_frames_survive_a_crash_mid_episode(self):
+        class _Exploding(MockGame):
+            def step(self, action):  # type: ignore[override]
+                if self.steps >= 3:
+                    raise RuntimeError("network died")
+                return super().step(action)
+
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "y.recording.jsonl"
+            env = RecordingEnv(_Exploding(), path)
+            with self.assertRaises(RuntimeError):
+                run_episode(env, RandomPolicy(seed=4), max_actions=20)
+            env.close()
+            frames, _ = load_recording(path)
+            self.assertEqual(len(frames), 4)  # reset + 3 steps, flushed as they happened
 
 
 if __name__ == "__main__":

@@ -1,0 +1,119 @@
+{
+  "recording": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.recording.jsonl",
+  "game_id": "ls20-9607627b",
+  "agent": "our loop (random policy, seed 0)",
+  "frames": 81,
+  "actions": 80,
+  "final_state": "NOT_FINISHED",
+  "final_score": 0,
+  "scores_seen": [
+    0
+  ],
+  "scorecard": {
+    "actions": [
+      80
+    ],
+    "actions_by_level": [
+      []
+    ],
+    "game_id": "ls20-9607627b",
+    "guids": [
+      "bd89a1c6-3970-4f1e-b6e2-18b769b37f4b"
+    ],
+    "levels_completed": [
+      0
+    ],
+    "resets": [
+      0
+    ],
+    "states": [
+      "NOT_FINISHED"
+    ],
+    "total_actions": 80,
+    "total_plays": 1
+  },
+  "grids_per_frame": {
+    "1": 79,
+    "6": 2
+  },
+  "grid_shapes": {
+    "64x64": 81
+  },
+  "cell_values_seen": [
+    0,
+    1,
+    3,
+    4,
+    5,
+    8,
+    9,
+    11,
+    12
+  ],
+  "cell_value_max": 12,
+  "available_actions_sets": {
+    "[1, 2, 3, 4]": 81
+  },
+  "actions_sent_histogram": {
+    "0": 1,
+    "1": 20,
+    "2": 19,
+    "3": 22,
+    "4": 19
+  },
+  "states_histogram": {
+    "NOT_FINISHED": 81
+  },
+  "game_over_frames": 0,
+  "game_over_at_action": [],
+  "actions_survived_between_deaths": [],
+  "resets_sent": 1,
+  "actions_not_available": 0,
+  "transitions": 80,
+  "transitions_no_change": 0,
+  "transitions_changed": 80,
+  "no_change_and_unavailable": 0,
+  "encodings_on_one_real_frame": [
+    {
+      "label": "real frame / raw grid, hex packed",
+      "chars": 4159,
+      "lines": 64,
+      "tokens": 1471,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_hex_packed": 1.0
+    },
+    {
+      "label": "real frame / raw grid, decimal space-separated",
+      "chars": 8205,
+      "lines": 64,
+      "tokens": 8191,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_hex_packed": 1.9728
+    },
+    {
+      "label": "real frame / objects (cap 40)",
+      "chars": 1083,
+      "lines": 20,
+      "tokens": 468,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_hex_packed": 0.2604
+    },
+    {
+      "label": "real frame / objects (uncapped)",
+      "chars": 1083,
+      "lines": 20,
+      "tokens": 468,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_hex_packed": 0.2604
+    },
+    {
+      "label": "real frame / diff vs previous",
+      "chars": 51,
+      "lines": 1,
+      "tokens": 27,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_hex_packed": 0.0123
+    }
+  ],
+  "tokeniser_note": "token counts are tiktoken/o200k_base (an OpenAI tokeniser): valid for comparing encodings with each other, NOT a budget for another vendor's model"
+}

@@ -90,11 +90,12 @@ this project does not do guesswork.
 | # | Note | What it will give you |
 |---|---|---|
 | 06 | **Context engineering** ✅ | choosing what the model gets to see each step, and why that is the job |
-| 07 | Evals | how you *know* a change helped, instead of believing it did |
-| 08 | Traces and observability | answering "why did it do that?" with receipts |
-| 09 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
-| 10 | Budgets: tokens, cost, latency | making cost a dial you control, not a surprise |
-| 11 | The interview story | the whole project as a 3-minute answer, with the hard follow-ups |
+| 07 | **Baselines** ✅ | how you *know* a change helped, instead of believing it did — with the run where the fix worked and the score still didn't move |
+| 08 | Evals | turning one-off comparisons into a suite that runs on every change |
+| 09 | Traces and observability | answering "why did it do that?" with receipts |
+| 10 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
+| 11 | Budgets: tokens, cost, latency | making cost a dial you control, not a surprise |
+| 12 | The interview story | the whole project as a 3-minute answer, with the hard follow-ups |
 
 Alongside the course there are two other kinds of file in this repo, and it helps to
 know what they are so you don't confuse them with teaching:
@@ -108,7 +109,7 @@ know what they are so you don't confuse them with teaching:
 
 ## How to actually read this
 
-1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06. Don't skip ahead; the ladder only
+1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07. Don't skip ahead; the ladder only
    works as a ladder.
 2. **One note per sitting.** Each is a 10–20 minute read. Finishing one and stopping
    beats skimming three.

@@ -1,20 +1,18 @@
-"""DRAFT — UNTESTED. Written 2026-07-22, never executed against the live API.
+"""The real ARC-AGI-3 API, behind the same `Environment` protocol as the mock game.
 
-Nothing in this file has made a single real request yet: the session ended before it could
-be run. The URL paths, payload shapes and header were read out of the SDK source, not
-observed, so treat every one of them as a claim to be checked. First job next session:
-run it (`scripts/run_agent.py` does not exist yet either) and delete this banner only
-after a real game has been played through it end to end.
-
-The real ARC-AGI-3 API, behind the same `Environment` protocol as the mock game.
+VERIFIED against the live server on 2026-07-22: two full 80- and 400-action games of
+`ls20` were played through this file end to end, scorecards opened and closed
+(`artifacts/ourloop-random-run.json`, `artifacts/ourloop-random-400.json`). The endpoints
+below are no longer read-from-source guesses; they are observed. One of them turned out
+*not* to match the SDK's schema — see `close_scorecard`.
 
 This is the piece that lets our loop (`harness/loop.py`) play a real game without
 inheriting from the SDK's `Agent`. We keep the SDK's *data types* — `FrameData` validates
 every response, so the server's contract is enforced by the vendor's own schema — and
 replace only its transport and its loop.
 
-The protocol, read out of the SDK source (`_agent.py`, `_swarm.py`, v0.0.1) and confirmed
-against a live run on 2026-07-22:
+The protocol, read out of the SDK source (`_agent.py`, `_swarm.py`, v0.0.1) and then
+confirmed request by request against the live server on 2026-07-22:
 
     GET  /api/games                        -> [{"game_id": ...}, ...]
     POST /api/scorecard/open   {tags}      -> {"card_id": ...}
@@ -30,14 +28,13 @@ shell history.
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Any
 
 import requests
-from arc_agi_3._structs import FrameData, GameAction, Scorecard
+from arc_agi_3._structs import FrameData, GameAction
 
 from .actions import Action
+from .env_file import MissingKey, read_env_key
 
 DEFAULT_ROOT = "https://three.arcprize.org"
 TIMEOUT = 30
@@ -50,28 +47,15 @@ class ArcApiError(RuntimeError):
 def load_api_key(explicit: str | None = None) -> str:
     """ARC_API_KEY from the argument, the environment, or ./.env — in that order.
 
-    We parse `.env` ourselves rather than depending on python-dotenv, and we strip a
-    leading byte-order mark. That is not defensive programming for its own sake: Windows
-    PowerShell 5.1's `Set-Content -Encoding utf8` writes a BOM, which turns the first line
-    into a variable literally named `﻿ARC_API_KEY`, and the resulting 401 looks
-    exactly like a wrong key. It cost this project two sessions; it is handled here once.
+    The reading itself lives in `harness/env_file.py`, along with the Windows byte-order-mark
+    trap that made this project's first live run return 401 twice.
     """
-    if explicit:
-        return explicit
-    key = os.getenv("ARC_API_KEY")
-    if key:
-        return key
-    env_file = Path(".env")
-    if env_file.exists():
-        for line in env_file.read_text(encoding="utf-8-sig").splitlines():
-            line = line.lstrip("﻿").strip()
-            if line.startswith("ARC_API_KEY"):
-                _, _, value = line.partition("=")
-                return value.strip().strip('"').strip("'")
-    raise ArcApiError(
-        "no ARC_API_KEY found — set the environment variable, or put "
-        "'ARC_API_KEY=<key>' in a .env file in this folder"
-    )
+    try:
+        key = read_env_key("ARC_API_KEY", explicit=explicit)
+    except MissingKey as exc:
+        raise ArcApiError(str(exc)) from exc
+    assert key is not None  # required=True guarantees this
+    return key
 
 
 class ArcEnv:
@@ -122,20 +106,44 @@ class ArcEnv:
             self.card_id = str(self._post("/api/scorecard/open", {"tags": self.tags})["card_id"])
         return self.card_id
 
-    def close_scorecard(self) -> Scorecard | None:
+    def close_scorecard(self) -> dict[str, Any] | None:
+        """Close the card and return the server's raw JSON.
+
+        Raw, not `Scorecard`, and that is a measured decision: on 2026-07-22 this endpoint
+        answered with
+
+            {"card_id", "environments", "score", "tags", "tags_scores", "total_actions",
+             "total_environments", "total_environments_completed", "total_levels",
+             "total_levels_completed"}
+
+        The SDK's `Scorecard` model has none of those except `card_id` and `tags`; every
+        field has a default, so `model_validate` succeeds and silently hands back an object
+        whose `cards` is `{}` and whose `score` is a computed 0. Validating here would
+        throw away the only numbers the run is judged on. The vendor's schema does not
+        cover the vendor's endpoint, so we keep the JSON and say why.
+        """
         if not (self.card_id and self._owns_card):
             return None
         data = self._post("/api/scorecard/close", {"card_id": self.card_id})
-        card = Scorecard.model_validate(data)
         self.card_id = None
-        return card
+        return data
 
-    def scorecard(self) -> Scorecard:
+    def scorecard(self) -> dict[str, Any]:
+        """The open card's per-game state. **Only works before `close_scorecard`** —
+        afterwards the id is gone and this returns 404 (measured 2026-07-22)."""
         if not self.card_id:
             raise ArcApiError("no scorecard is open")
-        return Scorecard.model_validate(
-            self._get(f"/api/scorecard/{self.card_id}/{self.game_id}")
-        )
+        return self._get(f"/api/scorecard/{self.card_id}/{self.game_id}")
+
+    def card(self, game_id: str | None = None) -> dict[str, Any] | None:
+        """This game's card: plays, states, action counts, scores. Fetch before closing.
+
+        Shape (measured): the GET returns `{"cards": {game_id: {...}}, "played", "won",
+        "total_actions", "levels_completed"}`. This is the record the SDK's own recorder
+        writes as the trailing line of a recording, so ours matches file for file.
+        """
+        data = self.scorecard()
+        return (data.get("cards") or {}).get(game_id or self.game_id)
 
     @property
     def scorecard_url(self) -> str | None:

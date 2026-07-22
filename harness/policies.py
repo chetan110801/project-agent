@@ -36,8 +36,17 @@ def legal_actions(latest: FrameData) -> list[GameAction]:
     The server sends `available_actions` per frame. When it is empty we fall back to all
     eight — but that fallback is a guess, so it is one line and easy to find, rather than
     scattered `or ALL` defaults across the codebase.
+
+    RESET is always included. Real frames leave it out of `available_actions` (the live
+    `ls20` run advertised `[1, 2, 3, 4]` in all 81 frames, measured — see
+    `artifacts/run-report.json`), yet RESET is what you send when the game is over, and the
+    SDK sends it regardless of that list. Without this line the loop would flag its own
+    fallback as an illegal action and report a rejection that never happened.
     """
-    return list(latest.available_actions) or list(GameAction)
+    allowed = list(latest.available_actions) or list(GameAction)
+    if GameAction.RESET not in allowed:
+        allowed.insert(0, GameAction.RESET)
+    return allowed
 
 
 class RandomPolicy:

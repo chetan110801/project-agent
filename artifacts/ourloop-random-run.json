@@ -1,0 +1,126 @@
+{
+  "generated": "2026-07-22T05:48:01+00:00",
+  "game_id": "ls20-9607627b",
+  "agent": "our loop (random policy)",
+  "policy": "random",
+  "actions": 80,
+  "final_score": 0,
+  "final_state": "NOT_FINISHED",
+  "stopped_because": "max_actions",
+  "actions_not_available": 0,
+  "transitions_no_change": 0,
+  "dead_action_rate": 0.0,
+  "wall_seconds": 38.1903,
+  "latency_ms_median": 557.948,
+  "latency_ms_max": 882.175,
+  "actions_sent_histogram": {
+    "ACTION1": 20,
+    "ACTION2": 19,
+    "ACTION3": 22,
+    "ACTION4": 19
+  },
+  "run_id": "18fef424-0164-4f28-8cf9-90c03bafa4da",
+  "recording": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.recording.jsonl",
+  "trace": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.trace.jsonl",
+  "mock": false,
+  "seed": 0,
+  "max_actions": 80,
+  "stuck_limit": null,
+  "scorecard_url": "https://three.arcprize.org/scorecards/841609df-39e4-4b5e-9f96-15183079e2e3",
+  "scorecard_card": {
+    "actions": [
+      80
+    ],
+    "actions_by_level": [
+      []
+    ],
+    "game_id": "ls20-9607627b",
+    "guids": [
+      "bd89a1c6-3970-4f1e-b6e2-18b769b37f4b"
+    ],
+    "levels_completed": [
+      0
+    ],
+    "resets": [
+      0
+    ],
+    "states": [
+      "NOT_FINISHED"
+    ],
+    "total_actions": 80,
+    "total_plays": 1
+  },
+  "scorecard_closed": {
+    "card_id": "841609df-39e4-4b5e-9f96-15183079e2e3",
+    "environments": [
+      {
+        "actions": 80,
+        "completed": false,
+        "id": "ls20-9607627b",
+        "level_count": 7,
+        "levels_completed": 0,
+        "resets": 0,
+        "runs": [
+          {
+            "actions": 80,
+            "completed": false,
+            "guid": "bd89a1c6-3970-4f1e-b6e2-18b769b37f4b",
+            "level_actions": [
+              80,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "level_baseline_actions": [
+              22,
+              123,
+              73,
+              84,
+              96,
+              192,
+              186
+            ],
+            "level_scores": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "levels_completed": 0,
+            "resets": 0,
+            "score": 0.0,
+            "state": "NOT_FINISHED"
+          }
+        ],
+        "score": 0.0
+      }
+    ],
+    "score": 0.0,
+    "tags": [
+      "project-agent",
+      "our-loop",
+      "agent"
+    ],
+    "tags_scores": [
+      {
+        "actions": 80,
+        "id": "keyboard",
+        "levels_completed": 0,
+        "number_of_environments": 1,
+        "number_of_levels": 7,
+        "score": 0.0
+      }
+    ],
+    "total_actions": 80,
+    "total_environments": 1,
+    "total_environments_completed": 0,
+    "total_levels": 7,
+    "total_levels_completed": 0
+  }
+}

@@ -105,7 +105,8 @@ phone padding cut from 3.4rem/4.5rem to 3.05rem/1.6rem so text fills the screen
 vertically; and the JS viewport-height override now only runs where CSS `dvh` is
 unsupported — a stale `innerHeight` in an in-app browser (e.g. opening the file from the
 OneDrive app) is the most likely cause of the dead band Chetan saw at the bottom.
-**Untested on the actual iPhone** — needs his confirmation.
+**Confirmed working on his iPhone 2026-07-22:** text fills the screen top to bottom and
+the menu and home buttons are separate and visible. This item is closed.
 
 ---
 

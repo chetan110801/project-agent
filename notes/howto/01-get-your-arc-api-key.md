@@ -72,29 +72,39 @@ login button again.
 
 ---
 
-## Step 3 — Create the API key
+## Step 3 — Find your API key (it already exists)
+
+*Corrected 2026-07-22 after Chetan actually did this: the platform creates a key for you
+automatically on first login. There is usually nothing to create.*
 
 1. Look at the **top-right corner** of the page. There will be your **user profile** —
    your name, your avatar picture, or a small circle icon.
-2. **Click it.** A menu opens.
-3. In that menu, find and click **API Keys**.
-4. On the API Keys page, click the button to **create a new key**. (Labels vary a little —
-   look for *Create*, *New key*, *Generate*, or a **+** button.)
-5. If it asks you to name the key, type: `project-agent` — the name is only a label to
-   help you recognise it later; it changes nothing.
-6. **The key now appears on screen.** It will be a long string of letters and numbers.
+2. **Click it.** You land on your profile page (the address bar reads
+   `arcprize.org/user`).
+3. Scroll down to the box headed **API Keys**.
+4. **You should already see one row there** — a masked key like `6e•••7851`, a **GAMES**
+   column saying `public`, and the date it was created. That is your key. It was made for
+   you when you logged in.
+5. **Click the small copy icon** (the clipboard button immediately to the right of the
+   masked key). That copies the **full** key to your clipboard — the screen only ever
+   shows the masked short form, so the copy button is the only way to get it.
 
-::: warn
-**Copy it now.** Many key systems show the full key exactly once and only a masked
-version afterwards. Click the copy button next to it (or select the text and press
-`Ctrl+C`) **before you navigate away**.
-
-If you lose it, don't panic — you delete that key and create another. Nothing breaks.
+::: note
+**Why is it masked?** So that a screenshot, a screen-share, or someone glancing at your
+laptop doesn't leak it. The first and last few characters are shown only so you can tell
+two keys apart. Nothing is wrong.
 :::
 
-Paste it somewhere safe for the next 60 seconds — Notepad is fine. **Don't save that
-Notepad file**; you'll paste the key into its proper home in Step 4 and then close
-Notepad without saving.
+**If the API Keys box is empty:** click **Create Key** (leave the `public` checkbox
+ticked — `public` means the key can play the public games, which is exactly what we
+want). The new row appears immediately; then do step 5 above.
+
+**Don't delete the key** (the bin icon on the right) unless you mean to. If you ever do
+delete it by accident, or think it leaked, just click **Create Key** for a new one — old
+key dead, new key works, nothing else breaks.
+
+The key is now on your clipboard. Go straight to Step 4 — you'll paste it there. You do
+not need to save it anywhere else.
 
 ---
 
@@ -170,31 +180,47 @@ arc-agi-3 --agent=random --game=ls20
 
 Press **Enter**.
 
-**What should happen:** lines start scrolling — the tool connects, starts the game, and
-plays it with the random agent (the deliberately dumb baseline from
-[Study 05](../study/05-the-agent-loop.md)). Each line shows an action, a count, and a
-score. It'll run up to 80 actions and then stop.
+**What actually happens on Windows** (observed 2026-07-22, this exact machine):
 
-At the end it prints a **scorecard** — a block of JSON with the score and action counts —
-and a **web link** where you can view the same result in your browser.
+```text
+API endpoint: https://three.arcprize.org/api/games
+2026-07-22 10:11:21,180 | INFO | Game list: ['ls20-9607627b']
+```
+
+…and then the window comes back to a prompt, seemingly having done nothing. **It worked.**
+Look in the project folder and you'll find a new file named something like
+`ls20-9607627b.random.80.<long-id>.recording.jsonl`, about 1 MB. That file is the whole
+game: 81 frames plus the scorecard.
+
+::: warn
+**This is a bug in the tool, on Windows, and it is not your fault.** When the agent
+finishes, the tool shuts itself down by sending itself the "Ctrl-C" signal. On Linux and
+Mac that runs a tidy-up step that prints the scorecard and a web link. On Windows the same
+signal simply kills the process, so the run ends abruptly with exit code 2 and the
+scorecard is never printed — even though the game was played and fully recorded.
+
+Nothing is lost: the scorecard is the last line of the recording file, and
+`py scripts/analyze_run.py` reads it out. It is also one of the reasons this project runs
+the agent from its own code rather than through this tool.
+:::
 
 ::: note
-**Expect the score to be zero or near zero, and that is the correct outcome.** The random
-agent presses buttons at random; it isn't supposed to win. What we're proving here is
-that the *pipeline* works: your key is accepted, a real game ran, and a scorecard came
-back. That's the entire goal of this step. The score becomes meaningful in the next phase,
-as the baseline everything else is compared against.
+**Expect the score to be zero, and that is the correct outcome.** The random agent presses
+buttons at random; it isn't supposed to win. What this proves is that the *pipeline* works:
+key accepted, real game played, frames recorded. The score becomes meaningful in the next
+phase, as the baseline everything else is compared against.
 :::
 
 ### If it doesn't work
 
 | What you see | What it means | What to do |
 |---|---|---|
-| `401` or `Unauthorized` or `Invalid API key` | The key isn't reaching the tool | Re-run `Get-Content .env` and check the line reads `ARC_API_KEY=` followed by your real key — no spaces around the `=`, no quotes around the key |
+| `401` or `unauthorized`, and `Game list: []` | The key isn't reaching the tool | Almost always the `.env` file. It must contain the line `ARC_API_KEY=` **followed by** the key, and it must have no invisible byte-order mark at the start — which `Set-Content -Encoding utf8` adds on Windows PowerShell 5.1. Tell me and I'll rewrite the file for you; it's a two-second fix and it has bitten this project twice. |
+| Exit code 2, no scorecard printed | The Windows shutdown bug above | Nothing to do — check for the `.recording.jsonl` file; if it's there, the run succeeded |
 | `arc-agi-3 : The term ... is not recognized` | The tool isn't on your command path | Run it this way instead: `py -m arc_agi_3._cli --agent=random --game=ls20` |
-| `404` or `game not found` | The game id `ls20` isn't available on your account | Run `arc-agi-3 --agent=random` with no `--game` — it plays whatever games your key can reach |
+| `The specified game ... does not exist` | The game id filter matched nothing | Run `arc-agi-3 --agent=random` with no `--game` — it plays whatever games your key can reach |
 | Connection / timeout errors | Network or server issue | Check you're online, wait a minute, try again |
-| It runs but you're not sure it worked | — | That's fine — send me the output (Step 6) and I'll read it |
+| It runs but you're not sure it worked | — | Send me the output (Step 6) and I'll read it |
 
 ---
 

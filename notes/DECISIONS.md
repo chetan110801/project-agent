@@ -5,6 +5,63 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 (morning) — Phase A done: first live run; the harness is built against a mock so it never waits on quota
+
+**Decision:** The agent harness is developed against an **offline mock environment**
+(`harness/mock_game.py`) that returns the SDK's own `FrameData` objects, with the real API
+used only for ground-truth runs. Our loop takes an `Environment` protocol rather than
+subclassing the SDK's `Agent`, because the SDK's loop is welded to its HTTP transport —
+every test of it would cost a network call and a slice of the free tier, which in practice
+means the tests don't get written. Result: 35 tests, running in 0.4 s, no key required.
+
+**Phase A is complete.** The `ls20` game was played end to end by the SDK's random
+baseline; the 81-frame recording is committed in `runs/` and analysed by
+`scripts/analyze_run.py` into `artifacts/run-report.json`. Score 0, state `NOT_FINISHED`,
+80 actions — the expected baseline result.
+
+**Findings from that run (all measured, all in the artifact):**
+
+- **The baseline wasted 47.5% of its budget.** `available_actions` was `[1, 2, 3, 4]` in
+  every frame; the SDK's random agent picks from all eight. 38 of 80 actions were buttons
+  that don't exist, and those are exactly the 38 transitions that changed nothing. Our
+  loop's illegal-action guard recovers that for one line of code and no model.
+- **Three of our pre-data assumptions were wrong**, each silent, none caught by a test:
+  cell values reach 12 (so packed *decimal* rendering is ambiguous — cells are now one hex
+  character); the background of `ls20` is colour 4 covering 64% of the screen, not 0 (the
+  object encoder was describing the floor as the biggest object — background is now
+  inferred); and one frame carried **six** grids, an animation for a single action (so
+  `frame[0]` would show a stale mid-animation picture — we take the last).
+- **Encoding costs on a real frame:** hex-packed grid 1,471 tokens; the same grid as spaced
+  decimals 8,191 (**5.6× for identical information**); objects 468; diff 22. On a
+  hand-built checkerboard the object encoding *inverts* to 20.9× the raw grid, so it
+  carries a truncation cap. Counts are `tiktoken/o200k_base` — for comparing encodings
+  only, never as a budget for another vendor's model.
+- **My synthetic pre-run measurement of the object encoding said 14×; the real frame says
+  3×.** The code was fine; the invented test input was flattering. Recorded because it is
+  the commonest way an honest number misleads.
+- **Two Windows papercuts, both costing a session's start:** `Set-Content -Encoding utf8`
+  writes a UTF-8 BOM, so `.env` produced a variable literally named `﻿ARC_API_KEY` and
+  the API returned 401 (the same BOM bug hit `.gitignore` on 2026-07-21). And the SDK's CLI
+  shuts down with `os.kill(os.getpid(), SIGINT)`, which on Windows kills the process before
+  the scorecard is printed — exit code 2, no output, despite a fully successful run. Both
+  are written into `notes/howto/01`.
+
+**Why:** Phase A's stated goal was to prove the pipeline before adding cleverness. It did
+that and more — the run cost nothing, scored nothing, and destroyed three wrong assumptions
+that every test would have kept passing.
+
+**Rejected:** subclassing the SDK's `Agent` and using its loop (untestable offline, and the
+loop is the interview artifact — see study note 05); waiting for real frames before writing
+any encoder (the mock made the loop and its guards testable immediately, and the guards
+turned out to be what the run needed); using the SDK CLI as the runner (the Windows
+shutdown bug plus no control over context is exactly what our own runner is for).
+
+**Also decided:** study notes quote numbers only from `artifacts/`, and every token count
+in this repo travels with the name of the tokeniser that produced it. Study note 06
+(context engineering) is written; note 07 (evals) waits for the eval suite to exist.
+
+---
+
 ## 2026-07-22 — Study notes become a structured course for a zero-knowledge reader; step-by-step walkthroughs are mandatory
 
 **Decision:** Three new hard rules, written into `CLAUDE.md` (§6A, §6B) so every future

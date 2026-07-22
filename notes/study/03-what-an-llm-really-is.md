@@ -141,9 +141,25 @@ Write that grid out as text — digits with spaces and line breaks — and you'r
 **several thousand tokens for a single screenshot of a single moment.**
 
 ::: warn
-That "several thousand" is arithmetic from the grid size, **not a measurement**. We will
-replace it with a counted number from a real frame in Phase A, and this note gets
-updated with the real figure. Project rule: no number stands on a guess.
+**Updated 2026-07-22 — now measured on a real frame.** That "several thousand" started as
+arithmetic. It has been counted, on an actual 64 × 64 frame from the `ls20` game, recorded
+in this repo (`runs/`, analysed by `scripts/analyze_run.py`, results in
+`artifacts/run-report.json`):
+
+| The same real frame, written as… | Tokens |
+|---|---:|
+| one character per cell, no separators | **1,471** |
+| decimal numbers with spaces between them | **8,191** |
+| a description of the objects in it | **468** |
+| just what changed since the previous frame | **22** |
+
+Same screen. Same information in the first two rows. **5.6× the cost.** That gap is the
+subject of [note 06](06-context-engineering.md).
+
+Still owed, and not rounded up: these counts come from `tiktoken`'s `o200k_base` — an
+**OpenAI** tokeniser — so they compare formats against each other honestly but are *not* a
+budget for another vendor's model (see the tokeniser trap above). The budget number gets
+counted with the provider's own endpoint once we pick the model in Phase B.
 :::
 
 Now watch the problem appear:

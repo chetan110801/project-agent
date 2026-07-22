@@ -291,6 +291,12 @@ Part 2 — context engineering, evals, tracing, memory, budgets — gets written
 is built, because a note about an unbuilt component would be guesswork, and this project
 doesn't publish guesswork.
 
-**What happens next, and it needs you:** nothing can be built until the agent can talk to
-a real game, and that needs a free API key.
+**Two things happen next.**
+
+**One needs you:** the agent can't play a *real* game until it has a free API key.
 → [How-to 01 — Get your ARC-AGI-3 API key, step by step](../howto/01-get-your-arc-api-key.md)
+
+**One didn't wait for it.** The loop above, and the decision about what to show the model
+inside it, were built and tested offline against a fake local game — no key, no quota.
+That work, with its measurements, is the next note.
+→ [Study 06 — Context engineering](06-context-engineering.md)

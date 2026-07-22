@@ -1,0 +1,75 @@
+{
+  "generated": "2026-07-22",
+  "what": "size of one 64x64 frame under each encoding in harness/frames.py",
+  "caveat": "SYNTHETIC grids built by scripts/measure_encodings.py, not real ARC-AGI-3 frames. Character counts are exact; token counts are tiktoken/o200k_base (an OpenAI tokeniser) and are valid for comparing encodings only, never as a budget for another vendor's model.",
+  "grid_size": [
+    64,
+    64
+  ],
+  "encodings": [
+    {
+      "label": "sparse / raw grid, hex packed",
+      "chars": 4159,
+      "lines": 64,
+      "tokens": 1471,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 1.0
+    },
+    {
+      "label": "sparse / raw grid, decimal space-separated",
+      "chars": 8191,
+      "lines": 64,
+      "tokens": 8191,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 1.9695
+    },
+    {
+      "label": "sparse / objects",
+      "chars": 253,
+      "lines": 5,
+      "tokens": 107,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 0.0608
+    },
+    {
+      "label": "sparse / diff after one move",
+      "chars": 117,
+      "lines": 1,
+      "tokens": 75,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 0.0281
+    },
+    {
+      "label": "sparse / diff after a dead action",
+      "chars": 15,
+      "lines": 1,
+      "tokens": 2,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 0.0036
+    },
+    {
+      "label": "busy / raw grid, hex packed",
+      "chars": 4159,
+      "lines": 64,
+      "tokens": 1471,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 1.0
+    },
+    {
+      "label": "busy / objects (truncated at 40)",
+      "chars": 1266,
+      "lines": 42,
+      "tokens": 626,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 0.3044
+    },
+    {
+      "label": "busy / objects (untruncated)",
+      "chars": 62886,
+      "lines": 2049,
+      "tokens": 30735,
+      "tokenizer": "tiktoken/o200k_base",
+      "chars_vs_packed_raw": 15.1205
+    }
+  ]
+}

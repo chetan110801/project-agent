@@ -5,6 +5,58 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-23 (later) — Experiment 3, PRE-REGISTERED before the run: make the theory explicit and falsifiable
+
+*This half of the entry was written and committed **before** the arm was run. The results
+section below it was appended afterwards. That order is the point: the last two experiments
+each produced a number that could be read as a win if you chose the reading afterwards, and
+the cheapest defence against choosing is to write the reading down first.*
+
+**The question.** The diagnosis left standing this morning is **premature commitment**: the
+agent picks one theory of the goal and never tests another. Memory did not fix it
+(experiment 1, reverted). A progress signal cannot exist (refuted offline). The repetition
+guard stopped the *symptom* — 26 identical actions in a row became 3 — and the score stayed
+0. So: does making the theory **explicit and falsifiable** change how the agent explores?
+
+**The change (one variable).** `hypothesis: None -> True`, arm `dev-llm-y1` against
+`dev-llm-r3`. Everything else identical — dev suite, seed 0, 30 actions, `repeat_limit 3`,
+`gemini-3.5-flash-lite`, objects encoder. The agent is asked for three lines: a GOAL (its
+theory of what the game wants), the ACTION, and a PREDICT of how much of the screen that
+action will change (NONE / FEW / MANY). The harness carries the theory forward, **checks the
+prediction against the frame that comes back**, and when the prediction fails says so in its
+own voice and demands a different theory. The model never grades itself — experiment 1
+established that a model given facts to interpret interprets them in its own favour.
+
+**The FEW/MANY boundary is measured, not chosen** (`scripts/change_sizes.py` →
+`artifacts/change-sizes.json`): across every committed recording these screens change
+**bimodally** — about two cells, or dozens, with almost nothing in between. Every boundary
+from 3 to 20 reclassifies under 1% of actions in every arm, so the number cannot be tuned to
+produce a result. It is set at 5.
+
+**What would count as the intervention working** (steering, decided in advance):
+`top_action_share_excess` down and `distinct_targets` up — the same two metrics the
+repetition guard moved — *with* `hypothesis_changes` well above zero, which is what says the
+mechanism actually ran rather than the prompt being ignored.
+
+**What would count as it backfiring.** A written theory carried forward may *entrench*
+commitment instead of breaking it: excess up, distinct targets down, `hypothesis_changes`
+near zero while predictions keep failing. This is a real possibility, not a formality —
+carrying the agent's own words forward is exactly what experiment 1 did with its actions,
+and that made things worse.
+
+**What would count as no result at all.** `hypothesis_stated_rate` low (the model ignores
+the format), or `predictions_checked` near zero. Either means the arm measured our prompt's
+obedience, not the agent's play.
+
+**The noise floor is known in advance and constrains what may be claimed.** A single seed;
+this morning a metric moved 17 points in a game where the intervention never fired. So no
+difference of that size in one game will be called a result, and any claim has to point at
+the games where the mechanism actually fired.
+
+**Cost expected:** roughly +5-8% input tokens for the extra block, and the same 120 calls.
+
+---
+
 ## 2026-07-23 — The progress signal cannot exist. Four candidates, all refuted offline; a repetition guard shipped instead
 
 **Decision:** `harness/progress.py` and `scripts/progress_signals.py` exist as a **recorded

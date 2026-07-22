@@ -13,7 +13,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from arc_agi_3._structs import GameAction, GameState  # noqa: E402
 
@@ -31,6 +32,20 @@ from harness.frames import (  # noqa: E402
     render_objects,
 )
 from harness.budget import LIMITS, BudgetExhausted, Limits, RateLimiter  # noqa: E402
+from harness.hypothesis import (  # noqa: E402
+    FEW,
+    FEW_MANY_BOUNDARY,
+    GOAL_MAX_CHARS,
+    MANY,
+    NONE,
+    Hypothesis,
+    bucket_of,
+    judge,
+    parse_hypothesis,
+    render_block,
+    same_goal,
+    strip_hypothesis_lines,
+)
 from harness.llm import ScriptedClient  # noqa: E402
 from harness.loop import run_episode  # noqa: E402
 from harness.mock_game import AGENT, MockGame, WIN_SCORE  # noqa: E402
@@ -708,6 +723,175 @@ class TestRepetitionGuard(unittest.TestCase):
         self.assertIsNone(blocked_label(frames, 3))
 
 
+class TestHypothesisParsing(unittest.TestCase):
+    """Reading a theory and a prediction out of whatever the model actually sends."""
+
+    def test_the_three_line_reply_the_prompt_asks_for(self):
+        h = parse_hypothesis("GOAL: reach the green square\nACTION1\nPREDICT: FEW")
+        self.assertEqual(h.goal, "reach the green square")
+        self.assertEqual(h.prediction, FEW)
+
+    def test_models_decorate_things_and_we_cope(self):
+        for text in (
+            "**GOAL:** reach the green square\nACTION1\n**PREDICT:** few",
+            "- GOAL - reach the green square\nACTION1\n- PREDICT - FEW cells\n",
+            "goal: reach the green square\nACTION1\npredict: I expect FEW",
+        ):
+            with self.subTest(text=text):
+                h = parse_hypothesis(text)
+                self.assertEqual(h.goal, "reach the green square")
+                self.assertEqual(h.prediction, FEW)
+
+    def test_a_missing_part_is_none_not_an_error(self):
+        self.assertEqual(parse_hypothesis("ACTION1\njust pressing things"), Hypothesis())
+        self.assertIsNone(parse_hypothesis("GOAL: explore\nACTION1").prediction)
+
+    def test_a_runaway_goal_cannot_grow_the_prompt(self):
+        """The context budget is the free tier's, not the model's."""
+        h = parse_hypothesis("GOAL: " + "words " * 200 + "\nACTION1")
+        self.assertLessEqual(len(h.goal), GOAL_MAX_CHARS)
+
+    def test_a_theory_mentioning_a_button_is_not_read_as_a_decision(self):
+        """The bug this function exists to prevent, stated as a test."""
+        reply = "GOAL: keep pressing ACTION3 to grow the bar\nACTION1\nPREDICT: FEW"
+        self.assertEqual(parse_action(reply).kind, GameAction.ACTION3)  # the trap
+        self.assertEqual(
+            parse_action(strip_hypothesis_lines(reply)).kind, GameAction.ACTION1
+        )
+
+
+class TestHypothesisJudging(unittest.TestCase):
+    def test_the_buckets_come_from_the_measured_boundary(self):
+        self.assertEqual(bucket_of(0), NONE)
+        self.assertEqual(bucket_of(1), FEW)
+        self.assertEqual(bucket_of(FEW_MANY_BOUNDARY), FEW)
+        self.assertEqual(bucket_of(FEW_MANY_BOUNDARY + 1), MANY)
+
+    def test_the_boundary_sits_inside_the_band_the_recordings_allow(self):
+        """If this fails, the number became a knob and the artifact says which values are not."""
+        path = ROOT / "artifacts" / "change-sizes.json"
+        measured = json.loads(path.read_text(encoding="utf-8"))
+        self.assertIn(FEW_MANY_BOUNDARY, measured["stable_band"])
+
+    def test_a_right_and_a_wrong_prediction(self):
+        self.assertTrue(judge(FEW, 2).correct)
+        self.assertFalse(judge(FEW, 52).correct)
+
+    def test_nothing_to_check_is_not_the_same_as_wrong(self):
+        """First move, no prediction, or a shape change: unchecked, never counted a miss."""
+        for verdict in (judge(None, 2), judge(FEW, None), judge("maybe", 2)):
+            with self.subTest(verdict=verdict):
+                self.assertIsNone(verdict.correct)
+                self.assertFalse(verdict.checked)
+
+    def test_a_failed_prediction_demands_a_different_theory(self):
+        block = render_block(Hypothesis("grow the bar", MANY), judge(MANY, 0))
+        self.assertIn("WRONG", block)
+        self.assertIn("DIFFERENT theory", block)
+
+    def test_a_survived_prediction_is_not_congratulated(self):
+        """It has already shown it reads any encouragement as proof it is winning."""
+        block = render_block(Hypothesis("grow the bar", FEW), judge(FEW, 2))
+        self.assertIn("held", block)
+        self.assertIn("not a solved game", block)
+        self.assertNotIn("WRONG", block)
+
+    def test_rewording_is_counted_as_a_change_rather_than_missed(self):
+        """The error direction is stated where the number is reported, and it is the safe one."""
+        self.assertTrue(same_goal("Reach the green square.", "reach the green square"))
+        self.assertFalse(same_goal("reach the green square", "reach the green box"))
+
+
+class TestHypothesisPolicy(unittest.TestCase):
+    def _frames(self, moves):
+        g = MockGame()
+        frames = [g.reset()]
+        for kind in moves:
+            frames.append(g.step(Action(kind)))
+        return frames
+
+    def test_off_by_default_and_the_control_prompt_is_frozen(self):
+        """The Phase B prompt, byte for byte. Every arm's control is this string."""
+        g = MockGame()
+        frame = g.reset()
+        prompt = LLMPolicy(ScriptedClient(["ACTION1"])).build_prompt([frame], frame)
+        self.assertEqual(
+            prompt,
+            "You are playing a puzzle video game. You see the screen as a grid of colours.\n"
+            "\n"
+            "grid 16x16, background 0, 2 objects\n"
+            "colour 3: 1 cell at (r2, c5)\n"
+            "colour 4: 1 cell at (r0, c0)\n"
+            "\n"
+            "Your last action: RESET\n"
+            "What that changed: this is the first frame\n"
+            "\n"
+            "Buttons you may press right now: ACTION1, ACTION2, ACTION3, ACTION4, "
+            "ACTION5, ACTION6, ACTION7\n"
+            "\n"
+            "Reply with ONE line and nothing else, in this exact form:\n"
+            "ACTION<n>\n"
+            "or, for a click:\n"
+            "ACTION6 x=<0-63> y=<0-63>\n"
+            "\n"
+            "Then, on a second line, at most 15 words explaining why.",
+        )
+
+    def test_the_first_prompt_asks_for_a_theory(self):
+        g = MockGame()
+        frame = g.reset()
+        policy = LLMPolicy(ScriptedClient(["ACTION1"]), hypothesis=True)
+        prompt = policy.build_prompt([frame], frame)
+        self.assertIn("not stated a theory", prompt)
+        self.assertIn("GOAL:", prompt)
+        self.assertIn("PREDICT:", prompt)
+
+    def test_the_theory_is_carried_into_the_next_prompt(self):
+        client = ScriptedClient(["GOAL: reach the exit\nACTION1\nPREDICT: MANY"])
+        policy = LLMPolicy(client, hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=3)
+        self.assertIn("reach the exit", client.prompts[1])
+
+    def test_a_silent_turn_leaves_the_commitment_standing(self):
+        """Silence is not a retraction — otherwise dropping a line escapes the rule."""
+        client = ScriptedClient(["GOAL: reach the exit\nACTION1\nPREDICT: FEW", "ACTION2"])
+        policy = LLMPolicy(client, hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=3)
+        self.assertIn("reach the exit", client.prompts[2])
+        self.assertEqual(policy.hypotheses_stated, 2)  # turns 1 and 3, not turn 2
+
+    def test_predictions_are_graded_by_the_harness_and_counted(self):
+        client = ScriptedClient(["GOAL: move the block\nACTION5\nPREDICT: MANY"])
+        policy = LLMPolicy(client, hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=4)
+        # ACTION5 is not available in the mock, so nothing on screen moves: MANY is wrong
+        # every time it can be checked.
+        self.assertEqual(policy.predictions_checked, 3)
+        self.assertEqual(policy.predictions_wrong, 3)
+        self.assertIn("WRONG", client.prompts[-1])
+
+    def test_the_agent_is_never_told_it_was_wrong_when_it_was_not_checked(self):
+        client = ScriptedClient(["ACTION1"])  # no theory, no prediction, ever
+        policy = LLMPolicy(client, hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=4)
+        self.assertEqual(policy.predictions_checked, 0)
+        self.assertEqual(policy.hypothesis_changes, 0)
+        self.assertNotIn("WRONG", client.prompts[-1])
+
+    def test_a_shape_change_is_unknown_rather_than_zero(self):
+        """Scoring it 0 would mark NONE correct on the turn the world did the most."""
+        policy = LLMPolicy(ScriptedClient(["ACTION1"]), hypothesis=True)
+        frames = self._frames([GameAction.ACTION1])
+        frames[-1].frame = [[[1, 2], [3, 4]]]  # a differently shaped screen
+        self.assertIsNone(policy.cells_changed(frames))
+
+    def test_an_unparseable_reply_is_recorded_whole_not_just_its_first_line(self):
+        """14 replies on tn36 were logged as the single word 'ACTION6' and lost."""
+        policy = LLMPolicy(ScriptedClient(["ACTION6\nclicking row 1, column 52"]))
+        result = run_episode(MockGame(), policy, max_actions=1)
+        self.assertIn("row 1, column 52", result.steps[0].reasoning)
+
+
 def max_streak(labels):
     best = run = 0
     previous = None
@@ -846,6 +1030,51 @@ class TestEvalAggregation(unittest.TestCase):
         self.assertAlmostEqual(agg["illegal_action_rate"], 0.9, places=4)
         per_game = [e.illegal_action_rate for e in arm.episodes]
         self.assertAlmostEqual(sum(per_game) / len(per_game), 0.5, places=4)
+
+    def test_the_theory_metrics_are_pooled_and_absent_when_the_arm_never_had_them(self):
+        """A rate over the suite, and '-' rather than a zero the arm never measured."""
+        plain = self._arm("old", run_episode(MockGame(), RandomPolicy(seed=3), max_actions=4))
+        self.assertIsNone(plain.aggregate()["hypothesis_changes"])
+        self.assertIsNone(plain.aggregate()["prediction_hit_rate"])
+
+        arm = evals.Arm(name="hyp", suite="dev", games=["a", "b"], episodes=[])
+        for checked, wrong, stated, calls in ((10, 1, 10, 10), (30, 14, 20, 30)):
+            r = run_episode(MockGame(), RandomPolicy(seed=4), max_actions=5)
+            arm.episodes.append(
+                evals.measure(
+                    r,
+                    {
+                        "calls": calls,
+                        "predictions_checked": checked,
+                        "predictions_wrong": wrong,
+                        "hypotheses_stated": stated,
+                        "hypothesis_changes": 2,
+                    },
+                )
+            )
+        agg = arm.aggregate()
+        self.assertEqual(agg["hypothesis_changes"], 4)
+        # Pooled: 25 hits over 40 checks, not the mean of 0.9 and 0.533.
+        self.assertAlmostEqual(agg["prediction_hit_rate"], 0.625, places=4)
+        self.assertAlmostEqual(agg["hypothesis_stated_rate"], 30 / 40, places=4)
+
+    def test_an_arm_that_stated_no_predictions_reports_nothing_not_a_perfect_score(self):
+        arm = evals.Arm(
+            name="silent",
+            suite="dev",
+            games=["a"],
+            episodes=[
+                evals.measure(
+                    run_episode(MockGame(), RandomPolicy(seed=5), max_actions=4),
+                    {"calls": 4, "predictions_checked": 0, "predictions_wrong": 0,
+                     "hypotheses_stated": 0, "hypothesis_changes": 0},
+                )
+            ],
+        )
+        agg = arm.aggregate()
+        self.assertIsNone(agg["prediction_hit_rate"])
+        self.assertEqual(agg["hypothesis_changes"], 0)   # measured zero, and it says so
+        self.assertEqual(agg["hypothesis_stated_rate"], 0.0)
 
     def test_a_failed_episode_is_counted_but_does_not_pollute_the_rates(self):
         ok = evals.measure(run_episode(MockGame(), RandomPolicy(seed=2), max_actions=10))

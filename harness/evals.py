@@ -149,6 +149,13 @@ STEERING = (
     # the *size* of an intervention, not a measure of how well the agent played. A change
     # whose intervention rate is invisible is a change of unknown magnitude.
     "repeat_blocks",
+    # The same treatment for the theory-of-the-game arm: how often the agent changed its
+    # stated theory, and how often the prediction it attached to that theory survived
+    # contact with the game. Both are the size and the bite of the intervention. Neither
+    # gets a direction — a high hit rate can mean a sharp theory or a safe one, and we do
+    # not know which without reading the traces (`harness/hypothesis.py`).
+    "hypothesis_changes",
+    "prediction_hit_rate",
 )
 OUTCOME = ("final_score", "levels_completed", "final_state", "level1_completed")
 COST = (
@@ -158,6 +165,10 @@ COST = (
     "seconds_waited",
     "llm_retries",
     "usable_reply_rate",
+    # Format compliance, next to the other reply-quality number and for the same reason: a
+    # prompt that asks for three lines and gets two has not been obeyed, and that is a cost
+    # of the change rather than a property of the agent's play.
+    "hypothesis_stated_rate",
 )
 
 # Which way is good. Anything not listed is reported without a verdict, because inventing
@@ -233,6 +244,12 @@ class Metrics:
     llm_retries: int | None = None
     # Times the repetition guard refused the model's choice (`harness/policies.py`).
     repeat_blocks: int | None = None
+    # The theory-of-the-game arm (`harness/hypothesis.py`). All None when it was off, so an
+    # arm from before it existed reports "-" rather than a zero it never measured.
+    hypotheses_stated: int | None = None
+    hypothesis_changes: int | None = None
+    predictions_checked: int | None = None
+    predictions_wrong: int | None = None
     error: str | None = None
 
     # -- derived ----------------------------------------------------------- #
@@ -310,6 +327,25 @@ class Metrics:
         bad = (self.parse_failures or 0) + (self.client_errors or 0)
         return (self.llm_calls - bad) / self.llm_calls
 
+    @property
+    def prediction_hit_rate(self) -> float | None:
+        """Share of checkable predictions that matched what the screen actually did.
+
+        The denominator is `predictions_checked`, not the number of actions: a turn where
+        the agent stated no prediction is not a turn it got wrong. Counting silence as a
+        miss would let the metric improve by making the model less talkative.
+        """
+        if not self.predictions_checked:
+            return None
+        return (self.predictions_checked - (self.predictions_wrong or 0)) / self.predictions_checked
+
+    @property
+    def hypothesis_stated_rate(self) -> float | None:
+        """Share of model calls that came back with the theory line the prompt asked for."""
+        if not self.llm_calls or self.hypotheses_stated is None:
+            return None
+        return self.hypotheses_stated / self.llm_calls
+
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         for name in (
@@ -320,6 +356,8 @@ class Metrics:
             "top_action_share_excess",
             "level1_ratio",
             "usable_reply_rate",
+            "prediction_hit_rate",
+            "hypothesis_stated_rate",
         ):
             v = getattr(self, name)
             d[name] = round(v, 4) if isinstance(v, float) else v
@@ -384,6 +422,10 @@ def measure(result: Any, llm: dict[str, Any] | None = None) -> Metrics:
         seconds_waited=(llm or {}).get("seconds_waited"),
         llm_retries=(llm or {}).get("retries"),
         repeat_blocks=(llm or {}).get("repeat_blocks"),
+        hypotheses_stated=(llm or {}).get("hypotheses_stated"),
+        hypothesis_changes=(llm or {}).get("hypothesis_changes"),
+        predictions_checked=(llm or {}).get("predictions_checked"),
+        predictions_wrong=(llm or {}).get("predictions_wrong"),
     )
 
 
@@ -421,6 +463,19 @@ def from_scorecard(metrics: Metrics, closed: dict[str, Any] | None) -> Metrics:
     metrics.level_count = env.get("level_count")
     metrics.level1_completed = bool((metrics.levels_completed or 0) >= 1)
     return metrics
+
+
+def _pooled_rate(hits: int, total: int, measured: bool = True) -> float | None:
+    """A rate over the whole suite, or None when there is nothing to divide by.
+
+    None and 0.0 are different answers and the difference matters: None means the arm never
+    measured this, 0.0 means it measured it and the answer was none. A zero denominator has
+    to come back as None, or an arm that stated no predictions at all would report a perfect
+    (or a catastrophic) hit rate out of thin air.
+    """
+    if not measured or total <= 0:
+        return None
+    return round(hits / total, 4)
 
 
 # --------------------------------------------------------------------------- #
@@ -489,6 +544,26 @@ class Arm:
                 sum(e.repeat_blocks or 0 for e in eps)
                 if any(e.repeat_blocks is not None for e in eps)
                 else None
+            ),
+            # Same convention as `repeat_blocks`: a measured zero is a finding and prints as
+            # 0, while None means the arm never had the feature at all. Rates are pooled
+            # over the suite (totals over totals), never averaged over games.
+            "hypothesis_changes": (
+                sum(e.hypothesis_changes or 0 for e in eps)
+                if any(e.hypothesis_changes is not None for e in eps)
+                else None
+            ),
+            "prediction_hit_rate": _pooled_rate(
+                sum(
+                    (e.predictions_checked or 0) - (e.predictions_wrong or 0)
+                    for e in eps
+                ),
+                sum(e.predictions_checked or 0 for e in eps),
+            ),
+            "hypothesis_stated_rate": _pooled_rate(
+                sum(e.hypotheses_stated or 0 for e in eps),
+                sum(e.llm_calls or 0 for e in eps),
+                measured=any(e.hypotheses_stated is not None for e in eps),
             ),
             # outcome — reported, never steered on
             "final_score": sum(e.final_score for e in eps),

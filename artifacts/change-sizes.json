@@ -1,0 +1,1126 @@
+{
+  "generated_from": "recordings committed in runs/",
+  "rule": "NONE = 0 cells; FEW = 1..B; MANY = above B. B is any value in the stable band below \u2014 inside it, moving the boundary reclassifies under 1% of actions in every group, because these screens change bimodally (about 2 cells, or dozens).",
+  "stable_band": [
+    2,
+    3,
+    5,
+    8,
+    10,
+    20
+  ],
+  "few_many_boundary": 5,
+  "boundary_is_inside_the_band": true,
+  "groups": {
+    "adhoc-llm": {
+      "actions": 31,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 22.97,
+      "share_above": {
+        "2": 0.4194,
+        "3": 0.4194,
+        "5": 0.4194,
+        "8": 0.4194,
+        "10": 0.4194,
+        "20": 0.4194
+      }
+    },
+    "adhoc-random": {
+      "actions": 640,
+      "dead_share": 0.0609,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 138.0,
+      "max": 162,
+      "mean": 38.99,
+      "share_above": {
+        "2": 0.7141,
+        "3": 0.7141,
+        "5": 0.7109,
+        "8": 0.7109,
+        "10": 0.7109,
+        "20": 0.7109
+      }
+    },
+    "dev-llm-h0": {
+      "actions": 120,
+      "dead_share": 0.0917,
+      "median": 1.0,
+      "p75": 2.0,
+      "p90": 52.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 11.4,
+      "share_above": {
+        "2": 0.1083,
+        "3": 0.1083,
+        "5": 0.1083,
+        "8": 0.1083,
+        "10": 0.1083,
+        "20": 0.1083
+      }
+    },
+    "dev-llm-h8": {
+      "actions": 120,
+      "dead_share": 0.175,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 31.61,
+      "share_above": {
+        "2": 0.375,
+        "3": 0.375,
+        "5": 0.375,
+        "8": 0.375,
+        "10": 0.375,
+        "20": 0.3667
+      }
+    },
+    "dev-llm-r3": {
+      "actions": 120,
+      "dead_share": 0.1167,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 33.91,
+      "share_above": {
+        "2": 0.4833,
+        "3": 0.4833,
+        "5": 0.4833,
+        "8": 0.4833,
+        "10": 0.4833,
+        "20": 0.475
+      }
+    },
+    "dev-random": {
+      "actions": 320,
+      "dead_share": 0.1781,
+      "median": 1.0,
+      "p75": 52.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 138,
+      "mean": 29.63,
+      "share_above": {
+        "2": 0.3812,
+        "3": 0.3812,
+        "5": 0.3719,
+        "8": 0.3719,
+        "10": 0.3719,
+        "20": 0.3688
+      }
+    },
+    "dev-random-30": {
+      "actions": 120,
+      "dead_share": 0.2,
+      "median": 1.0,
+      "p75": 52.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 29.89,
+      "share_above": {
+        "2": 0.375,
+        "3": 0.375,
+        "5": 0.375,
+        "8": 0.375,
+        "10": 0.375,
+        "20": 0.375
+      }
+    },
+    "llm-80-THE-STUCK-RUN": {
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 138,
+      "mean": 21.82,
+      "share_above": {
+        "2": 0.375,
+        "3": 0.375,
+        "5": 0.375,
+        "8": 0.375,
+        "10": 0.375,
+        "20": 0.375
+      }
+    }
+  },
+  "by_game": {
+    "ar25-0c556536": {
+      "dev-llm-h0": {
+        "actions": 30,
+        "dead_share": 0.0333,
+        "median": 1.0,
+        "p75": 109.0,
+        "p90": 109.0,
+        "p99": 109.0,
+        "max": 109,
+        "mean": 36.97,
+        "share_above": {
+          "2": 0.3333,
+          "3": 0.3333,
+          "5": 0.3333,
+          "8": 0.3333,
+          "10": 0.3333,
+          "20": 0.3333
+        }
+      },
+      "dev-llm-h8": {
+        "actions": 30,
+        "dead_share": 0.1,
+        "median": 109.0,
+        "p75": 109.0,
+        "p90": 109.0,
+        "p99": 109.0,
+        "max": 109,
+        "mean": 98.1,
+        "share_above": {
+          "2": 0.9,
+          "3": 0.9,
+          "5": 0.9,
+          "8": 0.9,
+          "10": 0.9,
+          "20": 0.9
+        }
+      },
+      "dev-llm-r3": {
+        "actions": 30,
+        "dead_share": 0.0333,
+        "median": 80.0,
+        "p75": 109.0,
+        "p90": 109.0,
+        "p99": 109.0,
+        "max": 109,
+        "mean": 85.77,
+        "share_above": {
+          "2": 0.9667,
+          "3": 0.9667,
+          "5": 0.9667,
+          "8": 0.9667,
+          "10": 0.9667,
+          "20": 0.9667
+        }
+      },
+      "dev-random": {
+        "actions": 80,
+        "dead_share": 0.0875,
+        "median": 109.0,
+        "p75": 109.0,
+        "p90": 109.0,
+        "p99": 109.0,
+        "max": 109,
+        "mean": 74.25,
+        "share_above": {
+          "2": 0.6875,
+          "3": 0.6875,
+          "5": 0.6875,
+          "8": 0.6875,
+          "10": 0.6875,
+          "20": 0.6875
+        }
+      },
+      "dev-random-30": {
+        "actions": 30,
+        "dead_share": 0.1,
+        "median": 109.0,
+        "p75": 109.0,
+        "p90": 109.0,
+        "p99": 109.0,
+        "max": 109,
+        "mean": 77.93,
+        "share_above": {
+          "2": 0.7333,
+          "3": 0.7333,
+          "5": 0.7333,
+          "8": 0.7333,
+          "10": 0.7333,
+          "20": 0.7333
+        }
+      }
+    },
+    "ls20-9607627b": {
+      "adhoc-llm": {
+        "actions": 31,
+        "dead_share": 0.0,
+        "median": 2.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 52.0,
+        "max": 52,
+        "mean": 22.97,
+        "share_above": {
+          "2": 0.4194,
+          "3": 0.4194,
+          "5": 0.4194,
+          "8": 0.4194,
+          "10": 0.4194,
+          "20": 0.4194
+        }
+      },
+      "adhoc-random": {
+        "actions": 640,
+        "dead_share": 0.0609,
+        "median": 52.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 138.0,
+        "max": 162,
+        "mean": 38.99,
+        "share_above": {
+          "2": 0.7141,
+          "3": 0.7141,
+          "5": 0.7109,
+          "8": 0.7109,
+          "10": 0.7109,
+          "20": 0.7109
+        }
+      },
+      "dev-llm-h0": {
+        "actions": 30,
+        "dead_share": 0.0333,
+        "median": 2.0,
+        "p75": 2.0,
+        "p90": 2.0,
+        "p99": 52.0,
+        "max": 52,
+        "mean": 6.93,
+        "share_above": {
+          "2": 0.1,
+          "3": 0.1,
+          "5": 0.1,
+          "8": 0.1,
+          "10": 0.1,
+          "20": 0.1
+        }
+      },
+      "dev-llm-h8": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 2.0,
+        "p75": 2.0,
+        "p90": 52.0,
+        "p99": 52.0,
+        "max": 52,
+        "mean": 12.0,
+        "share_above": {
+          "2": 0.2,
+          "3": 0.2,
+          "5": 0.2,
+          "8": 0.2,
+          "10": 0.2,
+          "20": 0.2
+        }
+      },
+      "dev-llm-r3": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 52.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 52.0,
+        "max": 52,
+        "mean": 47.0,
+        "share_above": {
+          "2": 0.9,
+          "3": 0.9,
+          "5": 0.9,
+          "8": 0.9,
+          "10": 0.9,
+          "20": 0.9
+        }
+      },
+      "dev-random": {
+        "actions": 80,
+        "dead_share": 0.0,
+        "median": 52.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 58.0,
+        "max": 138,
+        "mean": 40.65,
+        "share_above": {
+          "2": 0.75,
+          "3": 0.75,
+          "5": 0.75,
+          "8": 0.75,
+          "10": 0.75,
+          "20": 0.75
+        }
+      },
+      "dev-random-30": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 52.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 52.0,
+        "max": 52,
+        "mean": 40.33,
+        "share_above": {
+          "2": 0.7667,
+          "3": 0.7667,
+          "5": 0.7667,
+          "8": 0.7667,
+          "10": 0.7667,
+          "20": 0.7667
+        }
+      },
+      "llm-80-THE-STUCK-RUN": {
+        "actions": 80,
+        "dead_share": 0.0,
+        "median": 2.0,
+        "p75": 52.0,
+        "p90": 52.0,
+        "p99": 52.0,
+        "max": 138,
+        "mean": 21.82,
+        "share_above": {
+          "2": 0.375,
+          "3": 0.375,
+          "5": 0.375,
+          "8": 0.375,
+          "10": 0.375,
+          "20": 0.375
+        }
+      }
+    },
+    "sb26-7fbdac44": {
+      "dev-llm-h0": {
+        "actions": 30,
+        "dead_share": 0.3,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 0.7,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      },
+      "dev-llm-h8": {
+        "actions": 30,
+        "dead_share": 0.6,
+        "median": 0.0,
+        "p75": 40.0,
+        "p90": 40.0,
+        "p99": 40.0,
+        "max": 40,
+        "mean": 15.33,
+        "share_above": {
+          "2": 0.4,
+          "3": 0.4,
+          "5": 0.4,
+          "8": 0.4,
+          "10": 0.4,
+          "20": 0.3667
+        }
+      },
+      "dev-llm-r3": {
+        "actions": 30,
+        "dead_share": 0.4333,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 21.0,
+        "max": 21,
+        "mean": 1.87,
+        "share_above": {
+          "2": 0.0667,
+          "3": 0.0667,
+          "5": 0.0667,
+          "8": 0.0667,
+          "10": 0.0667,
+          "20": 0.0333
+        }
+      },
+      "dev-random": {
+        "actions": 80,
+        "dead_share": 0.625,
+        "median": 0.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 32.0,
+        "max": 53,
+        "mean": 1.65,
+        "share_above": {
+          "2": 0.0375,
+          "3": 0.0375,
+          "5": 0.0375,
+          "8": 0.0375,
+          "10": 0.0375,
+          "20": 0.025
+        }
+      },
+      "dev-random-30": {
+        "actions": 30,
+        "dead_share": 0.7,
+        "median": 0.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 0.3,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      }
+    },
+    "tn36-ef4dde99": {
+      "dev-llm-h0": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 1.0,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      },
+      "dev-llm-h8": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 1.0,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      },
+      "dev-llm-r3": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 1.0,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      },
+      "dev-random": {
+        "actions": 80,
+        "dead_share": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 4.0,
+        "max": 70,
+        "mean": 1.98,
+        "share_above": {
+          "2": 0.05,
+          "3": 0.05,
+          "5": 0.0125,
+          "8": 0.0125,
+          "10": 0.0125,
+          "20": 0.0125
+        }
+      },
+      "dev-random-30": {
+        "actions": 30,
+        "dead_share": 0.0,
+        "median": 1.0,
+        "p75": 1.0,
+        "p90": 1.0,
+        "p99": 1.0,
+        "max": 1,
+        "mean": 1.0,
+        "share_above": {
+          "2": 0.0,
+          "3": 0.0,
+          "5": 0.0,
+          "8": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "recording": "ar25-0c556536.eval-dev-llm-h0.llm-gemini-3.5-flash-lite-objects-h0.30.5975902b-31cd-4057-b8ea-2f743d7306a0.recording.jsonl.gz",
+      "group": "dev-llm-h0",
+      "actions": 30,
+      "dead_share": 0.0333,
+      "median": 1.0,
+      "p75": 109.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 36.97,
+      "share_above": {
+        "2": 0.3333,
+        "3": 0.3333,
+        "5": 0.3333,
+        "8": 0.3333,
+        "10": 0.3333,
+        "20": 0.3333
+      }
+    },
+    {
+      "recording": "ar25-0c556536.eval-dev-llm-h8.llm-gemini-3.5-flash-lite-objects-h8.30.ab07b7be-8d13-4ccb-963e-3716414467e3.recording.jsonl.gz",
+      "group": "dev-llm-h8",
+      "actions": 30,
+      "dead_share": 0.1,
+      "median": 109.0,
+      "p75": 109.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 98.1,
+      "share_above": {
+        "2": 0.9,
+        "3": 0.9,
+        "5": 0.9,
+        "8": 0.9,
+        "10": 0.9,
+        "20": 0.9
+      }
+    },
+    {
+      "recording": "ar25-0c556536.eval-dev-llm-r3.llm-gemini-3.5-flash-lite-objects-h0-r3.30.63ee06d4-6631-4b8b-9c24-d86f10b897f5.recording.jsonl.gz",
+      "group": "dev-llm-r3",
+      "actions": 30,
+      "dead_share": 0.0333,
+      "median": 80.0,
+      "p75": 109.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 85.77,
+      "share_above": {
+        "2": 0.9667,
+        "3": 0.9667,
+        "5": 0.9667,
+        "8": 0.9667,
+        "10": 0.9667,
+        "20": 0.9667
+      }
+    },
+    {
+      "recording": "ar25-0c556536.eval-dev-random-30.random.30.020776fe-9603-4148-835f-687a67968457.recording.jsonl.gz",
+      "group": "dev-random-30",
+      "actions": 30,
+      "dead_share": 0.1,
+      "median": 109.0,
+      "p75": 109.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 77.93,
+      "share_above": {
+        "2": 0.7333,
+        "3": 0.7333,
+        "5": 0.7333,
+        "8": 0.7333,
+        "10": 0.7333,
+        "20": 0.7333
+      }
+    },
+    {
+      "recording": "ar25-0c556536.eval-dev-random.random.80.68959841-a0db-4e87-9689-e4e027c2fd8d.recording.jsonl.gz",
+      "group": "dev-random",
+      "actions": 80,
+      "dead_share": 0.0875,
+      "median": 109.0,
+      "p75": 109.0,
+      "p90": 109.0,
+      "p99": 109.0,
+      "max": 109,
+      "mean": 74.25,
+      "share_above": {
+        "2": 0.6875,
+        "3": 0.6875,
+        "5": 0.6875,
+        "8": 0.6875,
+        "10": 0.6875,
+        "20": 0.6875
+      }
+    },
+    {
+      "recording": "ls20-9607627b.eval-dev-llm-h0.llm-gemini-3.5-flash-lite-objects-h0.30.194d152f-d754-4326-8e5c-72f4bdba1c4a.recording.jsonl.gz",
+      "group": "dev-llm-h0",
+      "actions": 30,
+      "dead_share": 0.0333,
+      "median": 2.0,
+      "p75": 2.0,
+      "p90": 2.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 6.93,
+      "share_above": {
+        "2": 0.1,
+        "3": 0.1,
+        "5": 0.1,
+        "8": 0.1,
+        "10": 0.1,
+        "20": 0.1
+      }
+    },
+    {
+      "recording": "ls20-9607627b.eval-dev-llm-h8.llm-gemini-3.5-flash-lite-objects-h8.30.2e99f00d-4cc2-4ed5-bc4a-713019296664.recording.jsonl.gz",
+      "group": "dev-llm-h8",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 2.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 12.0,
+      "share_above": {
+        "2": 0.2,
+        "3": 0.2,
+        "5": 0.2,
+        "8": 0.2,
+        "10": 0.2,
+        "20": 0.2
+      }
+    },
+    {
+      "recording": "ls20-9607627b.eval-dev-llm-r3.llm-gemini-3.5-flash-lite-objects-h0-r3.30.3de58d47-e51a-4157-9e28-bf747a59c19a.recording.jsonl.gz",
+      "group": "dev-llm-r3",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 47.0,
+      "share_above": {
+        "2": 0.9,
+        "3": 0.9,
+        "5": 0.9,
+        "8": 0.9,
+        "10": 0.9,
+        "20": 0.9
+      }
+    },
+    {
+      "recording": "ls20-9607627b.eval-dev-random-30.random.30.99ef4984-d914-40f2-9fec-2fc5f18ad13c.recording.jsonl.gz",
+      "group": "dev-random-30",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 40.33,
+      "share_above": {
+        "2": 0.7667,
+        "3": 0.7667,
+        "5": 0.7667,
+        "8": 0.7667,
+        "10": 0.7667,
+        "20": 0.7667
+      }
+    },
+    {
+      "recording": "ls20-9607627b.eval-dev-random.random.80.2b64d6b2-1972-4284-941a-83ed7102d25d.recording.jsonl.gz",
+      "group": "dev-random",
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 58.0,
+      "max": 138,
+      "mean": 40.65,
+      "share_above": {
+        "2": 0.75,
+        "3": 0.75,
+        "5": 0.75,
+        "8": 0.75,
+        "10": 0.75,
+        "20": 0.75
+      }
+    },
+    {
+      "recording": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.25.2d882a9b-3957-42c8-84c6-380681af12f2.recording.jsonl.gz",
+      "group": "adhoc-llm",
+      "actions": 25,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 52,
+      "mean": 28.0,
+      "share_above": {
+        "2": 0.52,
+        "3": 0.52,
+        "5": 0.52,
+        "8": 0.52,
+        "10": 0.52,
+        "20": 0.52
+      }
+    },
+    {
+      "recording": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.6.d78c5362-1d76-4c19-a971-c366fa899b73.recording.jsonl.gz",
+      "group": "adhoc-llm",
+      "actions": 6,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 2.0,
+      "p90": 2.0,
+      "p99": 2.0,
+      "max": 2,
+      "mean": 2.0,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.80.9669d0d5-f392-44d3-8064-31e06c9c2c7d.recording.jsonl.gz",
+      "group": "llm-80-THE-STUCK-RUN",
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 138,
+      "mean": 21.82,
+      "share_above": {
+        "2": 0.375,
+        "3": 0.375,
+        "5": 0.375,
+        "8": 0.375,
+        "10": 0.375,
+        "20": 0.375
+      }
+    },
+    {
+      "recording": "ls20-9607627b.random.400.74fbdcbe-88aa-49e3-8f97-4f8b9da30363.recording.jsonl.gz",
+      "group": "adhoc-random",
+      "actions": 400,
+      "dead_share": 0.0025,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 138.0,
+      "max": 162,
+      "mean": 42.28,
+      "share_above": {
+        "2": 0.77,
+        "3": 0.77,
+        "5": 0.765,
+        "8": 0.765,
+        "10": 0.765,
+        "20": 0.765
+      }
+    },
+    {
+      "recording": "ls20-9607627b.random.80.0036eedd-5088-411f-b77a-cfce5ff99522.recording.jsonl.gz",
+      "group": "adhoc-random",
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 58.0,
+      "max": 138,
+      "mean": 40.65,
+      "share_above": {
+        "2": 0.75,
+        "3": 0.75,
+        "5": 0.75,
+        "8": 0.75,
+        "10": 0.75,
+        "20": 0.75
+      }
+    },
+    {
+      "recording": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.recording.jsonl.gz",
+      "group": "adhoc-random",
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 52.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 58.0,
+      "max": 138,
+      "mean": 40.65,
+      "share_above": {
+        "2": 0.75,
+        "3": 0.75,
+        "5": 0.75,
+        "8": 0.75,
+        "10": 0.75,
+        "20": 0.75
+      }
+    },
+    {
+      "recording": "ls20-9607627b.random.80.e37062d0-f857-4ecd-abb5-5a8f2af3de6a.recording.jsonl.gz",
+      "group": "adhoc-random",
+      "actions": 80,
+      "dead_share": 0.475,
+      "median": 2.0,
+      "p75": 52.0,
+      "p90": 52.0,
+      "p99": 52.0,
+      "max": 58,
+      "mean": 19.25,
+      "share_above": {
+        "2": 0.3625,
+        "3": 0.3625,
+        "5": 0.3625,
+        "8": 0.3625,
+        "10": 0.3625,
+        "20": 0.3625
+      }
+    },
+    {
+      "recording": "sb26-7fbdac44.eval-dev-llm-h0.llm-gemini-3.5-flash-lite-objects-h0.30.56ffe835-7a20-4682-a623-0bbe8e6d15db.recording.jsonl.gz",
+      "group": "dev-llm-h0",
+      "actions": 30,
+      "dead_share": 0.3,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 0.7,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "sb26-7fbdac44.eval-dev-llm-h8.llm-gemini-3.5-flash-lite-objects-h8.30.8012e3e4-6c40-4e39-b3e1-9dd6b60299b3.recording.jsonl.gz",
+      "group": "dev-llm-h8",
+      "actions": 30,
+      "dead_share": 0.6,
+      "median": 0.0,
+      "p75": 40.0,
+      "p90": 40.0,
+      "p99": 40.0,
+      "max": 40,
+      "mean": 15.33,
+      "share_above": {
+        "2": 0.4,
+        "3": 0.4,
+        "5": 0.4,
+        "8": 0.4,
+        "10": 0.4,
+        "20": 0.3667
+      }
+    },
+    {
+      "recording": "sb26-7fbdac44.eval-dev-llm-r3.llm-gemini-3.5-flash-lite-objects-h0-r3.30.090af007-155f-4dcc-82dc-9783aae37a0d.recording.jsonl.gz",
+      "group": "dev-llm-r3",
+      "actions": 30,
+      "dead_share": 0.4333,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 21.0,
+      "max": 21,
+      "mean": 1.87,
+      "share_above": {
+        "2": 0.0667,
+        "3": 0.0667,
+        "5": 0.0667,
+        "8": 0.0667,
+        "10": 0.0667,
+        "20": 0.0333
+      }
+    },
+    {
+      "recording": "sb26-7fbdac44.eval-dev-random-30.random.30.7a9ad6c7-9922-4e16-8d1a-2381671c56ba.recording.jsonl.gz",
+      "group": "dev-random-30",
+      "actions": 30,
+      "dead_share": 0.7,
+      "median": 0.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 0.3,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "sb26-7fbdac44.eval-dev-random.random.80.5c8d7e06-e783-47a8-a212-70d0d360f829.recording.jsonl.gz",
+      "group": "dev-random",
+      "actions": 80,
+      "dead_share": 0.625,
+      "median": 0.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 32.0,
+      "max": 53,
+      "mean": 1.65,
+      "share_above": {
+        "2": 0.0375,
+        "3": 0.0375,
+        "5": 0.0375,
+        "8": 0.0375,
+        "10": 0.0375,
+        "20": 0.025
+      }
+    },
+    {
+      "recording": "tn36-ef4dde99.eval-dev-llm-h0.llm-gemini-3.5-flash-lite-objects-h0.30.a9c36f94-dc9e-478b-88a2-dde7d6bc8ab9.recording.jsonl.gz",
+      "group": "dev-llm-h0",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 1.0,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "tn36-ef4dde99.eval-dev-llm-h8.llm-gemini-3.5-flash-lite-objects-h8.30.77f903e7-2011-40af-88da-181610c82273.recording.jsonl.gz",
+      "group": "dev-llm-h8",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 1.0,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "tn36-ef4dde99.eval-dev-llm-r3.llm-gemini-3.5-flash-lite-objects-h0-r3.30.0deb81c6-af69-4c84-b92f-f832faf7d19d.recording.jsonl.gz",
+      "group": "dev-llm-r3",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 1.0,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "tn36-ef4dde99.eval-dev-random-30.random.30.bd4fe912-70e8-4a43-8e0f-3ec68398f00c.recording.jsonl.gz",
+      "group": "dev-random-30",
+      "actions": 30,
+      "dead_share": 0.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 1.0,
+      "max": 1,
+      "mean": 1.0,
+      "share_above": {
+        "2": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      }
+    },
+    {
+      "recording": "tn36-ef4dde99.eval-dev-random.random.80.d3d98ece-557c-4c2c-846a-2935ce2c5df2.recording.jsonl.gz",
+      "group": "dev-random",
+      "actions": 80,
+      "dead_share": 0.0,
+      "median": 1.0,
+      "p75": 1.0,
+      "p90": 1.0,
+      "p99": 4.0,
+      "max": 70,
+      "mean": 1.98,
+      "share_above": {
+        "2": 0.05,
+        "3": 0.05,
+        "5": 0.0125,
+        "8": 0.0125,
+        "10": 0.0125,
+        "20": 0.0125
+      }
+    }
+  ]
+}

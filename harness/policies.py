@@ -18,6 +18,15 @@ from typing import Protocol, runtime_checkable
 from arc_agi_3._structs import FrameData, GameAction, GameState
 
 from .actions import GRID_MAX, Action
+from .hypothesis import REPLY_FORMAT as HYPOTHESIS_REPLY_FORMAT
+from .hypothesis import (
+    Hypothesis,
+    judge,
+    parse_hypothesis,
+    render_block,
+    same_goal,
+    strip_hypothesis_lines,
+)
 from .llm import Completion
 
 
@@ -137,10 +146,16 @@ PROMPT = """You are playing a puzzle video game. You see the screen as a grid of
 
 Your last action: {last_action}
 What that changed: {feedback}
-{history}{ban}
+{hypothesis}{history}{ban}
 Buttons you may press right now: {options}
 
-Reply with ONE line and nothing else, in this exact form:
+{reply_format}"""
+
+# The Phase B reply format, frozen. Every arm before 2026-07-23 ran with exactly this tail,
+# so it stays a separate constant rather than an f-string with a switch in it: the control
+# arm of every future experiment has to be reproducible byte for byte, and the cheapest way
+# to guarantee that is for its text to be somewhere nobody edits by accident.
+REPLY_FORMAT = """Reply with ONE line and nothing else, in this exact form:
 ACTION<n>
 or, for a click:
 ACTION6 x=<0-63> y=<0-63>
@@ -155,8 +170,9 @@ class LLMPolicy:
     note 06. The parts of the prompt are the encoded screen, the feedback about the agent's
     own last action, an optional window of its own recent actions (`history`, off by
     default so the Phase B prompt is reproducible byte for byte), an optional repetition
-    ban (`repeat_limit`, likewise off by default), and the list of buttons that are legal
-    *right now*.
+    ban (`repeat_limit`, likewise off by default), an optional theory-of-the-game block
+    (`hypothesis`, also off by default — `harness/hypothesis.py`), and the list of buttons
+    that are legal *right now*.
 
     With both options off, `build_prompt` produces the Phase B prompt byte for byte. That
     is deliberate and there is a test for it: an A/B whose control arm has quietly drifted
@@ -179,6 +195,7 @@ class LLMPolicy:
         fallback_seed: int = 0,
         history: int = 0,
         repeat_limit: int = 0,
+        hypothesis: bool = False,
     ) -> None:
         from .frames import main_grid, render_objects
 
@@ -191,6 +208,9 @@ class LLMPolicy:
         # After this many identical actions in a row, the repeated action is refused. 0 is
         # off, and off is the setting every earlier arm ran under.
         self.repeat_limit = repeat_limit
+        # Ask the agent to state a theory of the goal and a checkable prediction, and hold
+        # it to both (`harness/hypothesis.py`). Off by default, like every other addition.
+        self.hypothesis = hypothesis
         self._fallback = RandomPolicy(seed=fallback_seed, name="fallback")
         self.calls = 0
         self.parse_failures = 0
@@ -199,7 +219,33 @@ class LLMPolicy:
         # How often the guard actually had to overrule the model. Reported, because a guard
         # whose firing rate is invisible is a change whose size is unknown.
         self.repeat_blocks = 0
+        # The theory the agent stated last turn, and the bookkeeping that makes the
+        # intervention's size visible. `hypothesis_changes` over-counts rewordings on
+        # purpose — see `hypothesis.same_goal`.
+        self.theory = Hypothesis()
+        self.hypotheses_stated = 0
+        self.hypothesis_changes = 0
+        self.predictions_checked = 0
+        self.predictions_wrong = 0
         self.last: Completion | None = None
+
+    def cells_changed(self, frames: list[FrameData]) -> int | None:
+        """How many cells the agent's last action moved, or None if that is not a number.
+
+        None covers both ends of the episode's edge cases — the first frame, and a screen
+        that changed shape — and the caller must treat it as *unknown*, never as zero. A
+        shape change scored as "0 cells changed" would mark a prediction of NONE correct on
+        the one turn the world was doing the most.
+        """
+        from .frames import diff_grids, main_grid
+
+        if len(frames) < 2:
+            return None
+        try:
+            d = diff_grids(main_grid(frames[-2]), main_grid(frames[-1]))
+        except ValueError:
+            return None
+        return d.count if d.same_shape else None
 
     def build_prompt(self, frames: list[FrameData], latest: FrameData) -> str:
         from .frames import main_grid, render_diff, render_history
@@ -212,6 +258,16 @@ class LLMPolicy:
                 feedback = render_diff(main_grid(frames[-2]), main_grid(latest))
             except ValueError:
                 feedback = "the screen changed shape"
+
+        # The theory block, and the reply format that goes with it. Both empty in the
+        # control arm, so `build_prompt` there is the Phase B prompt byte for byte — there
+        # is a golden test for exactly that string.
+        hypothesis = ""
+        reply_format = REPLY_FORMAT
+        if self.hypothesis:
+            hypothesis = render_block(self.theory, judge(self.theory.prediction, self.cells_changed(frames)))
+            reply_format = HYPOTHESIS_REPLY_FORMAT
+
         history = ""
         if self.history:
             history = (
@@ -239,14 +295,24 @@ class LLMPolicy:
             screen=self.encode(latest),
             last_action=last_action,
             feedback=feedback,
+            hypothesis=hypothesis,
             history=history,
             ban=ban,
             options=", ".join(options) or "none",
+            reply_format=reply_format,
         )
 
     def choose(self, frames: list[FrameData], latest: FrameData) -> Action:
         if latest.state in (GameState.NOT_PLAYED, GameState.GAME_OVER):
             return Action(GameAction.RESET, reasoning="game not in play — reset")
+
+        # Grade last turn's prediction before the prompt is built, so the counters and the
+        # sentence the agent reads are the same ruling and cannot drift apart.
+        if self.hypothesis:
+            verdict = judge(self.theory.prediction, self.cells_changed(frames))
+            if verdict.checked:
+                self.predictions_checked += 1
+                self.predictions_wrong += not verdict.correct
 
         prompt = self.build_prompt(frames, latest)
         completion = self.client.complete(prompt)
@@ -258,11 +324,22 @@ class LLMPolicy:
             self.client_errors += 1
             return self._fall_back(frames, latest, f"client error: {completion.error}")
 
-        action = parse_action(completion.text)
+        text = completion.text
+        if self.hypothesis:
+            self._record_theory(text)
+            # The action is parsed from the reply with the theory lines removed: a goal
+            # reading "keep pressing ACTION3" must not be mistaken for a decision.
+            text = strip_hypothesis_lines(text)
+
+        action = parse_action(text)
         if action is None:
             self.parse_failures += 1
-            first = completion.text.strip().splitlines()[:1]
-            return self._fall_back(frames, latest, f"unparseable reply: {first!r:.120}")
+            # The WHOLE reply, not its first line. The first-line version of this message
+            # recorded 14 unparseable replies on `tn36` as the single word "ACTION6" and
+            # left no way to find out what the rest of them said — a diagnostic that
+            # deletes the evidence. Newlines are escaped so a trace line stays one line.
+            raw = " / ".join(completion.text.strip().splitlines())[:300]
+            return self._fall_back(frames, latest, f"unparseable reply: {raw!r}")
 
         # A prompt is a request; a guard is a guarantee — the same pairing as the legal
         # action list. The model is told the action is blocked and is still capable of
@@ -273,6 +350,24 @@ class LLMPolicy:
             return self._escape(frames, latest, banned)
 
         return Action(action.kind, action.x, action.y, reasoning=completion.text.strip()[:300])
+
+    def _record_theory(self, text: str) -> None:
+        """Store what the agent just claimed, and count whether it changed its mind.
+
+        A reply that states no theory leaves the previous one standing rather than clearing
+        it. Silence is not a retraction, and clearing on silence would make the prompt
+        forget a commitment the agent never withdrew — turning a missing line into an escape
+        hatch from the only rule this arm adds.
+        """
+        stated = parse_hypothesis(text)
+        if stated.goal:
+            self.hypotheses_stated += 1
+            if self.theory.goal and not same_goal(self.theory.goal, stated.goal):
+                self.hypothesis_changes += 1
+        self.theory = Hypothesis(
+            goal=stated.goal or self.theory.goal,
+            prediction=stated.prediction,
+        )
 
     def _escape(self, frames, latest, banned: str) -> Action:
         """Any legal action that is not the banned one.

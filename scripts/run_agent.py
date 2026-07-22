@@ -75,6 +75,7 @@ def _llm_policy(args):
         fallback_seed=args.seed,
         history=args.history,
         repeat_limit=args.repeat_limit,
+        hypothesis=args.hypothesis,
     )
 
 
@@ -222,6 +223,11 @@ def main(argv: list[str]) -> int:
         type=int,
         default=3,
         help="block an action after this many identical plays in a row (0 = off)",
+    )
+    p.add_argument(
+        "--hypothesis",
+        action="store_true",
+        help="make the agent state a theory of the goal and a checkable prediction",
     )
     p.add_argument("--tag", action="append", default=[], help="scorecard tag (repeatable)")
     p.add_argument("--out", default=None, help="artifacts/<name>.json (default: derived)")

@@ -68,18 +68,30 @@ def build_policy(args, seed: int):
     # builder, the parser and the whole artifact path without a key. It proves the plumbing
     # and nothing about play, so the artifact records `mock: true` and the numbers must
     # never be quoted.
+    # The canned reply follows the format the arm actually asks for, so a mock run of the
+    # theory arm rehearses the theory path too instead of silently exercising the
+    # no-theory-stated branch for every action.
+    rehearsal = (
+        "GOAL: rehearsal, not a theory\nACTION1\nPREDICT: FEW"
+        if args.hypothesis
+        else "ACTION1\nrehearsal"
+    )
     client = (
-        ScriptedClient(["ACTION1\nrehearsal"], name="scripted")
+        ScriptedClient([rehearsal], name="scripted")
         if args.mock
         else GeminiClient(model=args.model)
     )
     return LLMPolicy(
         client,
         encoder=encoders[args.encoder],
-        name=f"llm:{args.model}:{args.encoder}:h{args.history}:r{args.repeat_limit}",
+        name=(
+            f"llm:{args.model}:{args.encoder}:h{args.history}:r{args.repeat_limit}"
+            f":y{int(args.hypothesis)}"
+        ),
         fallback_seed=seed,
         history=args.history,
         repeat_limit=args.repeat_limit,
+        hypothesis=args.hypothesis,
     )
 
 
@@ -95,6 +107,18 @@ def llm_stats(policy) -> dict[str, Any] | None:
         "retries": getattr(policy.client, "retries", 0),
         "requests_used_today": getattr(policy.client, "calls_made", None),
         "repeat_blocks": policy.repeat_blocks,
+        # None rather than 0 when the arm never asked for a theory, so an old arm and an
+        # arm whose agent stayed silent do not report the same number.
+        **(
+            {
+                "hypotheses_stated": policy.hypotheses_stated,
+                "hypothesis_changes": policy.hypothesis_changes,
+                "predictions_checked": policy.predictions_checked,
+                "predictions_wrong": policy.predictions_wrong,
+            }
+            if policy.hypothesis
+            else {}
+        ),
     }
 
 
@@ -102,10 +126,14 @@ def play(args, game: str, seed: int, run_id: str) -> Metrics:
     """One game, one seed. Returns metrics; never raises past the caller's report."""
     policy = build_policy(args, seed)
     safe = re.sub(r"[^A-Za-z0-9._-]+", "-", f"{args.arm}.{policy.name}")
-    stem = f"{game}.eval-{safe}.{args.max_actions}.{run_id}"
     inner: Any = MockGame() if args.mock else ArcEnv(game, tags=args.tag)
     if args.mock:
+        # The mock's own id, so its files are named `mock01.*` and cannot be mistaken for
+        # the game whose slot it filled. They land in the same `runs/` directory that every
+        # offline analyser globs, and a rehearsal pooled into a real arm's numbers is a
+        # measurement nobody would think to doubt.
         game = inner.game_id
+    stem = f"{game}.eval-{safe}.{args.max_actions}.{run_id}"
     env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl.gz")
     closed = None
     try:
@@ -154,6 +182,13 @@ def main(argv: list[str]) -> int:
         default=3,
         help="block an action after this many identical plays in a row (0 = off)",
     )
+    # Off by default while it is the change under test. The default moves only if the
+    # numbers say it should, and then the move is recorded in notes/DECISIONS.md.
+    p.add_argument(
+        "--hypothesis",
+        action="store_true",
+        help="make the agent state a theory of the goal and a checkable prediction",
+    )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--max-actions", type=int, default=80)
     p.add_argument("--mock", action="store_true", help="offline: no key, no quota, no meaning")
@@ -189,6 +224,7 @@ def main(argv: list[str]) -> int:
             "encoder": args.encoder if args.policy == "llm" else None,
             "history": args.history if args.policy == "llm" else None,
             "repeat_limit": args.repeat_limit if args.policy == "llm" else None,
+            "hypothesis": bool(args.hypothesis) if args.policy == "llm" else None,
             "seed": args.seed,
             "max_actions": args.max_actions,
             "mock": bool(args.mock),

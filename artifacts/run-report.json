@@ -1,7 +1,7 @@
 {
-  "recording": "ls20-9607627b.random.80.e37062d0-f857-4ecd-abb5-5a8f2af3de6a.recording.jsonl",
+  "recording": "ls20-9607627b.random.80.e37062d0-f857-4ecd-abb5-5a8f2af3de6a.recording.jsonl.gz",
   "game_id": "ls20-9607627b",
-  "agent": "sdk random baseline (arc-agi-3 --agent=random)",
+  "agent": "sdk random baseline",
   "frames": 81,
   "actions": 80,
   "final_state": "NOT_FINISHED",
@@ -69,6 +69,10 @@
   "transitions_no_change": 38,
   "transitions_changed": 42,
   "no_change_and_unavailable": 38,
+  "unique_screens": 43,
+  "revisit_rate": 0.4625,
+  "longest_repeat_streak": 2,
+  "top_action_share": 0.1975,
   "encodings_on_one_real_frame": [
     {
       "label": "real frame / raw grid, hex packed",

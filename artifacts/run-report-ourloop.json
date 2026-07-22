@@ -1,7 +1,7 @@
 {
-  "recording": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.recording.jsonl",
+  "recording": "ls20-9607627b.random.80.18fef424-0164-4f28-8cf9-90c03bafa4da.recording.jsonl.gz",
   "game_id": "ls20-9607627b",
-  "agent": "our loop (random policy, seed 0)",
+  "agent": "our loop (random policy)",
   "frames": 81,
   "actions": 80,
   "final_state": "NOT_FINISHED",
@@ -73,6 +73,10 @@
   "transitions_no_change": 0,
   "transitions_changed": 80,
   "no_change_and_unavailable": 0,
+  "unique_screens": 80,
+  "revisit_rate": 0.0,
+  "longest_repeat_streak": 4,
+  "top_action_share": 0.2716,
   "encodings_on_one_real_frame": [
     {
       "label": "real frame / raw grid, hex packed",

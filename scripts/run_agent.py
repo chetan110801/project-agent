@@ -34,8 +34,10 @@ has to be paid for twice.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import re
+import shutil
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -91,7 +93,14 @@ class RecordingEnv:
     def __init__(self, inner: Any, path: Path) -> None:
         self.inner = inner
         self.game_id = inner.game_id
-        self.path = path
+        # Ask for `.jsonl.gz` and you get a compressed file *at the end*; the live write is
+        # always plain. Recordings compress 126x (measured: a 400-action run, 5.8 MB ->
+        # 46 KB), which matters when every experiment writes one per game per arm — but a
+        # gzip stream cannot be read back until it is closed, and surviving a crash
+        # mid-episode is the whole reason the format is JSONL. So: plain while playing,
+        # compressed once the episode is over and there is nothing left to lose.
+        self.compress = path.suffix == ".gz"
+        self.path = path.with_suffix("") if self.compress else path
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._fh = self.path.open("a", encoding="utf-8")
         self.frames = 0
@@ -119,8 +128,21 @@ class RecordingEnv:
             self._record(card)
 
     def close(self) -> None:
+        """Close the file and, if asked for, compress it.
+
+        A failure to compress must never destroy the recording — the plain file is only
+        removed once the compressed one exists and is non-empty.
+        """
         if not self._fh.closed:
             self._fh.close()
+        if not self.compress or not self.path.exists():
+            return
+        gz = self.path.with_suffix(self.path.suffix + ".gz")
+        with self.path.open("rb") as src, gzip.open(gz, "wb", compresslevel=9) as dst:
+            shutil.copyfileobj(src, dst)
+        if gz.stat().st_size > 0:
+            self.path.unlink()
+            self.path = gz
 
 
 def resolve_game(env: ArcEnv, wanted: str) -> str:
@@ -219,7 +241,7 @@ def main(argv: list[str]) -> int:
     # those in filenames — with an Errno 22 that names the path but not the reason.
     safe_policy = re.sub(r"[^A-Za-z0-9._-]+", "-", policy.name)
     stem = f"{game_id}.{safe_policy}.{args.max_actions}.{run_id}"
-    env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl")
+    env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl.gz")
     trace_path = RUNS / f"{stem}.trace.jsonl"
 
     print(f"game    : {game_id}{'  (MOCK — offline, proves nothing about real play)' if args.mock else ''}")

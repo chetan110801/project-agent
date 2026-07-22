@@ -32,12 +32,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from harness.frames import (  # noqa: E402
     diff_grids,
+    grid_fingerprint,
     grid_shape,
     render_diff,
     render_grid,
     render_objects,
 )
 from harness.tokens import measure  # noqa: E402
+from harness.trace import open_jsonl  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ROOT / "artifacts"
@@ -45,7 +47,8 @@ ARTIFACTS = ROOT / "artifacts"
 
 def load(path: Path) -> tuple[list[dict], dict | None]:
     """(frames, scorecard). The scorecard is the trailing record, if present."""
-    records = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    with open_jsonl(path) as fh:
+        records = [json.loads(line) for line in fh if line.strip()]
     frames = [r["data"] for r in records if isinstance(r.get("data"), dict) and "frame" in r["data"]]
     tail = records[-1]["data"] if records and isinstance(records[-1].get("data"), dict) else None
     scorecard = tail if tail is not None and "frame" not in tail else None
@@ -55,6 +58,8 @@ def load(path: Path) -> tuple[list[dict], dict | None]:
 def screen(frame: dict) -> list[list[int]]:
     """The settled grid — the last one, see harness.frames.main_grid."""
     return frame["frame"][-1]
+
+
 
 
 def main(argv: list[str]) -> int:
@@ -112,6 +117,22 @@ def main(argv: list[str]) -> int:
     game_over_at = [i for i, f in enumerate(frames) if f["state"] == "GAME_OVER"]
     survived = [b - a for a, b in zip([0] + game_over_at, game_over_at)]
 
+    # -- was it going anywhere? -------------------------------------------- #
+    # Added in Phase C, and pointed at recordings that already existed. `dead` below counts
+    # screens that did not change at all; these count screens the agent had *already seen*,
+    # which is the failure `dead` is blind to — two cells flipping back and forth forever
+    # is a changed screen every turn and no progress at all. Computing it from the
+    # committed recordings means the metric can be checked against a failure we already
+    # have on disk instead of one we hope to reproduce.
+    hashes = [grid_fingerprint(screen(f)) for f in frames[1:]]
+    kinds = [f["action_input"]["id"] for f in frames[1:]]
+    streak = longest_streak = 0
+    previous = None
+    for k in kinds:
+        streak = streak + 1 if k == previous else 1
+        longest_streak = max(longest_streak, streak)
+        previous = k
+
     dead = changed = 0
     dead_and_illegal = 0
     for before, after in zip(frames, frames[1:]):
@@ -167,6 +188,10 @@ def main(argv: list[str]) -> int:
         "transitions_no_change": dead,
         "transitions_changed": changed,
         "no_change_and_unavailable": dead_and_illegal,
+        "unique_screens": len(set(hashes)),
+        "revisit_rate": round(1 - len(set(hashes)) / len(hashes), 4) if hashes else None,
+        "longest_repeat_streak": longest_streak,
+        "top_action_share": round(max(sent.values()) / sum(sent.values()), 4) if sent else None,
         "encodings_on_one_real_frame": enc_rows,
         "tokeniser_note": (
             "token counts are tiktoken/o200k_base (an OpenAI tokeniser): valid for "
@@ -192,6 +217,14 @@ def main(argv: list[str]) -> int:
     print(
         f"dead actions   : {report['transitions_no_change']} of {report['transitions']} "
         f"changed nothing ({report['no_change_and_unavailable']} of those were unavailable)"
+    )
+    print(
+        f"screens        : {report['unique_screens']} distinct of {report['actions']} "
+        f"(revisit rate {report['revisit_rate']:.0%})"
+    )
+    print(
+        f"repetition     : longest identical-action streak {report['longest_repeat_streak']}, "
+        f"favourite action {report['top_action_share']:.0%} of all actions"
     )
     print()
     width = max(len(r["label"]) for r in enc_rows)

@@ -24,7 +24,7 @@ from typing import Protocol, runtime_checkable
 from arc_agi_3._structs import FrameData, GameAction, GameState
 
 from .actions import Action
-from .frames import diff_grids, main_grid
+from .frames import diff_grids, grid_fingerprint, main_grid
 from .policies import Policy, legal_actions
 from .trace import Tracer
 
@@ -62,6 +62,17 @@ class StepRecord:
     # words, which is the only thing that makes a trace answer "why did it do that?"
     # rather than just "what did it do?".
     reasoning: str = ""
+    # How many non-RESET buttons were legal when this decision was made. Without it,
+    # "the agent pressed one button 99% of the time" is unreadable: measured 2026-07-22,
+    # `tn36-ef4dde99` offers exactly one action in all 81 frames and `ar25-0c556536`
+    # offers seven, so the same 99% means "no choice" on one game and "stuck" on the other.
+    legal_options: int = 0
+    # Fingerprint of the screen this action produced: sixteen hex characters of the grid,
+    # answering the question `cells_changed` cannot — *have we been here before?* Measured
+    # worth: it separates the SDK baseline (46% revisited) from our loop (0%). Measured
+    # limit: it does not detect a stuck agent, because a one-cell marker moving makes a
+    # screen technically new. See `harness/evals.py`. Empty when the frame carried no grid.
+    screen_hash: str = ""
 
 
 @dataclass
@@ -98,6 +109,14 @@ def _cells_changed(before: FrameData, after: FrameData) -> int:
         return diff_grids(main_grid(before), main_grid(after)).count
     except ValueError:
         return -1
+
+
+def screen_hash(frame: FrameData) -> str:
+    """Fingerprint of the settled screen, or "" if the frame carries no grid."""
+    try:
+        return grid_fingerprint(main_grid(frame))
+    except ValueError:
+        return ""
 
 
 def run_episode(
@@ -170,6 +189,8 @@ def run_episode(
             latency_ms=round(latency_ms, 3),
             note=note,
             reasoning=reasoning,
+            legal_options=sum(1 for a in allowed if a is not GameAction.RESET),
+            screen_hash=screen_hash(nxt),
         )
         steps.append(rec)
         if tracer:
@@ -209,4 +230,4 @@ def run_episode(
     return result
 
 
-__all__ = ["Environment", "EpisodeResult", "StepRecord", "run_episode"]
+__all__ = ["Environment", "EpisodeResult", "StepRecord", "run_episode", "screen_hash"]

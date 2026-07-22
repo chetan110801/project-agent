@@ -89,7 +89,7 @@ PROMPT = """You are playing a puzzle video game. You see the screen as a grid of
 
 Your last action: {last_action}
 What that changed: {feedback}
-
+{history}
 Buttons you may press right now: {options}
 
 Reply with ONE line and nothing else, in this exact form:
@@ -104,8 +104,10 @@ class LLMPolicy:
     """The decide step, done by a language model.
 
     Everything interesting is in what the model is shown, not in this class — see study
-    note 06. The three parts of the prompt are the encoded screen, the feedback about the
-    agent's own last action, and the list of buttons that are legal *right now*.
+    note 06. The parts of the prompt are the encoded screen, the feedback about the agent's
+    own last action, an optional window of its own recent actions (`history`, off by
+    default so the Phase B prompt is reproducible byte for byte), and the list of buttons
+    that are legal *right now*.
 
     That last part is belt-and-braces with the loop's guard: telling the model the legal
     set makes a good answer likelier, and the guard makes a bad one harmless. Both, because
@@ -122,20 +124,25 @@ class LLMPolicy:
         encoder=None,
         name: str | None = None,
         fallback_seed: int = 0,
+        history: int = 0,
     ) -> None:
         from .frames import main_grid, render_objects
 
         self.client = client
         self.encode = encoder or (lambda frame: render_objects(main_grid(frame)))
         self.name = name or f"llm:{getattr(client, 'name', 'unknown')}"
+        # How many of the agent's own past actions to put in the prompt. 0 reproduces the
+        # Phase B prompt exactly, which is what makes this an A/B and not a rewrite.
+        self.history = history
         self._fallback = RandomPolicy(seed=fallback_seed, name="fallback")
         self.calls = 0
         self.parse_failures = 0
         self.client_errors = 0
+        self.input_tokens = 0
         self.last: Completion | None = None
 
     def build_prompt(self, frames: list[FrameData], latest: FrameData) -> str:
-        from .frames import main_grid, render_diff
+        from .frames import main_grid, render_diff, render_history
 
         options = [a.name for a in legal_actions(latest) if a is not GameAction.RESET]
         last_action = latest.action_input.id.name if latest.action_input else "none yet"
@@ -145,10 +152,18 @@ class LLMPolicy:
                 feedback = render_diff(main_grid(frames[-2]), main_grid(latest))
             except ValueError:
                 feedback = "the screen changed shape"
+        history = ""
+        if self.history:
+            history = (
+                "\nYour recent actions, oldest first:\n"
+                + render_history(frames, self.history)
+                + "\n"
+            )
         return PROMPT.format(
             screen=self.encode(latest),
             last_action=last_action,
             feedback=feedback,
+            history=history,
             options=", ".join(options) or "none",
         )
 
@@ -160,6 +175,7 @@ class LLMPolicy:
         completion = self.client.complete(prompt)
         self.last = completion
         self.calls += 1
+        self.input_tokens += completion.input_tokens or 0
 
         if not completion.ok:
             self.client_errors += 1

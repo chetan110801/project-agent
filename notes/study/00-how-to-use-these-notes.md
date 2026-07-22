@@ -91,7 +91,7 @@ this project does not do guesswork.
 |---|---|---|
 | 06 | **Context engineering** ✅ | choosing what the model gets to see each step, and why that is the job |
 | 07 | **Baselines** ✅ | how you *know* a change helped, instead of believing it did — with the run where the fix worked and the score still didn't move |
-| 08 | Evals | turning one-off comparisons into a suite that runs on every change |
+| 08 | **Evals** ✅ | turning one-off comparisons into a suite that runs on every change — and the metric I built, ran, and found was measuring nothing |
 | 09 | Traces and observability | answering "why did it do that?" with receipts |
 | 10 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
 | 11 | Budgets: tokens, cost, latency | making cost a dial you control, not a surprise |
@@ -109,7 +109,7 @@ know what they are so you don't confuse them with teaching:
 
 ## How to actually read this
 
-1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07. Don't skip ahead; the ladder only
+1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08. Don't skip ahead; the ladder only
    works as a ladder.
 2. **One note per sitting.** Each is a 10–20 minute read. Finishing one and stopping
    beats skimming three.

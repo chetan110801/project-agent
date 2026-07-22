@@ -88,6 +88,16 @@ class GeminiClient:
     limits: Limits | None = None
     temperature: float = 0.0  # deterministic-ish: an eval needs runs to be comparable
     retry_seconds: float = 5.0
+    # MEASURED 2026-07-22, and the reason this field exists: an eval arm hung on action 1
+    # of game 1 and sat there for twenty-five minutes at zero CPU. `generate_content` has
+    # no default timeout, so one connection that never answers stops the whole suite —
+    # silently, because a hung call looks exactly like a slow one from the outside.
+    #
+    # 90 seconds is roughly thirty times the measured round trip for this model (3.1 s on
+    # a smoke test), so it cannot fire on a merely slow answer. A timeout is captured as a
+    # failed `Completion` like any other error, which costs the agent one turn instead of
+    # the run.
+    timeout_seconds: float = 90.0
     _client: Any = field(default=None, repr=False)
     _limiter: RateLimiter = field(init=False, repr=False)
 
@@ -143,7 +153,14 @@ class GeminiClient:
                 resp = self._client.models.generate_content(
                     model=self.model,
                     contents=prompt,
-                    config=types.GenerateContentConfig(temperature=self.temperature),
+                    config=types.GenerateContentConfig(
+                        temperature=self.temperature,
+                        # HttpOptions.timeout is in MILLISECONDS (checked against the
+                        # installed google-genai 2.8.0, not assumed).
+                        http_options=types.HttpOptions(
+                            timeout=int(self.timeout_seconds * 1000)
+                        ),
+                    ),
                 )
                 break
             except Exception as exc:

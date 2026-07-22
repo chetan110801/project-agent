@@ -5,6 +5,9 @@ Run:  py -m unittest discover -s tests -v
 
 from __future__ import annotations
 
+import contextlib
+import io
+import json
 import sys
 import tempfile
 import unittest
@@ -15,13 +18,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from arc_agi_3._structs import GameAction, GameState  # noqa: E402
 
 from harness.actions import Action  # noqa: E402
+from harness import evals  # noqa: E402
 from harness.frames import (  # noqa: E402
     diff_grids,
     find_blobs,
+    grid_fingerprint,
     grid_shape,
     main_grid,
     render_diff,
     render_grid,
+    render_history,
     render_objects,
 )
 from harness.budget import LIMITS, BudgetExhausted, Limits, RateLimiter  # noqa: E402
@@ -38,6 +44,8 @@ from harness.tokens import measure  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 from scripts.analyze_run import load as load_recording  # noqa: E402
 from scripts.run_agent import RecordingEnv, resolve_game  # noqa: E402
+from scripts.run_evals import main as run_evals_main  # noqa: E402
+from scripts import compare_evals  # noqa: E402
 
 
 class TestAction(unittest.TestCase):
@@ -398,6 +406,31 @@ class TestRecordingEnv(unittest.TestCase):
             frames, _ = load_recording(path)
             self.assertEqual(len(frames), 4)  # reset + 3 steps, flushed as they happened
 
+    def test_a_gz_path_compresses_on_close_and_still_reads_back(self):
+        with tempfile.TemporaryDirectory() as d:
+            asked = Path(d) / "z.recording.jsonl.gz"
+            env = RecordingEnv(MockGame(), asked)
+            self.assertEqual(env.path.suffix, ".jsonl")  # plain while playing
+            run_episode(env, RandomPolicy(seed=2), max_actions=6)
+            env.close()
+
+            self.assertTrue(asked.exists())
+            self.assertFalse((Path(d) / "z.recording.jsonl").exists())
+            self.assertEqual(env.path, asked)
+            frames, _ = load_recording(asked)
+            self.assertEqual(len(frames), 7)
+
+    def test_a_recording_is_readable_mid_run_which_is_why_it_is_not_gzipped_live(self):
+        """The measured reason compression waits for close: a half-written gzip stream
+        raises EOFError, and surviving a crash is what the format was chosen for."""
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "w.recording.jsonl.gz"
+            env = RecordingEnv(MockGame(), path)
+            run_episode(env, RandomPolicy(seed=2), max_actions=5)
+            frames, _ = load_recording(env.path)  # NOT closed yet
+            self.assertEqual(len(frames), 6)
+            env.close()
+
 
 class TestParseAction(unittest.TestCase):
     def test_plain_replies(self):
@@ -470,6 +503,324 @@ class TestLLMPolicy(unittest.TestCase):
         policy = LLMPolicy(ScriptedClient(["ACTION4"]))
         r = run_episode(g, policy, max_actions=3)
         self.assertEqual(r.rejected_actions, 3)
+
+
+class TestHistoryEncoding(unittest.TestCase):
+    """The context change Phase C's first experiment is about."""
+
+    def _frames(self, moves):
+        g = MockGame()
+        frames = [g.reset()]
+        for kind in moves:
+            frames.append(g.step(Action(kind)))
+        return frames
+
+    def test_first_move_says_so_rather_than_showing_an_empty_list(self):
+        self.assertIn("first move", render_history(self._frames([])))
+
+    def test_each_line_names_the_action_and_its_effect(self):
+        frames = self._frames([GameAction.ACTION1, GameAction.ACTION2])
+        text = render_history(frames, window=8)
+        self.assertEqual(len(text.splitlines()), 2)
+        self.assertIn("ACTION1", text)
+        self.assertIn("ACTION2", text)
+        self.assertIn("cells changed", text)
+
+    def test_the_window_caps_how_much_past_is_shown(self):
+        frames = self._frames([GameAction.ACTION1] * 20)
+        self.assertEqual(len(render_history(frames, window=5).splitlines()), 5)
+
+    def test_a_dead_action_repeated_looks_identical_every_line(self):
+        """The whole point: forty identical lines is what 'stuck' looks like in text."""
+        frames = self._frames([GameAction.ACTION5] * 6)  # not available in the mock
+        lines = render_history(frames, window=6).splitlines()
+        self.assertEqual(len(set(line.split(":", 1)[1] for line in lines)), 1)
+        self.assertIn("screen unchanged", lines[0])
+
+    def test_history_is_absent_from_the_prompt_by_default(self):
+        """Phase B's prompt must be reproducible byte for byte, or the A/B is not one."""
+        g = MockGame()
+        frame = g.reset()
+        plain = LLMPolicy(ScriptedClient(["ACTION1"]))
+        self.assertNotIn("recent actions", plain.build_prompt([frame], frame))
+
+    def test_history_appears_when_asked_for(self):
+        g = MockGame()
+        frames = [g.reset()]
+        frames.append(g.step(Action(GameAction.ACTION1)))
+        policy = LLMPolicy(ScriptedClient(["ACTION1"]), history=4)
+        prompt = policy.build_prompt(frames, frames[-1])
+        self.assertIn("recent actions", prompt)
+        self.assertIn("ACTION1 ->", prompt)
+
+    def test_history_reports_what_was_sent_not_what_was_asked_for(self):
+        """The loop rewrites illegal choices to RESET; the agent must see the RESET."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        policy = LLMPolicy(ScriptedClient(["ACTION4"]), history=4)
+        run_episode(g, policy, max_actions=3)
+        last_prompt = policy.client.prompts[-1]
+        self.assertIn("RESET ->", last_prompt)
+        self.assertNotIn("ACTION4 ->", last_prompt)
+
+
+class TestScreenFingerprint(unittest.TestCase):
+    def test_the_same_grid_fingerprints_the_same(self):
+        grid = [[1, 2], [3, 4]]
+        self.assertEqual(grid_fingerprint(grid), grid_fingerprint([[1, 2], [3, 4]]))
+
+    def test_one_changed_cell_changes_the_fingerprint(self):
+        self.assertNotEqual(grid_fingerprint([[1, 2]]), grid_fingerprint([[1, 3]]))
+
+    def test_rows_cannot_be_confused_with_each_other(self):
+        """A naive 'flatten and join' makes [[1],[2,3]] and [[1,2],[3]] identical."""
+        self.assertNotEqual(grid_fingerprint([[1], [2, 3]]), grid_fingerprint([[1, 2], [3]]))
+
+    def test_the_loop_records_a_fingerprint_for_every_step(self):
+        r = run_episode(MockGame(), RandomPolicy(seed=3), max_actions=6)
+        self.assertTrue(all(len(s.screen_hash) == 16 for s in r.steps))
+
+
+class TestEvalMetrics(unittest.TestCase):
+    def test_a_dead_agent_scores_the_worst_on_every_steering_metric(self):
+        r = run_episode(MockGame(), _AlwaysDead(), max_actions=10)
+        m = evals.measure(r)
+        self.assertEqual(m.no_change_rate, 1.0)
+        self.assertEqual(m.top_action_share, 1.0)
+        self.assertEqual(m.longest_repeat_streak, 10)
+        self.assertEqual(m.distinct_actions, 1)
+        self.assertEqual(m.revisit_rate, 0.9)  # ten actions, one screen
+
+    def test_a_random_agent_spreads_across_actions(self):
+        r = run_episode(MockGame(), RandomPolicy(seed=5), max_actions=40)
+        m = evals.measure(r)
+        self.assertGreater(m.distinct_actions, 1)
+        self.assertLess(m.top_action_share, 0.6)
+        self.assertLess(m.longest_repeat_streak, 10)
+
+    def test_a_game_with_one_legal_action_is_not_reported_as_a_stuck_agent(self):
+        """The confound found on 2026-07-22: `tn36-ef4dde99` offers exactly one action.
+
+        A random policy there necessarily repeats it every turn, scoring a 100% favourite
+        share and a full-length streak. The raw share cannot tell that from a stuck agent;
+        the excess can, and reads 0.
+        """
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        m = evals.measure(run_episode(g, RandomPolicy(seed=4), max_actions=20))
+        self.assertEqual(m.median_legal_options, 1)
+        self.assertEqual(m.top_action_share, 1.0)
+        self.assertEqual(m.top_action_share_excess, 0.0)
+
+    def test_the_same_share_on_a_wide_game_is_flagged_as_excess(self):
+        r = run_episode(MockGame(), _AlwaysDead(), max_actions=20)  # 7 options, one used
+        m = evals.measure(r)
+        self.assertEqual(m.median_legal_options, 7)
+        self.assertEqual(m.top_action_share, 1.0)
+        self.assertAlmostEqual(m.top_action_share_excess, 1 - 1 / 7)
+
+    def test_distinct_targets_separates_clicking_around_from_clicking_once(self):
+        """On a click-only game every action is ACTION6, so kinds cannot measure spread."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION6])
+        m = evals.measure(run_episode(g, RandomPolicy(seed=11), max_actions=20))
+        self.assertEqual(m.distinct_actions, 1)       # one kind
+        self.assertGreater(m.distinct_targets, 10)    # many coordinates
+
+    def test_illegal_actions_show_up_as_a_rate(self):
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        m = evals.measure(run_episode(g, _Illegal(), max_actions=4))
+        self.assertEqual(m.illegal_action_rate, 1.0)
+
+    def test_actions_to_first_score_is_none_when_nothing_scores(self):
+        m = evals.measure(run_episode(MockGame(), _AlwaysDead(), max_actions=5))
+        self.assertIsNone(m.actions_to_first_score)
+
+    def test_level_numbers_come_from_the_servers_scorecard_not_from_us(self):
+        """The exact shape measured from a real close on 2026-07-22."""
+        m = evals.measure(run_episode(MockGame(), RandomPolicy(seed=0), max_actions=5))
+        m.game_id = "ls20-9607627b"
+        closed = {
+            "environments": [
+                {
+                    "id": "ls20-9607627b",
+                    "level_count": 7,
+                    "levels_completed": 0,
+                    "runs": [
+                        {
+                            "level_actions": [400, 0, 0, 0, 0, 0, 0],
+                            "level_baseline_actions": [22, 123, 73, 84, 96, 192, 186],
+                        }
+                    ],
+                }
+            ]
+        }
+        out = evals.from_scorecard(m, closed)
+        self.assertEqual(out.level1_actions, 400)
+        self.assertEqual(out.level1_reference, 22)
+        self.assertAlmostEqual(out.level1_ratio, 400 / 22)
+        self.assertFalse(out.level1_completed)
+        self.assertEqual(out.level_count, 7)
+
+    def test_a_scorecard_for_another_game_is_ignored(self):
+        m = evals.measure(run_episode(MockGame(), RandomPolicy(seed=0), max_actions=3))
+        out = evals.from_scorecard(m, {"environments": [{"id": "somethingelse", "runs": []}]})
+        self.assertIsNone(out.level1_actions)
+
+    def test_no_scorecard_leaves_the_level_fields_empty_rather_than_zero(self):
+        m = evals.measure(run_episode(MockGame(), RandomPolicy(seed=0), max_actions=3))
+        self.assertIsNone(evals.from_scorecard(m, None).level1_ratio)
+
+
+class TestEvalAggregation(unittest.TestCase):
+    def _arm(self, name, *results):
+        return evals.Arm(
+            name=name,
+            suite="dev",
+            games=[r.game_id for r in results],
+            episodes=[evals.measure(r) for r in results],
+        )
+
+    def test_rates_are_pooled_not_averaged_over_games(self):
+        """Two games of unequal length must not count equally in a rate."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        long_illegal = run_episode(g, _Illegal(), max_actions=90)   # 90 of 90 illegal
+        short_clean = run_episode(MockGame(), RandomPolicy(seed=1), max_actions=10)  # 0 of 10
+        arm = self._arm("mixed", long_illegal, short_clean)
+        agg = arm.aggregate()
+        self.assertEqual(agg["actions"], 100)
+        # Pooled is 90/100. The mean of the two per-game rates would be (1.0 + 0.0)/2 = 0.5,
+        # which would let a ten-action game cancel out a ninety-action disaster.
+        self.assertAlmostEqual(agg["illegal_action_rate"], 0.9, places=4)
+        per_game = [e.illegal_action_rate for e in arm.episodes]
+        self.assertAlmostEqual(sum(per_game) / len(per_game), 0.5, places=4)
+
+    def test_a_failed_episode_is_counted_but_does_not_pollute_the_rates(self):
+        ok = evals.measure(run_episode(MockGame(), RandomPolicy(seed=2), max_actions=10))
+        broken = evals.Metrics(
+            game_id="x", policy="p", actions=0, illegal_actions=0, no_change_actions=0,
+            unique_screens=0, top_action_count=0, longest_repeat_streak=0,
+            distinct_actions=0, game_overs=0, resets=0, final_score=0,
+            final_state="ERROR", wall_seconds=0.0, error="boom",
+        )
+        arm = evals.Arm(name="a", suite="dev", games=["x"], episodes=[ok, broken])
+        agg = arm.aggregate()
+        self.assertEqual(agg["episodes"], 1)
+        self.assertEqual(agg["failed_episodes"], 1)
+        self.assertEqual(agg["actions"], 10)
+
+    def test_compare_labels_each_metric_with_its_kind(self):
+        a = self._arm("before", run_episode(MockGame(), _AlwaysDead(), max_actions=10))
+        b = self._arm("after", run_episode(MockGame(), RandomPolicy(seed=1), max_actions=10))
+        rows = {r["metric"]: r for r in evals.compare(a, b)}
+        self.assertEqual(rows["no_change_rate"]["kind"], "steering")
+        self.assertEqual(rows["final_score"]["kind"], "outcome")
+        self.assertEqual(rows["wall_seconds"]["kind"], "cost")
+
+    def test_outcome_metrics_never_carry_a_verdict(self):
+        """Score is reported, never steered on — so it gets no better/worse arrow."""
+        a = self._arm("before", run_episode(MockGame(), _AlwaysDead(), max_actions=10))
+        b = self._arm("after", run_episode(MockGame(), RandomPolicy(seed=1), max_actions=10))
+        for row in evals.compare(a, b):
+            if row["kind"] == "outcome":
+                self.assertEqual(row["direction"], "")
+
+    def test_a_forced_streak_on_a_one_action_game_is_left_out_of_the_aggregate(self):
+        """Otherwise every arm, random included, reports the full episode length."""
+        forced = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        wide = MockGame()
+        arm = self._arm(
+            "mixed",
+            run_episode(forced, RandomPolicy(seed=1), max_actions=25),  # streak 25, no choice
+            run_episode(wide, RandomPolicy(seed=1), max_actions=25),    # a real streak
+        )
+        self.assertEqual(arm.episodes[0].longest_repeat_streak, 25)
+        self.assertLess(arm.aggregate()["longest_repeat_streak"], 25)
+
+    def test_direction_knows_which_way_is_good(self):
+        self.assertEqual(evals.direction("no_change_rate", 0.9, 0.1), "better")
+        self.assertEqual(evals.direction("no_change_rate", 0.1, 0.9), "worse")
+        self.assertEqual(evals.direction("distinct_actions", 1, 4), "better")
+        self.assertEqual(evals.direction("final_state", "A", "B"), "")
+        self.assertEqual(evals.direction("resets", 1, 2), "")  # no direction claimed
+
+
+class TestCompareEvals(unittest.TestCase):
+    """End to end over the two files an experiment is actually judged from."""
+
+    def _write_arm(self, name: str, policy, history: int, actions: int) -> None:
+        arm = evals.Arm(
+            name=name,
+            suite="dev",
+            games=["mock01"],
+            episodes=[evals.measure(run_episode(MockGame(), policy, max_actions=actions))],
+            config={"policy": "llm", "history": history, "seed": 0, "mock": True},
+        )
+        (compare_evals.EVAL_DIR / f"{name}.json").write_text(
+            json.dumps(arm.to_dict(), indent=2), encoding="utf-8"
+        )
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self._saved = compare_evals.EVAL_DIR
+        compare_evals.EVAL_DIR = Path(self._tmp.name)
+        # The comparer prints a table; a test run should not.
+        self._stdout = contextlib.redirect_stdout(io.StringIO())
+        self._stdout.__enter__()
+
+    def tearDown(self):
+        self._stdout.__exit__(None, None, None)
+        compare_evals.EVAL_DIR = self._saved
+        self._tmp.cleanup()
+
+    def test_the_artifact_stores_canonical_directions_not_display_text(self):
+        """The bug this caught: the file said "WORSE" while every reader expects "worse"."""
+        self._write_arm("before", RandomPolicy(seed=1), 0, 20)
+        self._write_arm("after", _AlwaysDead(), 8, 20)
+        compare_evals.main(["before", "after"])
+
+        out = json.loads(
+            (compare_evals.EVAL_DIR / "comparison-before-vs-after.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertTrue(out["single_variable"])
+        self.assertEqual(out["config_changed"], ["history: 0 -> 8"])
+        directions = {r["direction"] for r in out["rows"]}
+        self.assertTrue(directions <= {"better", "worse", "same", ""}, directions)
+        # A policy that repeats one dead action must be worse on repetition.
+        worse = {r["metric"] for r in out["rows"] if r["direction"] == "worse"}
+        self.assertIn("top_action_share_excess", worse)
+
+    def test_outcome_rows_never_carry_a_verdict_in_the_file_either(self):
+        self._write_arm("a", RandomPolicy(seed=1), 0, 20)
+        self._write_arm("b", RandomPolicy(seed=2), 8, 20)
+        compare_evals.main(["a", "b"])
+        out = json.loads(
+            (compare_evals.EVAL_DIR / "comparison-a-vs-b.json").read_text(encoding="utf-8")
+        )
+        for row in out["rows"]:
+            if row["kind"] == "outcome":
+                self.assertEqual(row["direction"], "")
+
+
+class TestSuiteSplit(unittest.TestCase):
+    def test_the_three_suites_are_disjoint_and_cover_every_game(self):
+        s = evals.SUITES
+        allg = s["dev"] + s["heldout"] + s["reserve"]
+        self.assertEqual(len(allg), len(set(allg)))
+        self.assertEqual(set(allg), set(evals.GAMES))
+
+    def test_the_split_is_reproducible_from_the_published_seed(self):
+        self.assertEqual(evals.split(), evals.split())
+        self.assertNotEqual(evals.split(seed=1)["dev"], evals.split(seed=2)["dev"])
+
+    def test_the_contaminated_game_is_in_dev_and_not_in_heldout(self):
+        """Every baseline in this repo was measured on ls20; it cannot be 'held out'."""
+        for game in evals.PINNED_DEV:
+            self.assertIn(game, evals.SUITES["dev"])
+            self.assertNotIn(game, evals.SUITES["heldout"])
+
+    def test_the_heldout_suite_refuses_to_run_without_report(self):
+        with self.assertRaises(evals.HeldOutViolation):
+            run_evals_main(["--arm", "sneaky", "--suite", "heldout"])
 
 
 class TestRateLimiter(unittest.TestCase):

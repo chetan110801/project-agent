@@ -1,0 +1,62 @@
+{
+  "generated": "2026-07-22T15:14:32+00:00",
+  "prompt_chars": 1464,
+  "prompt_source": "real ls20 frame, objects encoding, the agent's own prompt builder",
+  "timeout_seconds": 30.0,
+  "calls_per_model": 3,
+  "results": [
+    {
+      "model": "gemma-4-31b-it",
+      "calls": 3,
+      "answered": 0,
+      "usable_actions": 0,
+      "median_ms": null,
+      "errors": [
+        "ServerError: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}",
+        "ServerError: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}",
+        "ReadTimeout: The read operation timed out"
+      ],
+      "rpd": 14400,
+      "rpm": 30,
+      "games_per_day_at_80_actions": 180.0
+    },
+    {
+      "model": "gemma-4-26b-a4b-it",
+      "calls": 3,
+      "answered": 0,
+      "usable_actions": 0,
+      "median_ms": null,
+      "errors": [
+        "ReadTimeout: The read operation timed out",
+        "ServerError: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}",
+        "ServerError: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}"
+      ],
+      "rpd": 14400,
+      "rpm": 30,
+      "games_per_day_at_80_actions": 180.0
+    },
+    {
+      "model": "gemini-3.5-flash-lite",
+      "calls": 3,
+      "answered": 3,
+      "usable_actions": 3,
+      "median_ms": 828,
+      "errors": [],
+      "rpd": 500,
+      "rpm": 15,
+      "games_per_day_at_80_actions": 6.25
+    },
+    {
+      "model": "gemini-3.1-flash-lite",
+      "calls": 3,
+      "answered": 3,
+      "usable_actions": 3,
+      "median_ms": 761,
+      "errors": [],
+      "rpd": 500,
+      "rpm": 15,
+      "games_per_day_at_80_actions": 6.25
+    }
+  ],
+  "conclusion": "models that answered every call: gemini-3.5-flash-lite, gemini-3.1-flash-lite"
+}

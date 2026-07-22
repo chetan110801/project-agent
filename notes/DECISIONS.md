@@ -5,6 +5,203 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-22 (late) — Phase C: the eval suite, and three separate ways measurement lied
+
+**Decision:** `harness/evals.py` + `scripts/run_evals.py` + `scripts/compare_evals.py` are
+the eval apparatus. Every number is tagged **steering** / **outcome** / **cost**; a change
+is kept or reverted on steering rows only, outcome rows carry no better/worse verdict at
+all, and cost sits in the same table so a steering win bought by tripling the bill is
+visible as a trade. 90 tests, all offline. Study note 08 written.
+
+**The suite's first act was to reject the change it was built to test** (below), and to
+catch three separate ways the measurement itself was lying. That is the return on
+CLAUDE.md §5's "evals gate all tuning": every one of these would have been invisible from
+inside a tuning loop.
+
+**The split, and one confession in it.** 25 games exist; the suite is **4 dev / 6 held-out /
+15 reserve**, made by shuffling the sorted id list with the published seed `20260722`.
+`ls20` is **pinned** to dev, because every baseline number in this repo was measured on it —
+putting it in the held-out set would let us report a game we had already studied. The
+runner **refuses** `--suite heldout` without `--report` and stamps `heldout_touched` into
+the artifact when used. Reserve is not spare capacity; it is the games the free tier cannot
+afford (see below).
+
+### Lie 1 — a metric built from a story about a failure was blind to that failure
+
+Phase B's stuck LLM run (`ACTION3` 57 of 80 times, 41 consecutively) was diagnosed as
+oscillation between two screens, so Phase C added a **screen fingerprint** and a
+**revisit rate**. Run against the recording that motivated it: **0%. All 80 screens
+distinct.**
+
+The recording says why: during the 41-action streak, 37 presses moved a **two-cell marker
+along rows 61–62 by exactly one column each** — 42, 43, 44 … 54, then a 138-cell event,
+then restarting at column 16. Every screen genuinely was new. So `no_change_rate` *and*
+`revisit_rate` both read healthy through the entire failure.
+
+Kept anyway, with its limits in the docstring, because re-analysing all four committed
+recordings showed it measures something real:
+
+| metric | SDK random | our random | our random 400 | **our LLM** |
+|---|---:|---:|---:|---:|
+| illegal-action rate | 47.5% | 0% | 0% | 0% |
+| no-change rate | 47.5% | 0% | 0.25% | 0% |
+| **revisit rate** | **46%** | **0%** | 6% | **0%** |
+| longest repeat streak | 2 | 4 | 6 | **41** |
+| favourite-action share | 20% | 27% | 25% | **70%** |
+
+Revisit rate separates the SDK baseline (46%, its illegal actions bounced it back) from our
+loop (0%). It is just not a measure of *stuckness*. The two that are: streak and
+favourite-action share. **A metric invented from a story is a guess until it is run against
+the failure** — and the recording being on disk is why that cost an hour, not a week.
+
+### Lie 2 — the metric that did catch it was not comparable across games
+
+The random baseline on `tn36-ef4dde99` scored a **99% favourite-action share and a
+61-action identical streak** — worse than the stuck LLM, from a coin flip. Measured cause:
+**`tn36` offers exactly one legal action in all 81 frames.** Across the dev set:
+`ar25` offers 7, `ls20` 4, `sb26` 3, `tn36` 1.
+
+Fix: **`top_action_share_excess` = observed share − 1/n_options**, reported instead of the
+raw share (the raw share is kept but carries no direction). `tn36` random reads **−1%**;
+`ls20` LLM reads **+62%**. Also added **`distinct_targets`** (full action labels, coordinates
+included), because on a click-only game `distinct_actions` is 1 however widely the agent
+clicks. `StepRecord` now records `legal_options` so the denominator is in the trace.
+
+### Lie 3 — the model chosen on published quota does not serve real requests
+
+Phase B chose `gemma-4-31b-it` as the eval model on arithmetic alone: **14,400 requests/day
+vs Flash-Lite's 500**, i.e. 180 games/day vs 6. Recorded as provisional, pending a bake-off.
+
+The first arm on it **hung on move 1 of game 1 for 25 minutes at zero CPU.** Two faults:
+
+1. **`google-genai`'s `generate_content` has no default timeout,** so an unanswered request
+   stalls forever and looks exactly like a slow one. Fixed: `timeout_seconds=90` via
+   `types.HttpOptions(timeout=ms)` — **milliseconds**, verified against the installed 2.8.0,
+   not guessed. A timeout is now a failed `Completion`: one lost turn, not a lost run.
+2. With the timeout in, the real fault surfaced. `scripts/model_bakeoff.py` sends every
+   candidate the agent's **real** 1,464-character prompt (`artifacts/model-bakeoff.json`):
+
+| model | answered | median | usable action | requests/day |
+|---|---:|---:|---:|---:|
+| `gemma-4-31b-it` | **0 of 3** — 504 DEADLINE_EXCEEDED | — | 0 | 14,400 |
+| `gemma-4-26b-a4b-it` | **0 of 3** — read timeout | — | 0 | 14,400 |
+| `gemini-3.5-flash-lite` | 3 of 3 | 828 ms | 3 | 500 |
+| `gemini-3.1-flash-lite` | 3 of 3 | 761 ms | 3 | 500 |
+
+Both Gemma models answer `"Reply with exactly the word: ready"` in ~3 s. **A rate limit is
+a promise about requests you may make, not requests that will be served**, and a smoke test
+with a toy prompt cannot tell the difference. This supersedes the Phase B entry's
+"Phase C's eval suite therefore runs on Gemma-4 with the object encoding".
+
+**Consequence, stated because it shapes every number that follows:** the eval model is
+`gemini-3.5-flash-lite` and the suite lives inside **500 requests/day**. One arm = 4 games ×
+**30 actions** = 120 calls; an A/B = 240. The 80-action episodes in `runs/` predate this.
+Episode length is set by a free-tier cap, not by what the metric would prefer.
+
+### The first experiment — REVERTED, and the reason is the finding
+
+**Question:** the Phase B stuck loop was diagnosed as "the agent cannot see its own
+repetition". Does putting its last 8 actions in the context fix it?
+
+**Where we stood first** (4 dev games × 30 actions; *not* an experiment — four settings
+differ — but the reference every other number is read against):
+
+| metric | random | LLM |
+|---|---:|---:|
+| no-change rate | 20% | **9.2%** |
+| revisit rate | 18.3% | **7.5%** |
+| **favourite-action excess** | **+4.4%** | **+36.9%** |
+| longest streak (games with a choice) | **3** | **26** |
+| level-1 ratio | 1.23 | 1.22 |
+| wall-clock per arm | 65 s | 522 s |
+
+The LLM's actions land better than random — half the dead actions, a third the revisits —
+while being **8× more repetitive than chance** and making **exactly as much level-1 progress
+as random** for 8× the wall clock.
+
+**The experiment** (one variable, `history: 0 -> 8`;
+`artifacts/evals/comparison-dev-llm-h0-vs-dev-llm-h8.json`):
+
+| metric | h0 | h8 | |
+|---|---:|---:|---|
+| illegal-action rate | 0.8% | 0% | better |
+| no-change rate | 9.2% | **17.5%** | worse |
+| revisit rate | 7.5% | **23.3%** | worse |
+| favourite-action excess | +36.9% | **+46.9%** | worse |
+| longest repeat streak | 26 | **30** (whole episode) | worse |
+| distinct actions | 2.5 | **1.75** | worse |
+| distinct targets | 10.75 | **4.75** | worse |
+| level-1 ratio | 1.215 | 1.226 | worse |
+| *outcome:* score | 0 | 0 | — |
+| *cost:* input tokens | 103,162 | **117,824** | +14.2% |
+| *cost:* usable replies | 90% | 97.5% | better |
+
+**Decision: reverted.** `history` stays in the code defaulting to 0. Worse on 7 of 10
+steering metrics for +14% tokens does not get kept on the strength of the hypothesis that
+produced it. (The offline prediction of +14% token cost matched the live +14.2% — the one
+thing that went exactly to plan.)
+
+**Why it backfired, which is worth more than the change would have been.** After eight
+identical presses the history block reads:
+
+```
+  -8: ACTION3 -> 2 cells changed
+  ...  (eight identical lines)
+```
+
+I read that as *"you are stuck"*. The model read it as *"this action reliably works"* — and
+said so in its own words during the run: *"Extending the green bar at the bottom right to
+connect the elements"*, *"Continuing the sequence to progress the puzzle mechanics."* The
+"green bar" is the two-cell marker from Lie 1: the thing that moves one column per press and
+means nothing. The agent had a theory that moving it *is* the goal, and the history handed
+it eight supporting observations per turn.
+
+**Memory of your actions is not feedback about your progress.** We supplied the first and
+expected the second, and with score frozen at zero there is nothing in the prompt that could
+supply the second. **So the next experiment is not more memory — it is a progress signal**,
+and that is a harder problem than a prompt tweak. Knowing which of the two we have is the
+return on building the suite before doing the tuning.
+
+**Also decided / recorded:**
+
+- **Aggregate `longest_repeat_streak` excludes single-option games**, for the Lie 2 reason
+  one level up: `tn36`'s forced streak is the full episode, so a plain max over games
+  reported 30 for *every* arm including random. After the fix random reads **3** and the LLM
+  **26** — an 8.7× separation that a broken aggregate had flattened to 1.0×.
+- **`compare_evals.py` recomputes aggregates from the stored per-episode metrics** rather
+  than trusting the `aggregate` block in the file. The per-episode numbers are data; the
+  roll-up is a definition, and definitions get corrected — recomputing means both sides of
+  an old comparison move together instead of silently comparing yesterday's definition
+  against today's.
+- **Recordings are gzipped on close, not while writing.** They compress **126×** (a
+  400-action run: 5.8 MB → 46 KB; `runs/` overall 29 MB → 692 KB, 42×), which matters when
+  every experiment writes one per game per arm. But measured: a gzip stream **cannot be read
+  back until closed** (`EOFError: Compressed file ended before the end-of-stream marker`),
+  and mid-run readability is exactly why the format is JSONL — a run that dies on action 57
+  must leave 56 readable records. So: plain while playing, compressed at `RecordingEnv.close`,
+  and the plain file is deleted only after the compressed one exists and is non-empty. All
+  four committed reports were regenerated from the compressed files and reproduce
+  identically.
+- **Rates are pooled, never averaged over games.** A 90-action disaster and a clean
+  10-action game average to 50% and pool to 90%. There is a test named after it.
+- **`compare_evals.py` prints what changed in the config before printing any result**, and
+  labels the table `NOT AN EXPERIMENT` when more than one variable moved.
+- **The history window was sized by measurement, not taste:** 8 past actions costs **+14%**
+  input tokens on a real frame (747 → 851, Gemini's own tokeniser); 16 costs +28%.
+- **Near-miss worth recording:** a bulk `gzip runs/*.recording.jsonl` was run while a live
+  arm was writing into that directory. Windows' file locking refused to touch the open file
+  and the run survived. That was luck, not design — bulk file operations over a directory a
+  live run is writing to are unsafe.
+
+**Rejected:** using score as the steering metric (measured constant); raw
+`top_action_share` as a cross-game metric (confounded by how many buttons a game offers);
+keeping Gemma for its quota (quota it cannot serve is not quota); gzipping the live
+recording (trades crash-survival for disk, and disk was never the scarce thing during a
+run); a bigger dev suite (500 requests/day is the ceiling, and saying so beats pretending
+4 games is statistically comfortable).
+
+---
+
 ## 2026-07-22 (night) — Phase B part 2: an LLM plays a real game, and it is worse than a coin flip
 
 **Decision:** `harness/llm.py` (provider behind a one-method interface + client-side rate

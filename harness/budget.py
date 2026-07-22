@@ -70,8 +70,18 @@ LIMITS: dict[str, Limits] = {
         Limits("gemini-3-flash-preview", rpm=5, tpm=250_000, rpd=20),
         Limits("gemini-2.5-flash", rpm=5, tpm=250_000, rpd=20),
         # The open Gemma models trade the token budget for the request budget: 16K TPM
-        # instead of 250K, but 14,400 requests a day instead of 500. Which is better is a
-        # question about our encoding size, not about the models — see scripts/budget_report.py.
+        # instead of 250K, but 14,400 requests a day instead of 500 — 180 games a day
+        # against 6, which is why Phase B picked one of them as the eval model.
+        #
+        # DO NOT USE THEM. **MEASURED 2026-07-22** (`artifacts/model-bakeoff.json`): both
+        # answer a "say ready" prompt in ~3 s and answer a real 1,464-character game prompt
+        # **0 times out of 3** — `504 DEADLINE_EXCEEDED` from the server, then read timeouts.
+        # The limits below are real and the throughput they imply is fiction.
+        #
+        # The lesson is worth more than the models: **a rate limit is a promise about
+        # requests you may make, not about requests that will be served.** A dashboard
+        # cannot tell you the second thing, and a smoke test with a toy prompt cannot
+        # either. Only the real prompt can.
         Limits("gemma-4-31b-it", rpm=30, tpm=16_000, rpd=14_400),
         Limits("gemma-4-26b-a4b-it", rpm=30, tpm=16_000, rpd=14_400),
     ]

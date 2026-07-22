@@ -17,6 +17,7 @@ Nothing here picks a winner. Phase C's eval suite does that with numbers.
 
 from __future__ import annotations
 
+import hashlib
 from collections import deque
 from dataclasses import dataclass, field
 
@@ -51,6 +52,21 @@ def main_grid(frame: FrameData) -> Grid:
     if not gs:
         raise ValueError("frame carries no grid (FrameData.is_empty() is True)")
     return gs[-1]
+
+
+def grid_fingerprint(grid: Grid) -> str:
+    """A stable 16-character fingerprint of a screen.
+
+    `hashlib`, not Python's `hash()`: the built-in is salted per process, so the same
+    screen would fingerprint differently in two runs and nothing could be compared across
+    processes — which is exactly what a trace file on disk is for.
+
+    Lives here rather than in the loop so that the live loop and the offline recording
+    analyser use one function. Two implementations that "should agree" is how a comparison
+    silently becomes an artefact of its two readers.
+    """
+    payload = ";".join(",".join(str(v) for v in row) for row in grid)
+    return hashlib.blake2b(payload.encode("utf-8"), digest_size=8).hexdigest()
 
 
 def grid_shape(grid: Grid) -> tuple[int, int]:
@@ -269,6 +285,53 @@ def render_diff(before: Grid, after: Grid, max_cells: int = 20) -> str:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Encoding 4 — what the agent itself has been doing
+# --------------------------------------------------------------------------- #
+def render_history(frames: list[FrameData], window: int = 8) -> str:
+    """The agent's own last `window` actions and what each one did.
+
+    Everything above encodes the *world*. This encodes the *agent*, and it exists because
+    of a measured failure: on 2026-07-22 the first LLM run pressed `ACTION3` for 41
+    consecutive turns, writing a fresh justification each turn ("repeating it continues the
+    progress"). It was not stuck in any sense the loop could see — 37 of those 41 presses
+    moved a two-cell marker one column along the bottom row, so `cells_changed` was never 0,
+    the `nothing changed` feedback never fired, and the score never moved either.
+
+    The model was not being stupid. It was being asked a question with no memory in it: it
+    saw one screen, one last action, and one diff, and from that position pressing the
+    button again is a perfectly reasonable answer. Forty times in a row is only visibly
+    absurd if you can see the other thirty-nine.
+
+    Derived from the frames, deliberately, and not from the policy's own bookkeeping: the
+    loop is allowed to override a policy's choice (illegal actions become RESET), so what
+    the policy *asked for* and what was *actually sent* can differ. `action_input` is what
+    the server received, which is what the agent needs to reason about.
+    """
+    if len(frames) < 2:
+        return "none yet — this is the first move"
+    lines = []
+    start = max(1, len(frames) - window)
+    for i in range(start, len(frames)):
+        prev, cur = frames[i - 1], frames[i]
+        label = "?"
+        if cur.action_input is not None:
+            label = cur.action_input.id.name
+            data = cur.action_input.data or {}
+            if "x" in data and "y" in data:
+                label += f"(x={data['x']}, y={data['y']})"
+        try:
+            n = diff_grids(main_grid(prev), main_grid(cur)).count
+            effect = "screen unchanged" if n == 0 else f"{n} cells changed"
+        except ValueError:
+            effect = "screen replaced"
+        delta = cur.score - prev.score
+        if delta:
+            effect += f", SCORE +{delta}"
+        lines.append(f"  {i - len(frames)}: {label} -> {effect}")
+    return "\n".join(lines)
+
+
 __all__ = [
     "BACKGROUND",
     "HEX_DIGITS",
@@ -278,10 +341,12 @@ __all__ = [
     "Grid",
     "diff_grids",
     "find_blobs",
+    "grid_fingerprint",
     "grid_shape",
     "grids",
     "main_grid",
     "render_diff",
     "render_grid",
+    "render_history",
     "render_objects",
 ]

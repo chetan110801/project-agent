@@ -559,15 +559,17 @@ tweaking.
 > model decision is thirty seconds of measurement instead of a day of reading dashboards."
 
 **"Isn't four games too small?"**
-> "Yes, and I'd say so rather than defend it. It's bounded by the free tier: one arm is 320
-> model calls, the token-per-minute limit binds before the request limit, so an arm spends
-> most of its wall-clock asleep on the rate limiter. Four games is the largest suite I can
+> "Yes, and I'd say so rather than defend it. It's bounded by the free tier: one arm is 120
+> model calls against a 500-a-day cap, and it's the *requests*-per-minute limit that binds,
+> not tokens — measured, the arm ran at 13.8 calls a minute against a ceiling of 15, while
+> using 11.8K tokens a minute against a ceiling of 250K. So an arm spends most of its
+> wall-clock asleep on the rate limiter: 334 seconds of 522. Four games is the largest suite I can
 > run twice in an evening, which is what an A/B needs. If I had budget, the first thing I'd
 > spend it on is more games and multiple seeds per game, in that order — more games attacks
 > overfitting, more seeds attacks noise, and right now overfitting is the bigger risk."
 
 ---
 
-**Next:** note 09 — traces: how you answer "*why* did it do that?" for any single action the
-agent ever took, with receipts. It gets written when the failure taxonomy exists, because a
-note about an unbuilt thing is guesswork.
+**Next:** note 09 — exploration: the note above ends by promising a progress signal as the
+next experiment. Note 09 is what happened when we tried to build one, and why it turned out
+to be impossible rather than merely difficult.

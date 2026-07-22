@@ -73,6 +73,8 @@ def _llm_policy(args):
         encoder=encoders[args.encoder],
         name=f"llm:{args.model}:{args.encoder}",
         fallback_seed=args.seed,
+        history=args.history,
+        repeat_limit=args.repeat_limit,
     )
 
 
@@ -213,6 +215,13 @@ def main(argv: list[str]) -> int:
         default="objects",
         choices=["objects", "grid"],
         help="how the screen is written for the model (study note 06)",
+    )
+    p.add_argument("--history", type=int, default=0, help="past actions shown (0 = none)")
+    p.add_argument(
+        "--repeat-limit",
+        type=int,
+        default=3,
+        help="block an action after this many identical plays in a row (0 = off)",
     )
     p.add_argument("--tag", action="append", default=[], help="scorecard tag (repeatable)")
     p.add_argument("--out", default=None, help="artifacts/<name>.json (default: derived)")

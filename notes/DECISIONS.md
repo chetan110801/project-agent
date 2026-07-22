@@ -5,6 +5,133 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-23 — The progress signal cannot exist. Four candidates, all refuted offline; a repetition guard shipped instead
+
+**Decision:** `harness/progress.py` and `scripts/progress_signals.py` exist as a **recorded
+negative result** — nothing in them is in the agent's prompt. The change that shipped is the
+**repetition guard** in `harness/policies.py` (`LLMPolicy(repeat_limit=…)`), kept on the
+numbers below. 109 tests, all offline.
+
+### The idea that died, and how cheaply
+
+Yesterday's entry ends: *"the next experiment is not more memory — it is a progress signal."*
+Four candidates were written (`harness/progress.py`), and — obeying the rule Lie 1 produced —
+all four were run over the committed recordings **before** any went near a model
+(`scripts/progress_signals.py` → `artifacts/progress-signals.json`). All four failed. The one
+I believed in failed **backwards**.
+
+Churn ratio = net change ÷ total change over a look-back window; low is supposed to mean the
+work undoes itself. Holding the game constant at `ls20`, mean over every recording we have:
+
+| look-back window | 5 | 10 | 20 | 30 | 40 | 60 |
+|---|---:|---:|---:|---:|---:|---:|
+| random play | 0.359 | 0.233 | 0.158 | 0.131 | **0.116** | 0.114 |
+| the stuck LLM run | 0.681 | 0.538 | 0.334 | 0.194 | **0.136** | 0.122 |
+
+**At every window the stuck agent scores better than a coin flip**, and inside its own
+41-action streak it reads 0.650 against 0.336 outside it. Novelty is worse still: the stuck
+run reached a new screen on **100%** of actions against random's 80.6%.
+
+**Why, from the recording, action by action.** The two-cell event during the streak is not a
+marker sliding — it is a **bar being extended by two fresh cells per press**. Nothing is
+undone, nothing is revisited, and net change equals total change. By every local measure the
+stuck agent was doing **perfect accumulating work**. It was extending the wrong thing.
+
+**So the signal is not hard to build, it is impossible.** Progress is defined against a goal;
+with the goal unknown and the score frozen at 0, no statistic over the screen separates
+progress from busywork — only activity from stillness. Both previous diagnoses are now
+retired: *"it cannot see its own repetition"* (refuted by the h8 experiment) and *"it needs a
+progress signal"* (refuted here). The fault is **premature commitment**: one hypothesis about
+the goal, never tested against another.
+
+### What shipped instead — the repetition guard
+
+After `repeat_limit` identical actions in a row, that exact action is refused: named as
+blocked in the prompt, removed from the offered options, and enforced in code if the model
+returns it anyway. Two things make it engineering rather than a hunch:
+
+- **The threshold is read off the baseline** (`repeat_cap_firing_rates` in the artifact). A
+  random player exceeds three-in-a-row on **0-2%** of its moves; the LLM exceeds it on **30%,
+  57% and 77%** of the three dev games where a guard can fire. The rule is therefore *you may
+  repeat an action as often as chance would*, and it provably cannot punish normal play.
+- **It bans the full label, coordinates included**, so clicking four squares is exploring and
+  clicking one square four times is not — and it can never leave zero options, which is why
+  `tn36-ef4dde99` (one legal action) is untouched.
+
+### The experiment (`comparison-dev-llm-h0-vs-dev-llm-r3.json`, one variable, 4 games × 30)
+
+| metric | h0 | r3 | |
+|---|---:|---:|---|
+| illegal-action rate | 0.83% | 0% | better |
+| **longest repeat streak** | **26** | **3** | better |
+| **favourite-action excess** | **+36.9%** | **+17.7%** | better |
+| distinct actions | 2.5 | 3.25 | better |
+| distinct targets | 10.75 | 12.25 | better |
+| no-change rate | 9.2% | **11.7%** | worse |
+| revisit rate | 7.5% | **10.0%** | worse |
+| level1_ratio | 1.215 | 1.226 | worse |
+| *outcome:* score / levels | 0 / 0 | 0 / 0 | — |
+| *cost:* input tokens | 103,162 | 104,376 | +1.2% |
+| **guard overrules needed** | — | **0 of 120** | — |
+
+**Decision: kept**, with the trade stated. Justification for the three regressions, as
+CLAUDE.md §5 requires: **both rate regressions come from one game.** `sb26` moved 0.300 →
+0.433 dead and 0.267 → 0.400 revisit; `ls20` and `ar25` held or improved. That is the trade we
+bought on purpose — stop an agent repeating its favourite button and some of the alternatives
+it tries do nothing. Paying 2.5 points of dead actions to stop spending 26 consecutive turns
+on one button is the intended direction, at +1.2% tokens.
+
+**The headline is not the win.** Score 0 → 0, levels 0 → 0. The guard did exactly what it was
+built to do and **the agent is no better at the game.** Reported that way everywhere.
+
+### Three more things the measurement said
+
+1. **The model obeyed the prompt every single time: `repeat_blocks` = 0 of 120.** The code
+   never had to overrule it — it wrote *"Since ACTION1 is blocked, trying ACTION2"* and
+   *"ACTION2 was blocked after 3 consecutive uses, so I must switch to ACTION1"* in its own
+   reasoning. The enforcement path stays anyway: a prompt is a request, a guard is a
+   guarantee, and one obedient run is not a property of the model. `aggregate()` reports this
+   zero as `0` and not as `-`, deliberately — a measured zero is the finding.
+2. **A free noise estimate, from the game where the change was inactive.** On `tn36` the guard
+   fired **0 times in both arms** (measured: 27 distinct click targets in 30 actions, never
+   three identical in a row), so its prompt was unchanged — and its unparseable replies still
+   moved **9 → 14 of 30**. The whole aggregate `usable_reply_rate` regression (0.90 → 0.85) is
+   that one game. **A metric that moves in a game where the intervention never fired is
+   noise**, and this is the first quantified sense of how much of a single-seed A/B is noise.
+3. **`level1_ratio` is saturated and is not a steering metric.** At a 30-action budget every
+   episode in both arms spent all 30 actions in level 1 (h0: 29/30/30/30, r3: 30/30/30/30), so
+   the ratio is ~30 ÷ reference — a number set by the action cap, not by play. It can only
+   move by completing level 1, which makes it an outcome metric wearing a steering label. It
+   stays in the table with this note against it rather than being quietly dropped.
+
+**Also decided / recorded:**
+
+- **`--repeat-limit` now defaults to 3** in `run_evals.py` and `run_agent.py`, because that is
+  what "kept" means. Reproducing any arm from before today requires `--repeat-limit 0`; every
+  artifact records its own config, so the instruction is in the file.
+- **A provenance correction to yesterday's entry.** It quoted *"Extending the green bar…"* as
+  something the model said during the **h8** run. Checked against the traces: that line appears
+  only in the **h0** arm, and *"Continuing the sequence to progress the puzzle mechanics"* in
+  h0 and the 80-action stuck run. Neither is from h8. The diagnosis survives; the attribution
+  was wrong, and it made the history block look like the cause of a theory the model states
+  with no history at all. Corrected in place, above.
+- **Study note 09 is exploration**, and the ladder shifted: traces → 10, memory → 11,
+  budgets → 12, interview story → 13.
+- **A number in study note 08 was wrong and is fixed:** it said an arm is "320 model calls"
+  and that "the token-per-minute limit binds before the request limit". Measured from
+  `dev-llm-h0.json`: an arm is **120 calls**, running at **13.8 calls/min against a 15 RPM
+  ceiling** while using **11.8K tokens/min against a 250K ceiling**. RPM binds, as
+  `DECISIONS` already said; the note contradicted it.
+
+**Rejected:** shipping any of the four progress signals (measured backwards or blind);
+deleting `harness/progress.py` after the negative result (the evidence is the result, and the
+tests pin the growing-bar case so nobody rebuilds it from the same story a third time);
+banning by button rather than by full action label (would forbid exploring a click game);
+firing the guard on single-option games (repetition there is forced, not chosen); calling the
+`usable_reply_rate` drop a regression (it is one game in which the change never fired).
+
+---
+
 ## 2026-07-22 (late) — Phase C: the eval suite, and three separate ways measurement lied
 
 **Decision:** `harness/evals.py` + `scripts/run_evals.py` + `scripts/compare_evals.py` are
@@ -149,12 +276,18 @@ identical presses the history block reads:
   ...  (eight identical lines)
 ```
 
-I read that as *"you are stuck"*. The model read it as *"this action reliably works"* — and
-said so in its own words during the run: *"Extending the green bar at the bottom right to
-connect the elements"*, *"Continuing the sequence to progress the puzzle mechanics."* The
-"green bar" is the two-cell marker from Lie 1: the thing that moves one column per press and
-means nothing. The agent had a theory that moving it *is* the goal, and the history handed
-it eight supporting observations per turn.
+I read that as *"you are stuck"*. The model read it as *"this action reliably works"*. The
+agent had a theory that extending the bottom-row bar *is* the goal, and the history handed it
+eight supporting observations per turn.
+
+> **CORRECTED 2026-07-23.** This paragraph originally quoted *"Extending the green bar at the
+> bottom right to connect the elements"* and *"Continuing the sequence to progress the puzzle
+> mechanics"* as things the model said **during the h8 run**. Checked against the traces: the
+> first appears only in `runs/ls20-…eval-dev-llm-h0.…trace.jsonl` — the **h0** arm — and the
+> second in the h0 arm and the 80-action stuck run. Neither is from h8. The quotes are real
+> and the diagnosis survives; the attribution was wrong, and it made the history block look
+> like the *cause* of a theory the model states without any history at all. Provenance is a
+> claim like any other (CLAUDE.md §3).
 
 **Memory of your actions is not feedback about your progress.** We supplied the first and
 expected the second, and with score frozen at zero there is nothing in the prompt that could

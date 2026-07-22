@@ -37,9 +37,12 @@ from harness.mock_game import AGENT, MockGame, WIN_SCORE  # noqa: E402
 from harness.policies import (  # noqa: E402
     LLMPolicy,
     RandomPolicy,
+    blocked_label,
     legal_actions,
     parse_action,
+    played_labels,
 )
+from harness.progress import measure_progress, render_progress  # noqa: E402
 from harness.tokens import measure  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 from scripts.analyze_run import load as load_recording  # noqa: E402
@@ -561,6 +564,158 @@ class TestHistoryEncoding(unittest.TestCase):
         last_prompt = policy.client.prompts[-1]
         self.assertIn("RESET ->", last_prompt)
         self.assertNotIn("ACTION4 ->", last_prompt)
+
+
+class TestProgressSignals(unittest.TestCase):
+    """The four candidates, and the property that made three of them useless.
+
+    These do not test that the signals *work* — `scripts/progress_signals.py` answered
+    that against real recordings, and the answer was no. They test that each one computes
+    what it claims to, so the negative result is a fact about the game and not about a bug.
+    """
+
+    def _grids(self, *rows_sets):
+        return [[list(r) for r in rs] for rs in rows_sets]
+
+    def test_too_early_to_tell_rather_than_a_confident_zero(self):
+        self.assertIsNone(measure_progress([[[0, 0], [0, 0]]]))
+        self.assertIn("too early", render_progress(None))
+
+    def test_work_that_accumulates_reads_near_one(self):
+        """Each step paints a new cell and leaves it painted: net == cumulative."""
+        grids = self._grids(
+            [[0, 0, 0]], [[1, 0, 0]], [[1, 1, 0]], [[1, 1, 1]]
+        )
+        p = measure_progress(grids, window=3)
+        self.assertEqual((p.cumulative_changes, p.net_changes), (3, 3))
+        self.assertEqual(p.churn_ratio, 1.0)
+        self.assertFalse(p.going_in_circles)
+
+    def test_work_that_undoes_itself_reads_near_zero(self):
+        """A cell toggling back and forth: plenty of change, no net effect."""
+        grids = self._grids([[0]], [[1]], [[0]], [[1]], [[0]])
+        p = measure_progress(grids, window=4)
+        self.assertEqual((p.cumulative_changes, p.net_changes), (4, 0))
+        self.assertEqual(p.churn_ratio, 0.0)
+        self.assertTrue(p.going_in_circles)
+        self.assertIn("going in circles", render_progress(p))
+
+    def test_a_dead_screen_is_reported_separately_from_a_treadmill(self):
+        """`None`, not 0.0: 'nothing happened' is not 'it added up to nothing'."""
+        p = measure_progress(self._grids([[0]], [[0]], [[0]]), window=2)
+        self.assertIsNone(p.churn_ratio)
+        self.assertFalse(p.going_in_circles)
+        self.assertIn("NOTHING", render_progress(p))
+
+    def test_a_shape_change_ends_the_window_instead_of_crashing(self):
+        grids = [[[0, 0]], [[0, 0]], [[0, 0, 0]], [[0, 1, 0]]]
+        p = measure_progress(grids, window=3)
+        self.assertEqual(p.window, 1)
+
+    def test_novelty_counts_screens_not_seen_earlier_in_the_episode(self):
+        """A screen counts as new once, the first time — even inside the window."""
+        grids = self._grids([[0]], [[1]], [[0]], [[1]], [[0]])
+        hashes = [grid_fingerprint(g) for g in grids]
+        # Window of 2: both screens reached were already seen before the window opened.
+        self.assertEqual(measure_progress(grids, hashes=hashes, window=2).new_screens, 0)
+        # Window of 4: the first screen reached inside it is new at that moment.
+        self.assertEqual(measure_progress(grids, hashes=hashes, window=4).new_screens, 1)
+
+    def test_the_growing_bar_that_defeated_this_whole_idea(self):
+        """A reconstruction of the measured failure, kept as an executable reminder.
+
+        In the real stuck run the agent extended a bar by two cells per press for forty
+        presses. Every local signal reads *healthy*: the work accumulates perfectly. That
+        is why `artifacts/progress-signals.json` shows the stuck run scoring **better**
+        than random play, and why no progress signal went into the prompt.
+        """
+        grids = [[[1] * n + [0] * (10 - n)] for n in range(0, 6)]
+        p = measure_progress(grids, window=5)
+        self.assertEqual(p.churn_ratio, 1.0)
+        self.assertFalse(p.going_in_circles)
+
+
+class TestRepetitionGuard(unittest.TestCase):
+    """The intervention that replaced the progress signal."""
+
+    def _frames(self, moves):
+        g = MockGame()
+        frames = [g.reset()]
+        for kind in moves:
+            frames.append(g.step(Action(kind)))
+        return frames
+
+    def test_labels_come_from_what_the_server_received(self):
+        frames = self._frames([GameAction.ACTION1, GameAction.ACTION2])
+        self.assertEqual(played_labels(frames), ["ACTION1", "ACTION2"])
+
+    def test_nothing_is_blocked_below_the_limit(self):
+        frames = self._frames([GameAction.ACTION1] * 2)
+        self.assertIsNone(blocked_label(frames, 3))
+
+    def test_the_repeated_action_is_blocked_at_the_limit(self):
+        frames = self._frames([GameAction.ACTION1] * 3)
+        self.assertEqual(blocked_label(frames, 3), "ACTION1")
+
+    def test_a_limit_of_zero_never_blocks(self):
+        frames = self._frames([GameAction.ACTION1] * 20)
+        self.assertIsNone(blocked_label(frames, 0))
+
+    def test_variety_clears_the_block(self):
+        frames = self._frames([GameAction.ACTION1] * 3 + [GameAction.ACTION2])
+        self.assertIsNone(blocked_label(frames, 3))
+
+    def test_the_guard_is_off_by_default_and_the_prompt_is_unchanged(self):
+        """The control arm must be the Phase B prompt byte for byte."""
+        frames = self._frames([GameAction.ACTION1] * 5)
+        plain = LLMPolicy(ScriptedClient(["ACTION1"]))
+        self.assertNotIn("BLOCKED", plain.build_prompt(frames, frames[-1]))
+
+    def test_the_prompt_states_the_block_and_drops_the_option(self):
+        frames = self._frames([GameAction.ACTION1] * 3)
+        policy = LLMPolicy(ScriptedClient(["ACTION1"]), repeat_limit=3)
+        prompt = policy.build_prompt(frames, frames[-1])
+        self.assertIn("BLOCKED", prompt)
+        options = prompt.split("Buttons you may press right now:")[1].splitlines()[0]
+        self.assertNotIn("ACTION1", options)
+
+    def test_the_block_is_enforced_when_the_model_ignores_it(self):
+        """A prompt is a request; a guard is a guarantee."""
+        policy = LLMPolicy(ScriptedClient(["ACTION1"] * 20), repeat_limit=3)
+        result = run_episode(MockGame(), policy, max_actions=10)
+        kinds = [s.action for s in result.steps]
+        self.assertGreater(policy.repeat_blocks, 0)
+        self.assertLessEqual(max_streak(kinds), 3)
+
+    def test_a_single_option_game_never_traps_the_agent(self):
+        """`tn36` offers one action; the guard must not leave nothing to press."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION1])
+        policy = LLMPolicy(ScriptedClient(["ACTION1"] * 20), repeat_limit=3)
+        result = run_episode(g, policy, max_actions=8)
+        self.assertEqual(result.actions_taken, 8)
+        self.assertEqual(result.rejected_actions, 0)
+
+    def test_clicks_are_blocked_by_square_not_by_button(self):
+        """Clicking one square four times is the failure; clicking four squares is not."""
+        g = MockGame(available=[GameAction.RESET, GameAction.ACTION6])
+        frames = [g.reset()]
+        for _ in range(3):
+            frames.append(g.step(Action(GameAction.ACTION6, x=5, y=5)))
+        self.assertEqual(blocked_label(frames, 3), "ACTION6(x=5,y=5)")
+        frames = [g.reset()]
+        for i in range(3):
+            frames.append(g.step(Action(GameAction.ACTION6, x=i, y=0)))
+        self.assertIsNone(blocked_label(frames, 3))
+
+
+def max_streak(labels):
+    best = run = 0
+    previous = None
+    for x in labels:
+        run = run + 1 if x == previous else 1
+        best = max(best, run)
+        previous = x
+    return best
 
 
 class TestScreenFingerprint(unittest.TestCase):

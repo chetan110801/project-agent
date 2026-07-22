@@ -83,13 +83,61 @@ class RandomPolicy:
         return Action(kind, reasoning="random baseline")
 
 
+# --------------------------------------------------------------------------- #
+# The repetition guard
+# --------------------------------------------------------------------------- #
+# How many times in a row the agent may repeat one action before the harness refuses it.
+# Chosen by measurement, not by taste. Across every committed recording, a *random* player
+# exceeds three identical actions in a row on 0-2% of its moves (and 0% on the 30-action
+# arms), while the LLM exceeds it on 30-77%. So the cap is set at exactly what chance
+# produces: **you may repeat an action as often as a coin flip would.** A guard that also
+# fires on random play would be punishing normal play; this one is calibrated so it cannot.
+REPEAT_LIMIT = 3
+
+
+def played_labels(frames: list[FrameData]) -> list[str]:
+    """The action labels actually sent to the server, oldest first.
+
+    Read from `action_input` rather than from the policy's own memory for the same reason
+    `render_history` does: the loop may override what the policy asked for (an illegal
+    action becomes RESET), and the guard has to count what the *game* saw.
+    """
+    labels = []
+    for f in frames[1:]:
+        if f.action_input is None:
+            continue
+        label = f.action_input.id.name
+        data = f.action_input.data or {}
+        if "x" in data and "y" in data:
+            label += f"(x={data['x']},y={data['y']})"
+        labels.append(label)
+    return labels
+
+
+def blocked_label(frames: list[FrameData], limit: int) -> str | None:
+    """The action the agent has just played `limit` times in a row, or None.
+
+    Compares **full labels**, coordinates included, so that on a click game clicking the
+    same square four times is caught while clicking four different squares is not. On a
+    game whose only action is a click, banning one square still leaves 4,095 — which is why
+    this can be safe to enforce even where `available_actions` has a single entry.
+    """
+    if limit <= 0:
+        return None
+    labels = played_labels(frames)
+    if len(labels) < limit:
+        return None
+    tail = labels[-limit:]
+    return tail[0] if len(set(tail)) == 1 else None
+
+
 PROMPT = """You are playing a puzzle video game. You see the screen as a grid of colours.
 
 {screen}
 
 Your last action: {last_action}
 What that changed: {feedback}
-{history}
+{history}{ban}
 Buttons you may press right now: {options}
 
 Reply with ONE line and nothing else, in this exact form:
@@ -106,8 +154,13 @@ class LLMPolicy:
     Everything interesting is in what the model is shown, not in this class — see study
     note 06. The parts of the prompt are the encoded screen, the feedback about the agent's
     own last action, an optional window of its own recent actions (`history`, off by
-    default so the Phase B prompt is reproducible byte for byte), and the list of buttons
-    that are legal *right now*.
+    default so the Phase B prompt is reproducible byte for byte), an optional repetition
+    ban (`repeat_limit`, likewise off by default), and the list of buttons that are legal
+    *right now*.
+
+    With both options off, `build_prompt` produces the Phase B prompt byte for byte. That
+    is deliberate and there is a test for it: an A/B whose control arm has quietly drifted
+    is not an A/B.
 
     That last part is belt-and-braces with the loop's guard: telling the model the legal
     set makes a good answer likelier, and the guard makes a bad one harmless. Both, because
@@ -125,6 +178,7 @@ class LLMPolicy:
         name: str | None = None,
         fallback_seed: int = 0,
         history: int = 0,
+        repeat_limit: int = 0,
     ) -> None:
         from .frames import main_grid, render_objects
 
@@ -134,11 +188,17 @@ class LLMPolicy:
         # How many of the agent's own past actions to put in the prompt. 0 reproduces the
         # Phase B prompt exactly, which is what makes this an A/B and not a rewrite.
         self.history = history
+        # After this many identical actions in a row, the repeated action is refused. 0 is
+        # off, and off is the setting every earlier arm ran under.
+        self.repeat_limit = repeat_limit
         self._fallback = RandomPolicy(seed=fallback_seed, name="fallback")
         self.calls = 0
         self.parse_failures = 0
         self.client_errors = 0
         self.input_tokens = 0
+        # How often the guard actually had to overrule the model. Reported, because a guard
+        # whose firing rate is invisible is a change whose size is unknown.
+        self.repeat_blocks = 0
         self.last: Completion | None = None
 
     def build_prompt(self, frames: list[FrameData], latest: FrameData) -> str:
@@ -159,11 +219,28 @@ class LLMPolicy:
                 + render_history(frames, self.history)
                 + "\n"
             )
+
+        # The ban is stated as a rule already in force, not as advice. Experiment 1 showed
+        # that facts the model is left to interpret get interpreted favourably: eight lines
+        # of "ACTION3 -> 2 cells changed" were read as proof the action worked. So the
+        # harness does the judging and reports a decision.
+        ban = ""
+        banned = blocked_label(frames, self.repeat_limit)
+        if banned:
+            simple = banned if "(" not in banned else banned.split("(")[0]
+            if simple in options and len(options) > 1:
+                options = [o for o in options if o != simple]
+            ban = (
+                f"\nRULE: you have played {banned} {self.repeat_limit} times in a row. "
+                f"It is BLOCKED this turn. Pick something else.\n"
+            )
+
         return PROMPT.format(
             screen=self.encode(latest),
             last_action=last_action,
             feedback=feedback,
             history=history,
+            ban=ban,
             options=", ".join(options) or "none",
         )
 
@@ -187,7 +264,34 @@ class LLMPolicy:
             first = completion.text.strip().splitlines()[:1]
             return self._fall_back(frames, latest, f"unparseable reply: {first!r:.120}")
 
+        # A prompt is a request; a guard is a guarantee — the same pairing as the legal
+        # action list. The model is told the action is blocked and is still capable of
+        # returning it, so the block is also enforced here.
+        banned = blocked_label(frames, self.repeat_limit)
+        if banned and action.label() == banned:
+            self.repeat_blocks += 1
+            return self._escape(frames, latest, banned)
+
         return Action(action.kind, action.x, action.y, reasoning=completion.text.strip()[:300])
+
+    def _escape(self, frames, latest, banned: str) -> Action:
+        """Any legal action that is not the banned one.
+
+        Bounded retries rather than a `while True`: on a game whose only action is a click,
+        a random square could in principle repeat the banned one, and an unbounded loop in
+        the decide step is a hang in the middle of a live run.
+        """
+        for _ in range(8):
+            candidate = self._fallback.choose(frames, latest)
+            if candidate.label() != banned:
+                return Action(
+                    candidate.kind,
+                    candidate.x,
+                    candidate.y,
+                    reasoning=f"repetition guard: {banned} blocked after "
+                    f"{self.repeat_limit} in a row — forced variety",
+                )
+        return Action(GameAction.RESET, reasoning=f"repetition guard: {banned} blocked, reset")
 
     def _fall_back(self, frames, latest, why: str) -> Action:
         action = self._fallback.choose(frames, latest)

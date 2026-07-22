@@ -76,9 +76,10 @@ def build_policy(args, seed: int):
     return LLMPolicy(
         client,
         encoder=encoders[args.encoder],
-        name=f"llm:{args.model}:{args.encoder}:h{args.history}",
+        name=f"llm:{args.model}:{args.encoder}:h{args.history}:r{args.repeat_limit}",
         fallback_seed=seed,
         history=args.history,
+        repeat_limit=args.repeat_limit,
     )
 
 
@@ -93,6 +94,7 @@ def llm_stats(policy) -> dict[str, Any] | None:
         "seconds_waited": getattr(policy.client, "seconds_waited", 0.0),
         "retries": getattr(policy.client, "retries", 0),
         "requests_used_today": getattr(policy.client, "calls_made", None),
+        "repeat_blocks": policy.repeat_blocks,
     }
 
 
@@ -143,6 +145,15 @@ def main(argv: list[str]) -> int:
     p.add_argument("--model", default="gemini-3.5-flash-lite")
     p.add_argument("--encoder", default="objects", choices=["objects", "grid"])
     p.add_argument("--history", type=int, default=0, help="past actions shown to the model")
+    # 3 because the experiment on 2026-07-23 kept it: streak 26 -> 3 and favourite-action
+    # excess +36.9% -> +17.7% for +1.2% tokens. Every arm run before that date needs
+    # `--repeat-limit 0` to reproduce, and each artifact records the config that made it.
+    p.add_argument(
+        "--repeat-limit",
+        type=int,
+        default=3,
+        help="block an action after this many identical plays in a row (0 = off)",
+    )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--max-actions", type=int, default=80)
     p.add_argument("--mock", action="store_true", help="offline: no key, no quota, no meaning")
@@ -177,6 +188,7 @@ def main(argv: list[str]) -> int:
             "model": args.model if args.policy == "llm" else None,
             "encoder": args.encoder if args.policy == "llm" else None,
             "history": args.history if args.policy == "llm" else None,
+            "repeat_limit": args.repeat_limit if args.policy == "llm" else None,
             "seed": args.seed,
             "max_actions": args.max_actions,
             "mock": bool(args.mock),

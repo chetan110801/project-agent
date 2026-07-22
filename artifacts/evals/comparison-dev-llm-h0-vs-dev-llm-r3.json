@@ -1,0 +1,150 @@
+{
+  "before": "dev-llm-h0",
+  "after": "dev-llm-r3",
+  "config_changed": [
+    "repeat_limit: None -> 3"
+  ],
+  "single_variable": true,
+  "same_games": true,
+  "games": [
+    "ls20-9607627b",
+    "sb26-7fbdac44",
+    "ar25-0c556536",
+    "tn36-ef4dde99"
+  ],
+  "rows": [
+    {
+      "kind": "steering",
+      "metric": "illegal_action_rate",
+      "before": 0.0083,
+      "after": 0.0,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "no_change_rate",
+      "before": 0.0917,
+      "after": 0.1167,
+      "direction": "worse"
+    },
+    {
+      "kind": "steering",
+      "metric": "revisit_rate",
+      "before": 0.075,
+      "after": 0.1,
+      "direction": "worse"
+    },
+    {
+      "kind": "steering",
+      "metric": "top_action_share_excess",
+      "before": 0.3685,
+      "after": 0.1768,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "top_action_share",
+      "before": 0.8,
+      "after": 0.6083,
+      "direction": ""
+    },
+    {
+      "kind": "steering",
+      "metric": "longest_repeat_streak",
+      "before": 26,
+      "after": 3,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "distinct_actions",
+      "before": 2.5,
+      "after": 3.25,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "distinct_targets",
+      "before": 10.75,
+      "after": 12.25,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "game_overs",
+      "before": 0,
+      "after": 0,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "level1_ratio",
+      "before": 1.215,
+      "after": 1.2263,
+      "direction": "worse"
+    },
+    {
+      "kind": "steering",
+      "metric": "repeat_blocks",
+      "before": null,
+      "after": 0,
+      "direction": ""
+    },
+    {
+      "kind": "outcome",
+      "metric": "final_score",
+      "before": 0,
+      "after": 0,
+      "direction": ""
+    },
+    {
+      "kind": "outcome",
+      "metric": "levels_completed",
+      "before": 0,
+      "after": 0,
+      "direction": ""
+    },
+    {
+      "kind": "cost",
+      "metric": "wall_seconds",
+      "before": 522.4,
+      "after": 526.0,
+      "direction": "worse"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_calls",
+      "before": 120,
+      "after": 120,
+      "direction": "same"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_input_tokens",
+      "before": 103162,
+      "after": 104376,
+      "direction": "worse"
+    },
+    {
+      "kind": "cost",
+      "metric": "seconds_waited",
+      "before": 333.6,
+      "after": 325.3,
+      "direction": "better"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_retries",
+      "before": 1,
+      "after": 1,
+      "direction": "same"
+    },
+    {
+      "kind": "cost",
+      "metric": "usable_reply_rate",
+      "before": 0.9,
+      "after": 0.85,
+      "direction": "worse"
+    }
+  ]
+}

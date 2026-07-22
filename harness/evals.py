@@ -144,6 +144,11 @@ STEERING = (
     "distinct_targets",
     "game_overs",
     "level1_ratio",
+    # How often the repetition guard overruled the model. Listed here so it prints in the
+    # comparison, and in neither direction set below so it prints without a verdict: it is
+    # the *size* of an intervention, not a measure of how well the agent played. A change
+    # whose intervention rate is invisible is a change of unknown magnitude.
+    "repeat_blocks",
 )
 OUTCOME = ("final_score", "levels_completed", "final_state", "level1_completed")
 COST = (
@@ -226,6 +231,8 @@ class Metrics:
     # 429s that were retried and then succeeded. Not failures — but not free either, and
     # invisible in every other number, so they are counted rather than shrugged off.
     llm_retries: int | None = None
+    # Times the repetition guard refused the model's choice (`harness/policies.py`).
+    repeat_blocks: int | None = None
     error: str | None = None
 
     # -- derived ----------------------------------------------------------- #
@@ -376,6 +383,7 @@ def measure(result: Any, llm: dict[str, Any] | None = None) -> Metrics:
         client_errors=(llm or {}).get("client_errors"),
         seconds_waited=(llm or {}).get("seconds_waited"),
         llm_retries=(llm or {}).get("retries"),
+        repeat_blocks=(llm or {}).get("repeat_blocks"),
     )
 
 
@@ -470,6 +478,18 @@ class Arm:
             ) if eps else 0,
             "game_overs": sum(e.game_overs for e in eps),
             "level1_ratio": round(sum(ratios) / len(ratios), 4) if ratios else None,
+            # Summed, not pooled: it is a count of interventions, and the arms it is
+            # compared across run the same number of actions.
+            #
+            # Deliberately NOT `or None` the way the cost fields below are. A measured zero
+            # here is the finding — it means the model obeyed the ban in the prompt every
+            # single time and the code never had to overrule it — and collapsing that to
+            # "not measured" would hide the most interesting number in the experiment.
+            "repeat_blocks": (
+                sum(e.repeat_blocks or 0 for e in eps)
+                if any(e.repeat_blocks is not None for e in eps)
+                else None
+            ),
             # outcome — reported, never steered on
             "final_score": sum(e.final_score for e in eps),
             "levels_completed": sum(e.levels_completed or 0 for e in eps),

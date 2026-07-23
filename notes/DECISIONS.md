@@ -211,6 +211,69 @@ actions and completed 0 levels; the reference solves level 1 in 22" — fed into
 episode's opening prompt changes anything. It is the only progress signal that can exist,
 because it is the only one sourced from something that knows the goal.
 
+### RESULTS — the completed four-game A/B (re-run 2026-07-23, 16:00 UTC, window rolled)
+
+**The arm finished cleanly this time.** All four dev games, 30 actions each, **120 real
+model calls, 0 quota fallbacks, 0 failed episodes** (`artifacts/evals/dev-llm-y1.json`). The
+stale single-game `ls20` trace from the aborted run was moved to `runs/quota-wall-2026-07-22/`
+first, so the mechanism report reads exactly the four fresh traces and cannot double-count.
+
+**The verdict is what the one clean game predicted, now at four games: the mechanism fires
+hard and does not steer.** `dev-llm-r3` vs `dev-llm-y1`, single variable `hypothesis: False →
+True`:
+
+- **It ran, beyond any doubt** (this rules out the pre-registered "no result at all", which
+  required a low stated-rate or unchecked predictions): `hypothesis_stated_rate` **0.975**,
+  `hypothesis_changes` **74**, **103** predictions checked against the frame that came back,
+  `prediction_hit_rate` **0.673**.
+- **It did not steer.** The two metrics named in advance as the "works" test did not move:
+  `top_action_share_excess` **0.1768 → 0.1768** (byte-identical — the repetition guard at
+  `repeat_limit 3`, on in *both* arms, is what sets repetition here, and the theory prompt
+  rides on top without widening exploration), `distinct_targets` **12.25 → 13.25** (+1, deep
+  inside the 17-point single-seed noise floor). `level1_ratio` **1.226 → 1.226**, streak 3 →
+  3, distinct actions 3.25 → 3.25, and two metrics got *worse* (`no_change_rate` 0.117 →
+  0.125, `revisit_rate` 0.10 → 0.125). **Score 0 → 0.** Cost **+9.4% input tokens**
+  (104,376 → 114,142). So it is **neither the pre-registered "works" (excess down) nor
+  "backfires" (excess up)** — it is null on steering while the mechanism ran at full tilt.
+- **The refutation-drives-revision finding is now pooled over four games and is stronger
+  than the single-game version:** theory changed **94% (30/32)** of the time after a WRONG
+  prediction versus **44% (30/68)** after one that HELD (`hypothesis-report-dev-llm-y1.json`;
+  the one-game version was 80% vs 39%). One honest nuance the four games expose: on `ls20`
+  every prediction *held* (0 wrong), yet the agent still stated 17 theories and changed 16
+  times — on the one game where nothing refuted it, it churned theories anyway. The pooled
+  conditional holds because `sb26`/`ar25`/`tn36` supplied the refutations (17/10/7 wrong).
+- **The completed arm did *not* reproduce the aborted run's tower-delusion narrative** (the
+  one-game RESULTS above, from trace `dbec901c`, ended on *"grow the tower higher"* three
+  times). This time — model output is stochastic across sessions — the four games ended on
+  *varied* plausible-but-wrong theories: `ls20` *"solve the maze puzzle"*, `ar25` *"clear the
+  colored objects"*, `sb26` *"light up the indicators"*, `tn36` *"turn off the switches"*. The
+  conclusion is the same and if anything cleaner: falsification does not loop back to one wrong
+  idea, it generates a *stream* of plausible wrong ideas, and with nothing scoring them the
+  score never moves. Study note 09 Part 9 was rewritten to this completed-arm story (the
+  tower-delusion quotes were stale and are gone from the note).
+
+**A fourth way measurement lied, found and fixed this run.** `compare_evals.py` flagged the
+comparison `NOT AN EXPERIMENT — more than one variable moved`, naming three: `hypothesis`,
+`attempts`, `progress`. Only `hypothesis` moved. The other two are **schema drift**: `dev-llm-r3`
+was written before those keys existed, so its config has no entry for them, and the tool read
+absent (`None`) as "a different setting" rather than "the behaviour that key defaults to". The
+fix normalises an absent later-added key to its runner default before diffing (`LEGACY_DEFAULTS`
+= `{hypothesis: False, attempts: 1, progress: False}`, the argparse defaults; a flag that was
+*set* is always recorded, so this can only ever fill a default, never mask a real change). The
+comparison now correctly reads one variable. This is the same class of bug as the three logged
+in study note 08 — a measurement tool telling a confident falsehood — and it was caught the
+same way, by refusing to accept a number that contradicted what the run plainly did. 150 tests,
+all offline (was 149).
+
+**Decision: FINAL — mechanism confirmed, not kept as a default.** `--hypothesis` stays **off by
+default**; the four-game numbers do not clear CLAUDE.md §5's bar to move a default (no steering
+gain, +9.4% tokens). The mechanism stays in the code, off, because its *sub-finding* is real
+and reusable: **you can break premature commitment — provably, driven by refutation — and it
+does not make the agent play better, because nothing in the loop still knows the goal.** That
+is exactly the gap Experiment 4 (the after-the-fact scorecard signal) attacks, and it is the
+last untried idea in study note 09. The `compare_evals` normalisation fix is kept (it is
+truth-telling, not tuning).
+
 ---
 
 ## 2026-07-23 — The progress signal cannot exist. Four candidates, all refuted offline; a repetition guard shipped instead

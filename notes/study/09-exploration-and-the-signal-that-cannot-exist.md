@@ -455,46 +455,53 @@ before it starts and refuses to begin an arm that will not fit in what is left o
 An arm that dies half-way is not a cheap failure — it spends the quota *and* leaves a table
 full of random fallbacks that look like play. Better to not start.
 
-**Now, the one game we do have.** Report it as one game — a single-seed difference of 17
-points was shown this morning to be within noise, so nothing small on one game is a result.
-On `ls20`, with the falsification prompt against the same setup without it:
+**The window rolled the next day, and the arm was re-run to completion** — all four dev games,
+120 real model calls, no fallbacks. Now report it against the noise floor: a single-seed
+difference of 17 points was shown that same morning to be within noise, so nothing small is a
+result. Guard-only against guard-plus-falsification, aggregated over the four games:
 
-| ls20, 30 actions | guard only | + falsification | |
+| 4 dev games, 30 actions each | guard only | + falsification | |
 |---|---:|---:|---|
-| repetition above chance | +21.7 pts | +18.3 pts | within noise |
+| repetition above chance | +17.7 pts | +17.7 pts | identical |
 | longest identical streak | 3 | 3 | same |
-| different targets tried | 4 | 4 | same |
+| different targets tried | 12.25 | 13.25 | +1, within noise |
 | **score** | **0** | **0** | — |
-| tokens | 21,480 | 23,212 | +8% |
+| tokens | 104,376 | 114,142 | +9% |
 
-Nothing there clears the noise floor. **On the numbers, this changed nothing.** But the
-numbers are not where this experiment's finding is.
+Nothing there clears the noise floor — the repetition number is *byte-for-byte identical*
+between the two arms. **On the numbers, this changed nothing.** But the numbers are not where
+this experiment's finding is.
 
 ::: key
-The finding is about the *mechanism*, and it is visible in one game because it is not a
-question of degree. The stuck agent held **one theory for 41 turns**. The falsifying agent
-stated **14 different theories in 30 turns** — and it changed its mind **80% of the time right
-after the harness told it a prediction was wrong**, versus **39% of the time** after a
-prediction that held. Being refuted is what moved it, about twice as often as not being
-refuted. That is the loop working exactly as designed.
+The finding is about the *mechanism*, and you can see it without any statistics. The stuck
+agent held **one theory for 41 turns**. Under the falsification prompt the agent stated **17
+different theories on `ls20` alone**, and **72 across the four games** — and pooled over all
+four it changed its mind **94% of the time right after the harness told it a prediction was
+wrong**, versus **44% of the time** after one that held. Being refuted is what moved it, more
+than twice as often as not being refuted. That is the loop working exactly as designed. (One
+honest wrinkle the four games show: on `ls20` every prediction happened to *hold* — the marker
+always moved as promised — yet the agent still churned 17 theories there. The pooled number
+holds because the other three games supplied the refutations.)
 :::
 
 So premature commitment — the disease we diagnosed — **broke**. The agent stopped clinging to
 one guess. And here is the part you must not round off:
 
 ::: warn
-It did not help. Look at the last three theories the falsifying agent landed on:
-*"Grow the central structure upward"*, *"Grow the central vertical structure further upward"*,
-*"Build the central tower higher."* It falsified its way through a dozen guesses and **walked
-straight back into the same bar-growing delusion** that has beaten every experiment in this
-note. Breaking premature commitment is **necessary but not sufficient.**
+It did not help. The seventeen theories on `ls20` were not seventeen ideas closing in on the
+right one — they were seventeen plausible-sounding guesses that never touched what the game
+rewards: *"navigate the maze"*, *"interact with the grid elements"*, *"collect items and solve
+the puzzle."* Every game told the same story — a stream of reasonable theories, each dropped
+for the next (*"clear the colored objects"* on one, *"light up the indicators"* on another,
+*"turn off the switches"* on a third), none of them right, the score fixed at zero throughout.
+Breaking premature commitment is **necessary but not sufficient.**
 :::
 
 This is not a disappointment; it is the morning's impossibility result coming back around,
 sharper. Nothing in the loop knows the goal. Stop the agent committing too early and it will
-simply take a longer, more varied road to the *same* wrong theory — because there is still no
-signal telling it which theory is right. You can cure the symptom of commitment and the
-underlying blindness is untouched.
+simply generate a longer, more varied stream of guesses that are **no more likely to be
+right** — because there is still no signal telling it *which* theory is right. You can cure the
+symptom of commitment and the underlying blindness is untouched.
 
 ::: key
 **What this leaves for next time.** There is exactly one thing in the whole system that knows
@@ -565,14 +572,16 @@ the diagnosis now points to, and it is the last idea in this note that has not y
 > recordings so it wasn't a number I could fiddle. The harness grades the prediction against
 > the actual frame and, when it's wrong, tells the agent so and demands a different theory.
 > The mechanism worked: the stuck agent had held one theory for forty turns; this one stated
-> fourteen theories in thirty and revised eighty percent of the time right after being told
-> it was wrong, versus thirty-nine percent after a prediction that held. So being refuted
-> genuinely moved it. But the score stayed zero — and the last three theories it landed on
-> were 'grow the tower higher', which is the exact wrong idea that started the whole
-> investigation. Breaking premature commitment turned out to be necessary and not sufficient:
-> with nothing in the loop that knows the goal, the agent just takes a longer road to the
-> same wrong guess. That sends me back to the one signal that does know the goal — the
-> server's end-of-game level counts — fed into the next game's prompt after the fact."
+> seventeen theories in thirty on that game — seventy-two across the four — and pooled over
+> all four it revised ninety-four percent of the time right after being told it was wrong,
+> versus forty-four percent after a prediction that held. So being refuted genuinely moved
+> it. But the score stayed zero — and the theories were the tell: a stream of plausible
+> guesses, 'navigate the maze', 'clear the colored objects', 'light up the indicators', each
+> dropped for the next, not one of them right. Breaking premature commitment turned out to be
+> necessary and not sufficient: with nothing in the loop that knows the goal, the agent just
+> generates more variety, none of it more likely to be right. That sends me back to the one
+> signal that does know the goal — the server's end-of-game level counts — fed into the next
+> game's prompt after the fact."
 
 **Follow-up: "Anything go wrong while running it?"**
 > "Yes, and it's my favourite bug on the project because it's a pure systems mistake, not a

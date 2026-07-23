@@ -1,82 +1,438 @@
 {
   "arm": "dev-llm-y1",
   "generated_from": [
-    "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1.30.dbec901c-cbd7-42d4-8d58-4589fad6489d.trace.jsonl"
+    "ar25-0c556536.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.4a2660e2-a929-436b-8193-7b6c837d46a3.trace.jsonl",
+    "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.d3109073-096a-4e8e-b3b6-746103435409.trace.jsonl",
+    "sb26-7fbdac44.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.d115f502-a42e-4141-9ce4-37d42d90dab6.trace.jsonl",
+    "tn36-ef4dde99.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.305eaaf9-c530-49e0-a941-bdcee8ba46b7.trace.jsonl"
   ],
   "totals": {
-    "actions": 30,
-    "goals_stated": 28,
-    "goal_changes": 13,
-    "predictions": 28,
-    "checked": 28,
-    "wrong": 5
+    "actions": 120,
+    "goals_stated": 103,
+    "goal_changes": 68,
+    "predictions": 103,
+    "checked": 103,
+    "wrong": 34
   },
   "prediction_mix": {
-    "NONE": 1,
-    "FEW": 4,
-    "MANY": 23
+    "NONE": 5,
+    "FEW": 35,
+    "MANY": 63
   },
   "changed_theory_after": {
     "wrong": {
-      "n": 5,
-      "changed": 4,
-      "rate": 0.8
+      "n": 32,
+      "changed": 30,
+      "rate": 0.9375
     },
     "held": {
-      "n": 23,
-      "changed": 9,
-      "rate": 0.3913
+      "n": 68,
+      "changed": 30,
+      "rate": 0.4412
     }
   },
   "episodes": [
     {
-      "trace": "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1.30.dbec901c-cbd7-42d4-8d58-4589fad6489d.trace.jsonl",
-      "game": "ls20-9607627b",
+      "trace": "ar25-0c556536.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.4a2660e2-a929-436b-8193-7b6c837d46a3.trace.jsonl",
+      "game": "ar25-0c556536",
       "actions": 30,
       "goals_stated": 28,
-      "goal_changes": 13,
+      "goal_changes": 17,
       "predictions": 28,
       "checked": 28,
-      "wrong": 5,
+      "wrong": 10,
       "prediction_mix": {
         "NONE": 1,
-        "FEW": 4,
-        "MANY": 23
+        "FEW": 7,
+        "MANY": 20
       },
       "changed_after": {
         "wrong": {
-          "n": 5,
-          "changed": 4,
-          "rate": 0.8
+          "n": 9,
+          "changed": 9,
+          "rate": 1.0
         },
         "held": {
-          "n": 23,
-          "changed": 9,
-          "rate": 0.3913
+          "n": 18,
+          "changed": 7,
+          "rate": 0.3889
         }
       },
-      "distinct_theories": 14,
+      "distinct_theories": 18,
       "theories": [
-        "Interact with the colored elements to solve the puzzle.",
-        "Complete the puzzle by manipulating the colored grid elements.",
-        "Interact with grid objects to solve the puzzle.",
-        "Navigate the character and avoid obstacles",
-        "Activate the sequence of coloured blocks in correct order",
-        "Connect and route power through wires and blocks.",
-        "Connect power wires to activate the machine components",
-        "Destroy obstacles by matching colours and clearing paths",
-        "Clear paths and destroy matching color obstacles",
-        "Clear obstacles and navigate paths.",
-        "Clear obstacles and navigate paths through the grid.",
-        "Grow the central structure upward using puzzle actions",
-        "Grow the central vertical structure further upward.",
-        "Build the central tower higher."
+        "Click the correct blobs to solve the color puzzle.",
+        "Slide blocks to clear paths and solve the puzzle.",
+        "Change the grid colors by interacting with active elements.",
+        "Guide the colored blobs along the paths by pressing buttons",
+        "Guide the colored blobs along the paths using buttons",
+        "Click matching color groups to connect or clear them.",
+        "Connect or clear matching color blobs on the grid.",
+        "Navigate the maze by guiding the marker through the walls.",
+        "Build or complete patterns by placing pixels in empty spaces.",
+        "Control a simulation or physics system by interacting with objects.",
+        "Direct the flowing elements or particles into the target areas.",
+        "Guide the colored particles or flows into their matching targets.",
+        "Build or connect conductive circuits by toggling pixels.",
+        "Sort or categorise colored blocks into matching target areas.",
+        "Sort colored blocks into matching target areas.",
+        "Move colored blocks into their matching target areas.",
+        "Erase all the colored blocks by clicking on them.",
+        "Clear all colored objects by clicking them."
+      ],
+      "steps": [
+        {
+          "index": 0,
+          "action": "ACTION6(x=22,y=19)",
+          "goal": "Click the correct blobs to solve the color puzzle.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 1,
+          "action": "ACTION6(x=30,y=30)",
+          "goal": "Slide blocks to clear paths and solve the puzzle.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 2,
+          "action": "ACTION2",
+          "goal": "Change the grid colors by interacting with active elements.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 109,
+          "verdict": "wrong"
+        },
+        {
+          "index": 3,
+          "action": "ACTION2",
+          "goal": "Guide the colored blobs along the paths by pressing buttons",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 4,
+          "action": "ACTION2",
+          "goal": "Guide the colored blobs along the paths by pressing buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 5,
+          "action": "ACTION1",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 6,
+          "action": "ACTION1",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 7,
+          "action": "ACTION1",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 8,
+          "action": "ACTION2",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 9,
+          "action": "ACTION2",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 10,
+          "action": "ACTION7",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 108,
+          "verdict": null
+        },
+        {
+          "index": 11,
+          "action": "ACTION7",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 108,
+          "verdict": "held"
+        },
+        {
+          "index": 12,
+          "action": "ACTION7",
+          "goal": "Guide the colored blobs along the paths using buttons",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "NONE",
+          "cells_changed": 108,
+          "verdict": "wrong"
+        },
+        {
+          "index": 13,
+          "action": "ACTION1",
+          "goal": "Click matching color groups to connect or clear them.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 14,
+          "action": "ACTION2",
+          "goal": "Connect or clear matching color blobs on the grid.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 15,
+          "action": "ACTION6(x=39,y=22)",
+          "goal": "Connect or clear matching color blobs on the grid.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 16,
+          "action": "ACTION6(x=31,y=31)",
+          "goal": "Navigate the maze by guiding the marker through the walls.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 17,
+          "action": "ACTION1",
+          "goal": "Build or complete patterns by placing pixels in empty spaces.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 109,
+          "verdict": "wrong"
+        },
+        {
+          "index": 18,
+          "action": "ACTION1",
+          "goal": "Control a simulation or physics system by interacting with objects.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 19,
+          "action": "ACTION1",
+          "goal": "Direct the flowing elements or particles into the target areas.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 20,
+          "action": "ACTION5",
+          "goal": "Guide the colored particles or flows into their matching targets.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 21,
+          "action": "ACTION6(x=31,y=31)",
+          "goal": "Build or connect conductive circuits by toggling pixels.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 22,
+          "action": "ACTION5",
+          "goal": "Sort or categorise colored blocks into matching target areas.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 23,
+          "action": "ACTION5",
+          "goal": "Sort colored blocks into matching target areas.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 24,
+          "action": "ACTION5",
+          "goal": "Move colored blocks into their matching target areas.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 25,
+          "action": "ACTION4",
+          "goal": "Move colored blocks into their matching target areas.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 109,
+          "verdict": null
+        },
+        {
+          "index": 26,
+          "action": "ACTION1",
+          "goal": "Erase all the colored blocks by clicking on them.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 27,
+          "action": "ACTION3",
+          "goal": "Erase all the colored blocks by clicking on them.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 28,
+          "action": "ACTION3",
+          "goal": "Clear all colored objects by clicking them.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 109,
+          "verdict": "held"
+        },
+        {
+          "index": 29,
+          "action": "ACTION6(x=55,y=49)",
+          "goal": "Clear all colored objects by clicking them.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        }
+      ]
+    },
+    {
+      "trace": "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.d3109073-096a-4e8e-b3b6-746103435409.trace.jsonl",
+      "game": "ls20-9607627b",
+      "actions": 30,
+      "goals_stated": 30,
+      "goal_changes": 16,
+      "predictions": 30,
+      "checked": 30,
+      "wrong": 0,
+      "prediction_mix": {
+        "NONE": 0,
+        "FEW": 0,
+        "MANY": 30
+      },
+      "changed_after": {
+        "wrong": {
+          "n": 0,
+          "changed": 0,
+          "rate": null
+        },
+        "held": {
+          "n": 29,
+          "changed": 16,
+          "rate": 0.5517
+        }
+      },
+      "distinct_theories": 17,
+      "theories": [
+        "Navigate the character to avoid obstacles and reach the target.",
+        "Navigate the character to reach the target and avoid obstacles.",
+        "Navigate the character to avoid obstacles and reach the target.",
+        "Control the character to avoid obstacles and reach the target.",
+        "Navigate the character to avoid obstacles and reach the target.",
+        "Guide the character safely through the maze-like obstacles.",
+        "Guide the character and interact with the puzzle elements.",
+        "Interact with puzzle elements to solve the level.",
+        "Solve the puzzle by interacting with the correct elements.",
+        "Complete the puzzle by triggering the correct interactive elements.",
+        "Activate all interactive elements to solve the puzzle.",
+        "Solve the puzzle by interacting with different active elements.",
+        "Complete the puzzle by manipulating the active grid elements correctly.",
+        "Fill or complete the grid patterns using available tools.",
+        "Interact with the grid elements to solve the puzzle.",
+        "Navigate the maze and interact with objects to solve the puzzle.",
+        "Control the character to collect items and solve the maze puzzle."
       ],
       "steps": [
         {
           "index": 0,
           "action": "ACTION1",
-          "goal": "Interact with the colored elements to solve the puzzle.",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -86,7 +442,7 @@
         {
           "index": 1,
           "action": "ACTION1",
-          "goal": "Complete the puzzle by manipulating the colored grid elements.",
+          "goal": "Navigate the character to reach the target and avoid obstacles.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -96,7 +452,7 @@
         {
           "index": 2,
           "action": "ACTION1",
-          "goal": "Complete the puzzle by manipulating the colored grid elements.",
+          "goal": "Navigate the character to reach the target and avoid obstacles.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -106,67 +462,67 @@
         {
           "index": 3,
           "action": "ACTION2",
-          "goal": "Interact with grid objects to solve the puzzle.",
+          "goal": "Navigate the character to reach the target and avoid obstacles.",
           "goal_stated": true,
-          "goal_changed": true,
-          "prediction": "FEW",
+          "goal_changed": false,
+          "prediction": "MANY",
           "cells_changed": 52,
-          "verdict": "wrong"
+          "verdict": "held"
         },
         {
           "index": 4,
-          "action": "ACTION1",
-          "goal": "Navigate the character and avoid obstacles",
+          "action": "ACTION2",
+          "goal": "Navigate the character to reach the target and avoid obstacles.",
           "goal_stated": true,
-          "goal_changed": true,
-          "prediction": "NONE",
+          "goal_changed": false,
+          "prediction": "MANY",
           "cells_changed": 52,
-          "verdict": "wrong"
+          "verdict": "held"
         },
         {
           "index": 5,
-          "action": "ACTION3",
-          "goal": "Activate the sequence of coloured blocks in correct order",
+          "action": "ACTION2",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
-          "cells_changed": 2,
-          "verdict": "wrong"
+          "cells_changed": 52,
+          "verdict": "held"
         },
         {
           "index": 6,
-          "action": "ACTION3",
-          "goal": "Connect and route power through wires and blocks.",
+          "action": "ACTION1",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
-          "goal_changed": true,
-          "prediction": "FEW",
-          "cells_changed": 2,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
           "verdict": "held"
         },
         {
           "index": 7,
-          "action": "ACTION3",
-          "goal": "Connect power wires to activate the machine components",
+          "action": "ACTION1",
+          "goal": "Control the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": true,
-          "prediction": "FEW",
-          "cells_changed": 2,
+          "prediction": "MANY",
+          "cells_changed": 52,
           "verdict": "held"
         },
         {
           "index": 8,
           "action": "ACTION1",
-          "goal": "Connect power wires to activate the machine components",
+          "goal": "Control the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": false,
-          "prediction": "FEW",
+          "prediction": "MANY",
           "cells_changed": 52,
-          "verdict": "wrong"
+          "verdict": "held"
         },
         {
           "index": 9,
-          "action": "ACTION1",
-          "goal": "Destroy obstacles by matching colours and clearing paths",
+          "action": "ACTION2",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -175,10 +531,10 @@
         },
         {
           "index": 10,
-          "action": "ACTION1",
-          "goal": "Clear paths and destroy matching color obstacles",
+          "action": "ACTION2",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
-          "goal_changed": true,
+          "goal_changed": false,
           "prediction": "MANY",
           "cells_changed": 52,
           "verdict": "held"
@@ -186,7 +542,7 @@
         {
           "index": 11,
           "action": "ACTION2",
-          "goal": "Clear paths and destroy matching color obstacles",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -195,8 +551,8 @@
         },
         {
           "index": 12,
-          "action": "ACTION2",
-          "goal": "Clear paths and destroy matching color obstacles",
+          "action": "ACTION1",
+          "goal": "Navigate the character to avoid obstacles and reach the target.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -205,10 +561,10 @@
         },
         {
           "index": 13,
-          "action": "ACTION2",
-          "goal": "Clear paths and destroy matching color obstacles",
+          "action": "ACTION1",
+          "goal": "Guide the character safely through the maze-like obstacles.",
           "goal_stated": true,
-          "goal_changed": false,
+          "goal_changed": true,
           "prediction": "MANY",
           "cells_changed": 52,
           "verdict": "held"
@@ -216,17 +572,17 @@
         {
           "index": 14,
           "action": "ACTION1",
-          "goal": "Clear paths and destroy matching color obstacles",
+          "goal": "Guide the character and interact with the puzzle elements.",
           "goal_stated": true,
-          "goal_changed": false,
+          "goal_changed": true,
           "prediction": "MANY",
           "cells_changed": 52,
           "verdict": "held"
         },
         {
           "index": 15,
-          "action": "ACTION1",
-          "goal": "Clear obstacles and navigate paths.",
+          "action": "ACTION2",
+          "goal": "Interact with puzzle elements to solve the level.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -235,8 +591,8 @@
         },
         {
           "index": 16,
-          "action": "ACTION1",
-          "goal": "Clear obstacles and navigate paths through the grid.",
+          "action": "ACTION2",
+          "goal": "Solve the puzzle by interacting with the correct elements.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -246,17 +602,7 @@
         {
           "index": 17,
           "action": "ACTION2",
-          "goal": "Clear obstacles and navigate paths through the grid.",
-          "goal_stated": true,
-          "goal_changed": false,
-          "prediction": "MANY",
-          "cells_changed": 52,
-          "verdict": "held"
-        },
-        {
-          "index": 18,
-          "action": "ACTION2",
-          "goal": "Grow the central structure upward using puzzle actions",
+          "goal": "Complete the puzzle by triggering the correct interactive elements.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -264,9 +610,19 @@
           "verdict": "held"
         },
         {
+          "index": 18,
+          "action": "ACTION1",
+          "goal": "Complete the puzzle by triggering the correct interactive elements.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
           "index": 19,
-          "action": "ACTION2",
-          "goal": "Grow the central vertical structure further upward.",
+          "action": "ACTION1",
+          "goal": "Activate all interactive elements to solve the puzzle.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -276,7 +632,7 @@
         {
           "index": 20,
           "action": "ACTION1",
-          "goal": "Grow the central vertical structure further upward.",
+          "goal": "Activate all interactive elements to solve the puzzle.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -285,8 +641,8 @@
         },
         {
           "index": 21,
-          "action": "ACTION1",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION2",
+          "goal": "Solve the puzzle by interacting with different active elements.",
           "goal_stated": true,
           "goal_changed": true,
           "prediction": "MANY",
@@ -295,8 +651,8 @@
         },
         {
           "index": 22,
-          "action": "ACTION1",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION2",
+          "goal": "Solve the puzzle by interacting with different active elements.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -306,7 +662,7 @@
         {
           "index": 23,
           "action": "ACTION2",
-          "goal": "Build the central tower higher.",
+          "goal": "Solve the puzzle by interacting with different active elements.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -315,8 +671,8 @@
         },
         {
           "index": 24,
-          "action": "ACTION2",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION1",
+          "goal": "Solve the puzzle by interacting with different active elements.",
           "goal_stated": true,
           "goal_changed": false,
           "prediction": "MANY",
@@ -325,52 +681,753 @@
         },
         {
           "index": 25,
-          "action": "ACTION2",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION1",
+          "goal": "Complete the puzzle by manipulating the active grid elements correctly.",
           "goal_stated": true,
-          "goal_changed": false,
+          "goal_changed": true,
           "prediction": "MANY",
           "cells_changed": 52,
           "verdict": "held"
         },
         {
           "index": 26,
-          "action": "ACTION3",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION1",
+          "goal": "Fill or complete the grid patterns using available tools.",
           "goal_stated": true,
-          "goal_changed": false,
+          "goal_changed": true,
           "prediction": "MANY",
-          "cells_changed": 2,
-          "verdict": "wrong"
+          "cells_changed": 52,
+          "verdict": "held"
         },
         {
           "index": 27,
-          "action": "ACTION4",
-          "goal": "Build the central tower higher.",
-          "goal_stated": false,
-          "goal_changed": false,
-          "prediction": null,
+          "action": "ACTION2",
+          "goal": "Interact with the grid elements to solve the puzzle.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
           "cells_changed": 52,
-          "verdict": null
+          "verdict": "held"
         },
         {
           "index": 28,
-          "action": "ACTION4",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION2",
+          "goal": "Navigate the maze and interact with objects to solve the puzzle.",
           "goal_stated": true,
-          "goal_changed": false,
+          "goal_changed": true,
           "prediction": "MANY",
           "cells_changed": 52,
           "verdict": "held"
         },
         {
           "index": 29,
-          "action": "ACTION4",
-          "goal": "Build the central tower higher.",
+          "action": "ACTION2",
+          "goal": "Control the character to collect items and solve the maze puzzle.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        }
+      ]
+    },
+    {
+      "trace": "sb26-7fbdac44.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.d115f502-a42e-4141-9ce4-37d42d90dab6.trace.jsonl",
+      "game": "sb26-7fbdac44",
+      "actions": 30,
+      "goals_stated": 28,
+      "goal_changes": 22,
+      "predictions": 28,
+      "checked": 28,
+      "wrong": 17,
+      "prediction_mix": {
+        "NONE": 1,
+        "FEW": 18,
+        "MANY": 9
+      },
+      "changed_after": {
+        "wrong": {
+          "n": 16,
+          "changed": 16,
+          "rate": 1.0
+        },
+        "held": {
+          "n": 11,
+          "changed": 5,
+          "rate": 0.4545
+        }
+      },
+      "distinct_theories": 23,
+      "theories": [
+        "Guide the colored squares to the matching colored targets.",
+        "Toggle the switch at the bottom corner to activate systems",
+        "Toggle switches to activate systems in the puzzle",
+        "Guide falling objects into matching target slots",
+        "Color-matching puzzle",
+        "Clear all blocks using color matching and sorting.",
+        "Color the final tile matching the sequence pattern.",
+        "Match the color sequence at the bottom to the top.",
+        "Fill the bottom row with color 3 using clicks.",
+        "Match the upper color patterns by clicking the bottom targets.",
+        "Guide falling items into matching color slots at bottom.",
+        "Toggle switches or items to match colors in the grid.",
+        "Match the colored squares at the bottom to the top targets.",
+        "Rotate or slide the row of colored blocks at the bottom.",
+        "Align the bottom blocks to match the top row.",
+        "Move colored squares into matching target zones.",
+        "Fill the grid by cycling through cell color states.",
+        "Fill the bottom row with the correct matching colors.",
+        "Match the bottom row colors with the upper icons.",
+        "Click matching pairs of colored blocks to clear them.",
+        "Build or complete a structure by filling in missing grid parts.",
+        "Sort colored blocks into matching target boxes by clicking them.",
+        "Light up all the indicator lights correctly."
+      ],
+      "steps": [
+        {
+          "index": 0,
+          "action": "ACTION5",
+          "goal": "Guide the colored squares to the matching colored targets.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 1,
+          "action": "ACTION5",
+          "goal": "Toggle the switch at the bottom corner to activate systems",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 2,
+          "action": "ACTION5",
+          "goal": "Toggle switches to activate systems in the puzzle",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 3,
+          "action": "ACTION6(x=61,y=53)",
+          "goal": "Toggle switches to activate systems in the puzzle",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 4,
+          "action": "ACTION5",
+          "goal": "Guide falling objects into matching target slots",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 5,
+          "action": "ACTION5",
+          "goal": "Guide falling objects into matching target slots",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 6,
+          "action": "ACTION5",
+          "goal": "Guide falling objects into matching target slots",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "NONE",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 7,
+          "action": "ACTION7",
+          "goal": "Color-matching puzzle",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 8,
+          "action": "ACTION5",
+          "goal": "Clear all blocks using color matching and sorting.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 9,
+          "action": "ACTION5",
+          "goal": "Color the final tile matching the sequence pattern.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 10,
+          "action": "ACTION6(x=53,y=5)",
+          "goal": "Color the final tile matching the sequence pattern.",
           "goal_stated": false,
           "goal_changed": false,
           "prediction": null,
-          "cells_changed": 52,
+          "cells_changed": 0,
+          "verdict": null
+        },
+        {
+          "index": 11,
+          "action": "ACTION6(x=62,y=51)",
+          "goal": "Color the final tile matching the sequence pattern.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 0,
+          "verdict": null
+        },
+        {
+          "index": 12,
+          "action": "ACTION5",
+          "goal": "Match the color sequence at the bottom to the top.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 13,
+          "action": "ACTION6(x=56,y=53)",
+          "goal": "Fill the bottom row with color 3 using clicks.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 14,
+          "action": "ACTION5",
+          "goal": "Match the upper color patterns by clicking the bottom targets.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 15,
+          "action": "ACTION6(x=37,y=58)",
+          "goal": "Guide falling items into matching color slots at bottom.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 20,
+          "verdict": "wrong"
+        },
+        {
+          "index": 16,
+          "action": "ACTION5",
+          "goal": "Toggle switches or items to match colors in the grid.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 21,
+          "verdict": "held"
+        },
+        {
+          "index": 17,
+          "action": "ACTION5",
+          "goal": "Match the colored squares at the bottom to the top targets.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 18,
+          "action": "ACTION5",
+          "goal": "Rotate or slide the row of colored blocks at the bottom.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 19,
+          "action": "ACTION6(x=0,y=0)",
+          "goal": "Align the bottom blocks to match the top row.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 20,
+          "action": "ACTION5",
+          "goal": "Move colored squares into matching target zones.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 21,
+          "action": "ACTION5",
+          "goal": "Fill the grid by cycling through cell color states.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 22,
+          "action": "ACTION5",
+          "goal": "Fill the bottom row with the correct matching colors.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 23,
+          "action": "ACTION6(x=48,y=53)",
+          "goal": "Match the bottom row colors with the upper icons.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 24,
+          "action": "ACTION5",
+          "goal": "Click matching pairs of colored blocks to clear them.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 25,
+          "action": "ACTION6(x=47,y=53)",
+          "goal": "Build or complete a structure by filling in missing grid parts.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        },
+        {
+          "index": 26,
+          "action": "ACTION5",
+          "goal": "Sort colored blocks into matching target boxes by clicking them.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 27,
+          "action": "ACTION5",
+          "goal": "Light up all the indicator lights correctly.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 28,
+          "action": "ACTION5",
+          "goal": "Light up all the indicator lights correctly.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 29,
+          "action": "ACTION6(x=44,y=53)",
+          "goal": "Light up all the indicator lights correctly.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 0,
+          "verdict": "wrong"
+        }
+      ]
+    },
+    {
+      "trace": "tn36-ef4dde99.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1-p0.30.a1.305eaaf9-c530-49e0-a941-bdcee8ba46b7.trace.jsonl",
+      "game": "tn36-ef4dde99",
+      "actions": 30,
+      "goals_stated": 17,
+      "goal_changes": 13,
+      "predictions": 17,
+      "checked": 17,
+      "wrong": 7,
+      "prediction_mix": {
+        "NONE": 3,
+        "FEW": 10,
+        "MANY": 4
+      },
+      "changed_after": {
+        "wrong": {
+          "n": 7,
+          "changed": 5,
+          "rate": 0.7143
+        },
+        "held": {
+          "n": 10,
+          "changed": 2,
+          "rate": 0.2
+        }
+      },
+      "distinct_theories": 14,
+      "theories": [
+        "Clear the grid or interact with objects to solve the puzzle.",
+        "Connect the matching colour blocks by clicking them in order",
+        "Click the colour 9 blob at the bottom",
+        "Fill the grid completely by placing objects of colour 3.",
+        "Fill the remaining cells with colour 3.",
+        "Fill the entire grid with the colour 3.",
+        "Clear the grid or interact with yellow border elements.",
+        "Click the top-right progress bar to advance.",
+        "Clear the grid by clicking matching connected colour blocks.",
+        "Toggle specific grid pixels based on rule sequences.",
+        "Match the upper colored bar with the puzzle grid.",
+        "Collect all matching items by navigating the grid.",
+        "Turn off all the switches at the top row.",
+        "Turn off all the switches across the top row."
+      ],
+      "steps": [
+        {
+          "index": 0,
+          "action": "ACTION6(x=32,y=35)",
+          "goal": "Clear the grid or interact with objects to solve the puzzle.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 1,
+          "action": "ACTION6(x=32,y=1)",
+          "goal": "Connect the matching colour blocks by clicking them in order",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 2,
+          "action": "ACTION6(x=36,y=55)",
+          "goal": "Click the colour 9 blob at the bottom",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 3,
+          "action": "ACTION6(x=59,y=1)",
+          "goal": "Fill the grid completely by placing objects of colour 3.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 4,
+          "action": "ACTION6(x=58,y=1)",
+          "goal": "Fill the remaining cells with colour 3.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 5,
+          "action": "ACTION6(x=53,y=5)",
+          "goal": "Fill the remaining cells with colour 3.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 6,
+          "action": "ACTION6(x=56,y=1)",
+          "goal": "Fill the entire grid with the colour 3.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 7,
+          "action": "ACTION6(x=62,y=51)",
+          "goal": "Fill the entire grid with the colour 3.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 8,
+          "action": "ACTION6(x=54,y=1)",
+          "goal": "Clear the grid or interact with yellow border elements.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 9,
+          "action": "ACTION6(x=61,y=45)",
+          "goal": "Clear the grid or interact with yellow border elements.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 10,
+          "action": "ACTION6(x=52,y=1)",
+          "goal": "Click the top-right progress bar to advance.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 11,
+          "action": "ACTION6(x=51,y=1)",
+          "goal": "Click the top-right progress bar to advance.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 12,
+          "action": "ACTION6(x=17,y=36)",
+          "goal": "Click the top-right progress bar to advance.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 13,
+          "action": "ACTION6(x=49,y=1)",
+          "goal": "Click the top-right progress bar to advance.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "NONE",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 14,
+          "action": "ACTION6(x=32,y=35)",
+          "goal": "Clear the grid by clicking matching connected colour blocks.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 15,
+          "action": "ACTION6(x=47,y=1)",
+          "goal": "Toggle specific grid pixels based on rule sequences.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "NONE",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 16,
+          "action": "ACTION6(x=12,y=32)",
+          "goal": "Toggle specific grid pixels based on rule sequences.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 17,
+          "action": "ACTION6(x=45,y=1)",
+          "goal": "Match the upper colored bar with the puzzle grid.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "NONE",
+          "cells_changed": 1,
+          "verdict": "wrong"
+        },
+        {
+          "index": 18,
+          "action": "ACTION6(x=1,y=1)",
+          "goal": "Collect all matching items by navigating the grid.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 19,
+          "action": "ACTION6(x=39,y=12)",
+          "goal": "Collect all matching items by navigating the grid.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 20,
+          "action": "ACTION6(x=42,y=60)",
+          "goal": "Collect all matching items by navigating the grid.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 21,
+          "action": "ACTION6(x=45,y=55)",
+          "goal": "Collect all matching items by navigating the grid.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 22,
+          "action": "ACTION6(x=40,y=1)",
+          "goal": "Turn off all the switches at the top row.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 23,
+          "action": "ACTION6(x=26,y=61)",
+          "goal": "Turn off all the switches at the top row.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 24,
+          "action": "ACTION6(x=38,y=1)",
+          "goal": "Turn off all the switches at the top row.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 25,
+          "action": "ACTION6(x=33,y=7)",
+          "goal": "Turn off all the switches at the top row.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 26,
+          "action": "ACTION6(x=11,y=51)",
+          "goal": "Turn off all the switches at the top row.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 27,
+          "action": "ACTION6(x=35,y=1)",
+          "goal": "Turn off all the switches across the top row.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 1,
+          "verdict": "held"
+        },
+        {
+          "index": 28,
+          "action": "ACTION6(x=63,y=42)",
+          "goal": "Turn off all the switches across the top row.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
+          "verdict": null
+        },
+        {
+          "index": 29,
+          "action": "ACTION6(x=41,y=8)",
+          "goal": "Turn off all the switches across the top row.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 1,
           "verdict": null
         }
       ]

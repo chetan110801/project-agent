@@ -77,12 +77,28 @@ def load(name: str, attempt: int | None = None) -> dict[str, Any]:
     return data
 
 
+# Config keys the runner grew *after* some arms were already on disk. An arm run before a
+# key existed has no entry for it, and `None` there does not mean "a different setting" — it
+# means "the behaviour that key defaults to". Filling the default before diffing is what lets
+# `compare_evals dev-llm-r3 dev-llm-y1` see the single variable (hypothesis) that actually
+# moved, instead of crying NOT AN EXPERIMENT over two keys r3 merely predates. The values are
+# the runner's own argparse defaults (scripts/run_evals.py): `--hypothesis`/`--progress` are
+# store_true (False) and `--attempts` defaults to 1. A key whose flag WAS set is always
+# recorded, so this can only ever fill in a default — it can never mask a real difference.
+LEGACY_DEFAULTS = {"hypothesis": False, "progress": False, "attempts": 1}
+
+
+def _cfg(config: dict, key: str) -> Any:
+    """A config value, treating an absent later-added key as its behavioural default."""
+    return config[key] if key in config else LEGACY_DEFAULTS.get(key)
+
+
 def config_diff(a: dict, b: dict) -> list[str]:
     keys = sorted(set(a["config"]) | set(b["config"]))
     return [
-        f"{k}: {a['config'].get(k)!r} -> {b['config'].get(k)!r}"
+        f"{k}: {_cfg(a['config'], k)!r} -> {_cfg(b['config'], k)!r}"
         for k in keys
-        if a["config"].get(k) != b["config"].get(k)
+        if _cfg(a["config"], k) != _cfg(b["config"], k)
     ]
 
 

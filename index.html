@@ -4183,13 +4183,14 @@ request now writes one line to a file that outlives the program, and a run <stro
 before it starts and refuses to begin an arm that will not fit in what is left of the day</strong>.
 An arm that dies half-way is not a cheap failure — it spends the quota <em>and</em> leaves a table
 full of random fallbacks that look like play. Better to not start.</p>
-<p><strong>Now, the one game we do have.</strong> Report it as one game — a single-seed difference of 17
-points was shown this morning to be within noise, so nothing small on one game is a result.
-On <code>ls20</code>, with the falsification prompt against the same setup without it:</p>
+<p><strong>The window rolled the next day, and the arm was re-run to completion</strong> — all four dev games,
+120 real model calls, no fallbacks. Now report it against the noise floor: a single-seed
+difference of 17 points was shown that same morning to be within noise, so nothing small is a
+result. Guard-only against guard-plus-falsification, aggregated over the four games:</p>
 <table>
 <thead>
 <tr>
-<th>ls20, 30 actions</th>
+<th>4 dev games, 30 actions each</th>
 <th style="text-align: right;">guard only</th>
 <th style="text-align: right;">+ falsification</th>
 <th></th>
@@ -4198,9 +4199,9 @@ On <code>ls20</code>, with the falsification prompt against the same setup witho
 <tbody>
 <tr>
 <td>repetition above chance</td>
-<td style="text-align: right;">+21.7 pts</td>
-<td style="text-align: right;">+18.3 pts</td>
-<td>within noise</td>
+<td style="text-align: right;">+17.7 pts</td>
+<td style="text-align: right;">+17.7 pts</td>
+<td>identical</td>
 </tr>
 <tr>
 <td>longest identical streak</td>
@@ -4210,9 +4211,9 @@ On <code>ls20</code>, with the falsification prompt against the same setup witho
 </tr>
 <tr>
 <td>different targets tried</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">4</td>
-<td>same</td>
+<td style="text-align: right;">12.25</td>
+<td style="text-align: right;">13.25</td>
+<td>+1, within noise</td>
 </tr>
 <tr>
 <td><strong>score</strong></td>
@@ -4222,36 +4223,42 @@ On <code>ls20</code>, with the falsification prompt against the same setup witho
 </tr>
 <tr>
 <td>tokens</td>
-<td style="text-align: right;">21,480</td>
-<td style="text-align: right;">23,212</td>
-<td>+8%</td>
+<td style="text-align: right;">104,376</td>
+<td style="text-align: right;">114,142</td>
+<td>+9%</td>
 </tr>
 </tbody>
 </table>
-<p>Nothing there clears the noise floor. <strong>On the numbers, this changed nothing.</strong> But the
-numbers are not where this experiment's finding is.</p>
+<p>Nothing there clears the noise floor — the repetition number is <em>byte-for-byte identical</em>
+between the two arms. <strong>On the numbers, this changed nothing.</strong> But the numbers are not where
+this experiment's finding is.</p>
 <div class="callout key">
-<p>The finding is about the <em>mechanism</em>, and it is visible in one game because it is not a
-question of degree. The stuck agent held <strong>one theory for 41 turns</strong>. The falsifying agent
-stated <strong>14 different theories in 30 turns</strong> — and it changed its mind <strong>80% of the time right
-after the harness told it a prediction was wrong</strong>, versus <strong>39% of the time</strong> after a
-prediction that held. Being refuted is what moved it, about twice as often as not being
-refuted. That is the loop working exactly as designed.</p>
+<p>The finding is about the <em>mechanism</em>, and you can see it without any statistics. The stuck
+agent held <strong>one theory for 41 turns</strong>. Under the falsification prompt the agent stated <strong>17
+different theories on <code>ls20</code> alone</strong>, and <strong>72 across the four games</strong> — and pooled over all
+four it changed its mind <strong>94% of the time right after the harness told it a prediction was
+wrong</strong>, versus <strong>44% of the time</strong> after one that held. Being refuted is what moved it, more
+than twice as often as not being refuted. That is the loop working exactly as designed. (One
+honest wrinkle the four games show: on <code>ls20</code> every prediction happened to <em>hold</em> — the marker
+always moved as promised — yet the agent still churned 17 theories there. The pooled number
+holds because the other three games supplied the refutations.)</p>
 </div>
 <p>So premature commitment — the disease we diagnosed — <strong>broke</strong>. The agent stopped clinging to
 one guess. And here is the part you must not round off:</p>
 <div class="callout warn">
-<p>It did not help. Look at the last three theories the falsifying agent landed on:
-<em>"Grow the central structure upward"</em>, <em>"Grow the central vertical structure further upward"</em>,
-<em>"Build the central tower higher."</em> It falsified its way through a dozen guesses and <strong>walked
-straight back into the same bar-growing delusion</strong> that has beaten every experiment in this
-note. Breaking premature commitment is <strong>necessary but not sufficient.</strong></p>
+<p>It did not help. The seventeen theories on <code>ls20</code> were not seventeen ideas closing in on the
+right one — they were seventeen plausible-sounding guesses that never touched what the game
+rewards: <em>"navigate the maze"</em>, <em>"interact with the grid elements"</em>, <em>"collect items and solve
+the puzzle."</em> Every game told the same story — a stream of reasonable theories, each dropped
+for the next (<em>"clear the colored objects"</em> on one, <em>"light up the indicators"</em> on another,
+<em>"turn off the switches"</em> on a third), none of them right, the score fixed at zero throughout.
+Breaking premature commitment is <strong>necessary but not sufficient.</strong></p>
 </div>
 <p>This is not a disappointment; it is the morning's impossibility result coming back around,
 sharper. Nothing in the loop knows the goal. Stop the agent committing too early and it will
-simply take a longer, more varied road to the <em>same</em> wrong theory — because there is still no
-signal telling it which theory is right. You can cure the symptom of commitment and the
-underlying blindness is untouched.</p>
+simply generate a longer, more varied stream of guesses that are <strong>no more likely to be
+right</strong> — because there is still no signal telling it <em>which</em> theory is right. You can cure the
+symptom of commitment and the underlying blindness is untouched.</p>
 <div class="callout key">
 <p><strong>What this leaves for next time.</strong> There is exactly one thing in the whole system that knows
 the goal: the server's own count, at the end of a game, of how many actions each level took
@@ -4324,14 +4331,16 @@ the agent state a theory of the goal and, alongside its action, a prediction I c
 recordings so it wasn't a number I could fiddle. The harness grades the prediction against
 the actual frame and, when it's wrong, tells the agent so and demands a different theory.
 The mechanism worked: the stuck agent had held one theory for forty turns; this one stated
-fourteen theories in thirty and revised eighty percent of the time right after being told
-it was wrong, versus thirty-nine percent after a prediction that held. So being refuted
-genuinely moved it. But the score stayed zero — and the last three theories it landed on
-were 'grow the tower higher', which is the exact wrong idea that started the whole
-investigation. Breaking premature commitment turned out to be necessary and not sufficient:
-with nothing in the loop that knows the goal, the agent just takes a longer road to the
-same wrong guess. That sends me back to the one signal that does know the goal — the
-server's end-of-game level counts — fed into the next game's prompt after the fact."</p>
+seventeen theories in thirty on that game — seventy-two across the four — and pooled over
+all four it revised ninety-four percent of the time right after being told it was wrong,
+versus forty-four percent after a prediction that held. So being refuted genuinely moved
+it. But the score stayed zero — and the theories were the tell: a stream of plausible
+guesses, 'navigate the maze', 'clear the colored objects', 'light up the indicators', each
+dropped for the next, not one of them right. Breaking premature commitment turned out to be
+necessary and not sufficient: with nothing in the loop that knows the goal, the agent just
+generates more variety, none of it more likely to be right. That sends me back to the one
+signal that does know the goal — the server's end-of-game level counts — fed into the next
+game's prompt after the fact."</p>
 </blockquote>
 <p><strong>Follow-up: "Anything go wrong while running it?"</strong></p>
 <blockquote>
@@ -5538,6 +5547,65 @@ next experiment is whether an <em>after-the-fact</em> signal — "on the last ep
 actions and completed 0 levels; the reference solves level 1 in 22" — fed into the <em>next</em>
 episode's opening prompt changes anything. It is the only progress signal that can exist,
 because it is the only one sourced from something that knows the goal.</p>
+<h3>RESULTS — the completed four-game A/B (re-run 2026-07-23, 16:00 UTC, window rolled)</h3>
+<p><strong>The arm finished cleanly this time.</strong> All four dev games, 30 actions each, <strong>120 real
+model calls, 0 quota fallbacks, 0 failed episodes</strong> (<code>artifacts/evals/dev-llm-y1.json</code>). The
+stale single-game <code>ls20</code> trace from the aborted run was moved to <code>runs/quota-wall-2026-07-22/</code>
+first, so the mechanism report reads exactly the four fresh traces and cannot double-count.</p>
+<p><strong>The verdict is what the one clean game predicted, now at four games: the mechanism fires
+hard and does not steer.</strong> <code>dev-llm-r3</code> vs <code>dev-llm-y1</code>, single variable <code>hypothesis: False →
+True</code>:</p>
+<ul>
+<li><strong>It ran, beyond any doubt</strong> (this rules out the pre-registered "no result at all", which
+  required a low stated-rate or unchecked predictions): <code>hypothesis_stated_rate</code> <strong>0.975</strong>,
+  <code>hypothesis_changes</code> <strong>74</strong>, <strong>103</strong> predictions checked against the frame that came back,
+  <code>prediction_hit_rate</code> <strong>0.673</strong>.</li>
+<li><strong>It did not steer.</strong> The two metrics named in advance as the "works" test did not move:
+  <code>top_action_share_excess</code> <strong>0.1768 → 0.1768</strong> (byte-identical — the repetition guard at
+  <code>repeat_limit 3</code>, on in <em>both</em> arms, is what sets repetition here, and the theory prompt
+  rides on top without widening exploration), <code>distinct_targets</code> <strong>12.25 → 13.25</strong> (+1, deep
+  inside the 17-point single-seed noise floor). <code>level1_ratio</code> <strong>1.226 → 1.226</strong>, streak 3 →
+  3, distinct actions 3.25 → 3.25, and two metrics got <em>worse</em> (<code>no_change_rate</code> 0.117 →
+  0.125, <code>revisit_rate</code> 0.10 → 0.125). <strong>Score 0 → 0.</strong> Cost <strong>+9.4% input tokens</strong>
+  (104,376 → 114,142). So it is <strong>neither the pre-registered "works" (excess down) nor
+  "backfires" (excess up)</strong> — it is null on steering while the mechanism ran at full tilt.</li>
+<li><strong>The refutation-drives-revision finding is now pooled over four games and is stronger
+  than the single-game version:</strong> theory changed <strong>94% (30/32)</strong> of the time after a WRONG
+  prediction versus <strong>44% (30/68)</strong> after one that HELD (<code>hypothesis-report-dev-llm-y1.json</code>;
+  the one-game version was 80% vs 39%). One honest nuance the four games expose: on <code>ls20</code>
+  every prediction <em>held</em> (0 wrong), yet the agent still stated 17 theories and changed 16
+  times — on the one game where nothing refuted it, it churned theories anyway. The pooled
+  conditional holds because <code>sb26</code>/<code>ar25</code>/<code>tn36</code> supplied the refutations (17/10/7 wrong).</li>
+<li><strong>The completed arm did <em>not</em> reproduce the aborted run's tower-delusion narrative</strong> (the
+  one-game RESULTS above, from trace <code>dbec901c</code>, ended on <em>"grow the tower higher"</em> three
+  times). This time — model output is stochastic across sessions — the four games ended on
+  <em>varied</em> plausible-but-wrong theories: <code>ls20</code> <em>"solve the maze puzzle"</em>, <code>ar25</code> <em>"clear the
+  colored objects"</em>, <code>sb26</code> <em>"light up the indicators"</em>, <code>tn36</code> <em>"turn off the switches"</em>. The
+  conclusion is the same and if anything cleaner: falsification does not loop back to one wrong
+  idea, it generates a <em>stream</em> of plausible wrong ideas, and with nothing scoring them the
+  score never moves. Study note 09 Part 9 was rewritten to this completed-arm story (the
+  tower-delusion quotes were stale and are gone from the note).</li>
+</ul>
+<p><strong>A fourth way measurement lied, found and fixed this run.</strong> <code>compare_evals.py</code> flagged the
+comparison <code>NOT AN EXPERIMENT — more than one variable moved</code>, naming three: <code>hypothesis</code>,
+<code>attempts</code>, <code>progress</code>. Only <code>hypothesis</code> moved. The other two are <strong>schema drift</strong>: <code>dev-llm-r3</code>
+was written before those keys existed, so its config has no entry for them, and the tool read
+absent (<code>None</code>) as "a different setting" rather than "the behaviour that key defaults to". The
+fix normalises an absent later-added key to its runner default before diffing (<code>LEGACY_DEFAULTS</code>
+= <code>{hypothesis: False, attempts: 1, progress: False}</code>, the argparse defaults; a flag that was
+<em>set</em> is always recorded, so this can only ever fill a default, never mask a real change). The
+comparison now correctly reads one variable. This is the same class of bug as the three logged
+in study note 08 — a measurement tool telling a confident falsehood — and it was caught the
+same way, by refusing to accept a number that contradicted what the run plainly did. 150 tests,
+all offline (was 149).</p>
+<p><strong>Decision: FINAL — mechanism confirmed, not kept as a default.</strong> <code>--hypothesis</code> stays <strong>off by
+default</strong>; the four-game numbers do not clear CLAUDE.md §5's bar to move a default (no steering
+gain, +9.4% tokens). The mechanism stays in the code, off, because its <em>sub-finding</em> is real
+and reusable: <strong>you can break premature commitment — provably, driven by refutation — and it
+does not make the agent play better, because nothing in the loop still knows the goal.</strong> That
+is exactly the gap Experiment 4 (the after-the-fact scorecard signal) attacks, and it is the
+last untried idea in study note 09. The <code>compare_evals</code> normalisation fix is kept (it is
+truth-telling, not tuning).</p>
 <hr />
 <h2>2026-07-23 — The progress signal cannot exist. Four candidates, all refuted offline; a repetition guard shipped instead</h2>
 <p><strong>Decision:</strong> <code>harness/progress.py</code> and <code>scripts/progress_signals.py</code> exist as a <strong>recorded

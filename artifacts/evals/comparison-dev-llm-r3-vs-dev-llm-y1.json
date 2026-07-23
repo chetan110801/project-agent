@@ -1,0 +1,172 @@
+{
+  "before": "dev-llm-r3",
+  "after": "dev-llm-y1",
+  "attempt": null,
+  "config_changed": [
+    "hypothesis: False -> True"
+  ],
+  "single_variable": true,
+  "same_games": true,
+  "games": [
+    "ls20-9607627b",
+    "sb26-7fbdac44",
+    "ar25-0c556536",
+    "tn36-ef4dde99"
+  ],
+  "rows": [
+    {
+      "kind": "steering",
+      "metric": "illegal_action_rate",
+      "before": 0.0,
+      "after": 0.0,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "no_change_rate",
+      "before": 0.1167,
+      "after": 0.125,
+      "direction": "worse"
+    },
+    {
+      "kind": "steering",
+      "metric": "revisit_rate",
+      "before": 0.1,
+      "after": 0.125,
+      "direction": "worse"
+    },
+    {
+      "kind": "steering",
+      "metric": "top_action_share_excess",
+      "before": 0.1768,
+      "after": 0.1768,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "top_action_share",
+      "before": 0.6083,
+      "after": 0.6083,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "longest_repeat_streak",
+      "before": 3,
+      "after": 3,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "distinct_actions",
+      "before": 3.25,
+      "after": 3.25,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "distinct_targets",
+      "before": 12.25,
+      "after": 13.25,
+      "direction": "better"
+    },
+    {
+      "kind": "steering",
+      "metric": "game_overs",
+      "before": 0,
+      "after": 0,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "level1_ratio",
+      "before": 1.2263,
+      "after": 1.2263,
+      "direction": "same"
+    },
+    {
+      "kind": "steering",
+      "metric": "repeat_blocks",
+      "before": 0,
+      "after": 1,
+      "direction": ""
+    },
+    {
+      "kind": "steering",
+      "metric": "hypothesis_changes",
+      "before": null,
+      "after": 74,
+      "direction": ""
+    },
+    {
+      "kind": "steering",
+      "metric": "prediction_hit_rate",
+      "before": null,
+      "after": 0.6733,
+      "direction": ""
+    },
+    {
+      "kind": "outcome",
+      "metric": "final_score",
+      "before": 0,
+      "after": 0,
+      "direction": ""
+    },
+    {
+      "kind": "outcome",
+      "metric": "levels_completed",
+      "before": 0,
+      "after": 0,
+      "direction": ""
+    },
+    {
+      "kind": "cost",
+      "metric": "wall_seconds",
+      "before": 526.0,
+      "after": 525.9,
+      "direction": "better"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_calls",
+      "before": 120,
+      "after": 120,
+      "direction": "same"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_input_tokens",
+      "before": 104376,
+      "after": 114142,
+      "direction": "worse"
+    },
+    {
+      "kind": "cost",
+      "metric": "seconds_waited",
+      "before": 325.3,
+      "after": 320.6,
+      "direction": "better"
+    },
+    {
+      "kind": "cost",
+      "metric": "llm_retries",
+      "before": 1,
+      "after": 4,
+      "direction": ""
+    },
+    {
+      "kind": "cost",
+      "metric": "usable_reply_rate",
+      "before": 0.85,
+      "after": 0.8667,
+      "direction": "better"
+    },
+    {
+      "kind": "cost",
+      "metric": "hypothesis_stated_rate",
+      "before": null,
+      "after": 0.975,
+      "direction": ""
+    }
+  ]
+}

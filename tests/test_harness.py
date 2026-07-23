@@ -1294,6 +1294,35 @@ class TestCompareEvals(unittest.TestCase):
             if row["kind"] == "outcome":
                 self.assertEqual(row["direction"], "")
 
+    def test_an_arm_predating_a_config_key_is_still_a_single_variable(self):
+        """The real Exp-3 judgement: dev-llm-r3 was written before the `hypothesis`,
+        `attempts`, and `progress` keys existed, so its config has none of them. The
+        falsification arm sets `hypothesis: True` and records `attempts: 1`, `progress:
+        False` (both defaults). Only `hypothesis` truly moved; the other two are
+        absent-vs-default, and the comparer must not cry NOT AN EXPERIMENT over them.
+        """
+        def write(name, config):
+            arm = evals.Arm(
+                name=name, suite="dev", games=["mock01"],
+                episodes=[evals.measure(run_episode(MockGame(), RandomPolicy(seed=1), max_actions=10))],
+                config=config,
+            )
+            (compare_evals.EVAL_DIR / f"{name}.json").write_text(
+                json.dumps(arm.to_dict(), indent=2), encoding="utf-8"
+            )
+
+        # `before` predates the three later keys entirely (like dev-llm-r3 on disk).
+        write("before", {"policy": "llm", "history": 0, "repeat_limit": 3, "seed": 0, "mock": True})
+        write("after", {"policy": "llm", "history": 0, "repeat_limit": 3,
+                        "hypothesis": True, "attempts": 1, "progress": False,
+                        "seed": 0, "mock": True})
+        compare_evals.main(["before", "after"])
+        out = json.loads(
+            (compare_evals.EVAL_DIR / "comparison-before-vs-after.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(out["config_changed"], ["hypothesis: False -> True"])
+        self.assertTrue(out["single_variable"])
+
     def _write_two_attempt_arm(self, name: str, progress: bool) -> None:
         e1 = evals.measure(run_episode(MockGame(), _AlwaysDead(), max_actions=10))
         e1.attempt = 1

@@ -219,6 +219,12 @@ class Metrics:
     final_score: int
     final_state: str
     wall_seconds: float
+    # Which attempt at this game produced these numbers, 1-based. 1 for every arm that plays
+    # each game once (all of them before the progress-signal experiment), so old artifacts
+    # read back as attempt 1. The progress signal only acts from attempt 2 on, so the
+    # comparison that judges it slices to a single attempt — see `scripts/compare_evals.py
+    # --attempt`.
+    attempt: int = 1
     # The typical number of buttons the game offered. The denominator that makes every
     # repetition number readable — see `top_action_share_excess`.
     median_legal_options: int = 1

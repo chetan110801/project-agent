@@ -46,6 +46,7 @@ from harness.evals import Arm, HeldOutViolation, Metrics  # noqa: E402
 from harness.loop import run_episode  # noqa: E402
 from harness.mock_game import MockGame  # noqa: E402
 from harness.policies import LLMPolicy, RandomPolicy  # noqa: E402
+from harness.progress_signal import summary_from_scorecard  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 from scripts.run_agent import RecordingEnv  # noqa: E402
 
@@ -54,7 +55,7 @@ RUNS = ROOT / "runs"
 EVAL_DIR = ROOT / "artifacts" / "evals"
 
 
-def build_policy(args, seed: int):
+def build_policy(args, seed: int, progress=None):
     if args.policy == "random":
         return RandomPolicy(seed=seed)
 
@@ -87,12 +88,13 @@ def build_policy(args, seed: int):
         encoder=encoders[args.encoder],
         name=(
             f"llm:{args.model}:{args.encoder}:h{args.history}:r{args.repeat_limit}"
-            f":y{int(args.hypothesis)}"
+            f":y{int(args.hypothesis)}:p{int(progress is not None)}"
         ),
         fallback_seed=seed,
         history=args.history,
         repeat_limit=args.repeat_limit,
         hypothesis=args.hypothesis,
+        progress=progress,
     )
 
 
@@ -123,42 +125,64 @@ def llm_stats(policy) -> dict[str, Any] | None:
     }
 
 
-def play(args, game: str, seed: int, run_id: str) -> Metrics:
-    """One game, one seed. Returns metrics; never raises past the caller's report."""
-    policy = build_policy(args, seed)
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "-", f"{args.arm}.{policy.name}")
-    inner: Any = MockGame() if args.mock else ArcEnv(game, tags=args.tag)
-    if args.mock:
-        # The mock's own id, so its files are named `mock01.*` and cannot be mistaken for
-        # the game whose slot it filled. They land in the same `runs/` directory that every
-        # offline analyser globs, and a rehearsal pooled into a real arm's numbers is a
-        # measurement nobody would think to doubt.
-        game = inner.game_id
-    stem = f"{game}.eval-{safe}.{args.max_actions}.{run_id}"
-    env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl.gz")
-    closed = None
-    try:
-        if not args.mock:
-            inner.open_scorecard()
-        with Tracer(RUNS / f"{stem}.trace.jsonl", run_id=run_id) as tracer:
-            result = run_episode(
-                env, policy, max_actions=args.max_actions, tracer=tracer
-            )
-    finally:
-        if not args.mock:
-            try:
-                env.record_scorecard(inner.card(game))
-            except Exception as exc:
-                print(f"    warning: could not read scorecard: {exc}")
-            try:
-                closed = inner.close_scorecard()
-            except Exception as exc:
-                print(f"    warning: could not close scorecard: {exc}")
-            inner.close()
-        env.close()
+def play(args, game: str, seed: int) -> list[Metrics]:
+    """One game, played `args.attempts` times. Returns one `Metrics` per attempt.
 
-    metrics = evals.measure(result, llm_stats(policy))
-    return evals.from_scorecard(metrics, closed)
+    Each attempt is a fresh scorecard, a fresh recording and a fresh trace, so its numbers
+    stand alone. When `--progress` is on, the scorecard-close summary of attempt K is carried
+    into attempt K+1's opening prompt (`harness/progress_signal.py`) — the after-the-fact
+    signal is the only progress signal that can exist, because the scorecard is the only thing
+    in this system that knows the goal. Without `--progress`, or with `--attempts 1`, this is
+    the single play it has always been and nothing is carried anywhere.
+
+    Never raises past the caller's report; a broken attempt is caught in `main` and recorded
+    as an ERROR episode so the arm keeps its shape.
+    """
+    out: list[Metrics] = []
+    prior = None  # AttemptSummary | None — the previous attempt at THIS game
+    for attempt in range(1, args.attempts + 1):
+        # The signal is only handed to the policy when the arm asked for it AND there is a
+        # previous attempt to summarise. Attempt 1 of a progress arm is therefore the control
+        # prompt byte for byte, which is what makes the attempt-2 comparison a clean A/B.
+        carried = prior if (args.progress and prior is not None) else None
+        policy = build_policy(args, seed, progress=carried)
+        safe = re.sub(r"[^A-Za-z0-9._-]+", "-", f"{args.arm}.{policy.name}")
+        inner: Any = MockGame() if args.mock else ArcEnv(game, tags=args.tag)
+        game_id = inner.game_id if args.mock else game
+        run_id = str(uuid.uuid4())
+        stem = f"{game_id}.eval-{safe}.{args.max_actions}.a{attempt}.{run_id}"
+        env = RecordingEnv(inner, RUNS / f"{stem}.recording.jsonl.gz")
+        closed = None
+        try:
+            if not args.mock:
+                inner.open_scorecard()
+            with Tracer(RUNS / f"{stem}.trace.jsonl", run_id=run_id) as tracer:
+                result = run_episode(
+                    env, policy, max_actions=args.max_actions, tracer=tracer
+                )
+        finally:
+            if not args.mock:
+                try:
+                    env.record_scorecard(inner.card(game))
+                except Exception as exc:
+                    print(f"    warning: could not read scorecard: {exc}")
+                try:
+                    closed = inner.close_scorecard()
+                except Exception as exc:
+                    print(f"    warning: could not close scorecard: {exc}")
+                inner.close()
+            env.close()
+
+        metrics = evals.from_scorecard(evals.measure(result, llm_stats(policy)), closed)
+        metrics.attempt = attempt
+        out.append(metrics)
+
+        # What the next attempt at this game gets to open with. Built from the same scorecard
+        # fields the metric reads, so the number in the prompt and the number in the report
+        # can never disagree. `actions_spent` is what the episode actually spent, not a
+        # scorecard total, so it is right even on the games whose card omits the level data.
+        prior = summary_from_scorecard(closed, game, metrics.actions)
+    return out
 
 
 def main(argv: list[str]) -> int:
@@ -190,6 +214,18 @@ def main(argv: list[str]) -> int:
         action="store_true",
         help="make the agent state a theory of the goal and a checkable prediction",
     )
+    # How many times each game is attempted. 1 is the historical behaviour (each game played
+    # once) and every earlier arm ran that way. The progress signal needs at least 2, because
+    # it feeds attempt K's result into attempt K+1's opening prompt.
+    p.add_argument("--attempts", type=int, default=1, help="times each game is replayed")
+    # Off by default, like every other addition. Carries the previous attempt's scorecard-close
+    # summary into the next attempt's opening prompt (`harness/progress_signal.py`). No effect
+    # with --attempts 1, and none on a random policy.
+    p.add_argument(
+        "--progress",
+        action="store_true",
+        help="feed the previous attempt's scorecard summary into the next attempt's prompt",
+    )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--max-actions", type=int, default=80)
     p.add_argument("--mock", action="store_true", help="offline: no key, no quota, no meaning")
@@ -212,6 +248,16 @@ def main(argv: list[str]) -> int:
             "Pass --report if this run IS the report; use --suite dev to iterate."
         )
 
+    if args.attempts < 1:
+        raise SystemExit("--attempts must be at least 1")
+    if args.progress and args.attempts < 2:
+        print(
+            "NOTE: --progress has no effect with --attempts 1. The signal is the previous\n"
+            "      attempt's result, and attempt 1 has no previous attempt. Use --attempts 2+.\n"
+        )
+    if args.progress and args.policy != "llm":
+        print("NOTE: --progress is ignored by a random policy (it reads no prompt).\n")
+
     games = (
         [g.strip() for g in args.games.split(",") if g.strip()]
         if args.games
@@ -231,6 +277,8 @@ def main(argv: list[str]) -> int:
             "history": args.history if args.policy == "llm" else None,
             "repeat_limit": args.repeat_limit if args.policy == "llm" else None,
             "hypothesis": bool(args.hypothesis) if args.policy == "llm" else None,
+            "progress": bool(args.progress) if args.policy == "llm" else None,
+            "attempts": args.attempts,
             "seed": args.seed,
             "max_actions": args.max_actions,
             "mock": bool(args.mock),
@@ -245,7 +293,7 @@ def main(argv: list[str]) -> int:
     if args.mock:
         print("MOCK    : offline rehearsal. These numbers prove plumbing, not play.")
     if args.policy == "llm" and not args.mock:
-        budget = budget_check(args.model, planned=len(games) * args.max_actions)
+        budget = budget_check(args.model, planned=len(games) * args.attempts * args.max_actions)
         print(
             f"budget  : {budget['used_last_24h']} calls in the last 24h, "
             f"{budget['remaining']} left of {budget['daily_limit']}/day; "
@@ -266,37 +314,41 @@ def main(argv: list[str]) -> int:
     for i, game in enumerate(games, 1):
         print(f"[{i}/{len(games)}] {game} ...", flush=True)
         try:
-            m = play(args, game, args.seed, str(uuid.uuid4()))
+            episodes = play(args, game, args.seed)
         except Exception:
             traceback.print_exc()
-            m = Metrics(
-                game_id=game,
-                policy=args.policy,
-                actions=0,
-                illegal_actions=0,
-                no_change_actions=0,
-                unique_screens=0,
-                top_action_count=0,
-                longest_repeat_streak=0,
-                distinct_actions=0,
-                game_overs=0,
-                resets=0,
-                final_score=0,
-                final_state="ERROR",
-                wall_seconds=0.0,
-                error=traceback.format_exc(limit=1).strip().splitlines()[-1][:200],
+            episodes = [
+                Metrics(
+                    game_id=game,
+                    policy=args.policy,
+                    actions=0,
+                    illegal_actions=0,
+                    no_change_actions=0,
+                    unique_screens=0,
+                    top_action_count=0,
+                    longest_repeat_streak=0,
+                    distinct_actions=0,
+                    game_overs=0,
+                    resets=0,
+                    final_score=0,
+                    final_state="ERROR",
+                    wall_seconds=0.0,
+                    error=traceback.format_exc(limit=1).strip().splitlines()[-1][:200],
+                )
+            ]
+        for m in episodes:
+            arm.episodes.append(m)
+            tag = f" attempt {m.attempt}/{args.attempts}" if args.attempts > 1 else ""
+            print(
+                f"       {tag} score={m.final_score} state={m.final_state} "
+                f"illegal={m.illegal_action_rate:.0%} dead={m.no_change_rate:.0%} "
+                f"revisit={m.revisit_rate:.0%} "
+                f"top={m.top_action_share:.0%} (excess {m.top_action_share_excess:+.0%} "
+                f"of {m.median_legal_options} options) "
+                f"streak={m.longest_repeat_streak} lvl1={m.level1_actions}/{m.level1_reference}",
+                flush=True,
             )
-        arm.episodes.append(m)
-        print(
-            f"        score={m.final_score} state={m.final_state} "
-            f"illegal={m.illegal_action_rate:.0%} dead={m.no_change_rate:.0%} "
-            f"revisit={m.revisit_rate:.0%} "
-            f"top={m.top_action_share:.0%} (excess {m.top_action_share_excess:+.0%} "
-            f"of {m.median_legal_options} options) "
-            f"streak={m.longest_repeat_streak} lvl1={m.level1_actions}/{m.level1_reference}",
-            flush=True,
-        )
-        write(out, arm, args)
+            write(out, arm, args)
 
     print()
     print(json.dumps(arm.aggregate(), indent=2))

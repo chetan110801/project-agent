@@ -4982,6 +4982,80 @@ that: <strong>tokens, context windows, and why they are the physics of this whol
 <p>One entry per decision that shaped the project. Newest first.
 Format: date · decision · why · what was rejected.</p>
 <hr />
+<h2>2026-07-23 (next session, after the quota wall) — Experiment 4, built and PRE-REGISTERED; not yet run (quota-blocked)</h2>
+<p><em>Same discipline as Experiment 3: the design and the reading are written </em><em>before</em><em> the arm
+runs, and this whole entry except the RESULTS section was committed first. The mechanism was
+built and tested this session (149 tests, all offline); the A/B could not run because the free
+quota was nearly gone — 87 of 500 calls left, and each arm needs 240. It runs when the window
+rolls. The order is fixed: finish Experiment 3 first (re-run <code>dev-llm-y1</code>, 120 calls), then
+this.</em></p>
+<p><strong>The question.</strong> Experiment 3 established that premature commitment is <em>breakable</em> (14 theories
+in 30 turns, up from 1 in 41) and <em>not sufficient</em>: with nothing in the loop that knows the
+goal, the agent falsified its way straight back into the same wrong theory ("grow the tower
+higher"). The diagnosis carried forward is therefore <strong>the absence of any goal signal</strong>, and
+the morning's impossibility result named why no <em>inside-the-episode</em> signal can supply it —
+progress is undefined without a goal, and the screen does not know the goal. Exactly one thing
+in this system does: the server's scorecard, closed at the end of a play, which reports how
+many levels were actually cleared and how many actions a reference solution needs per level
+(<code>ls20</code> = <code>[22, 123, 73, 84, 96, 192, 186]</code>, measured 2026-07-22). That number cannot help the
+play it came from — it arrives only at the end. So the last untried idea is an <strong>after-the-fact</strong>
+signal: carry the summary of one attempt into the <em>opening prompt of the next attempt at the
+same game</em>. Does telling the agent "last time you used 30 actions and did not clear even level
+1, which a reference clears in 22" change how it plays the next attempt?</p>
+<p><strong>Why this needed a new eval mode, and the structural finding behind it.</strong> The current runner
+plays <strong>each game exactly once per arm</strong>, so "the next episode's opening prompt" did not exist
+to feed anything into. The experiment is therefore not a prompt tweak but a <strong>multi-attempt</strong>
+mode: <code>--attempts N</code> replays each game N times, and <code>--progress</code> threads attempt K's
+scorecard-close summary into attempt K+1's opening prompt (<code>harness/progress_signal.py</code>, wired
+as <code>LLMPolicy(progress=…)</code>). Both flags are <strong>off by default</strong> — <code>--attempts 1</code>, <code>--progress</code>
+absent — so every earlier arm reproduces byte for byte, and the golden control-prompt test
+still passes.</p>
+<p><strong>The change (one variable).</strong> <code>--progress</code> on vs off, arm <code>dev-llm-p1</code> against <code>dev-llm-p0</code>,
+<strong>both running <code>--attempts 2</code></strong>. Everything else identical — dev suite, seed 0, 30 actions,
+<code>repeat_limit 3</code>, no hypothesis, <code>gemini-3.5-flash-lite</code>, objects encoder. The single variable
+is whether attempt 2's opening prompt carries attempt 1's scorecard summary.</p>
+<p><strong>Why the control also replays twice.</strong> To isolate the <em>signal</em> from mere <em>replay-familiarity</em>.
+If the control played each game once, any attempt-2 difference could be "the agent has seen this
+game before" rather than "the signal helped". Both arms replay; only the treatment's attempt 2
+gets the signal. Attempt 1 of the treatment arm is the control prompt byte for byte (no previous
+attempt to summarise), so it is the null check, and the comparison that judges the experiment
+slices to <strong>attempt 2 only</strong> (<code>scripts/compare_evals.py --attempt 2</code>) — a plain aggregate would
+dilute the effect with an attempt-1 that is identical in both arms by construction.</p>
+<p><strong>The signal is the server's, not ours.</strong> <code>harness/progress_signal.py</code> reads the same
+scorecard-close fields as the metric (<code>levels_completed</code>, <code>level_baseline_actions</code>), so the
+number in the prompt and the number in the report come from one place and cannot drift. The
+wording is the harness's flat voice — "you did not clear even level 1" is a verdict the model
+cannot argue with, because the number came from the game — for the reason Experiment 1
+established: a fact left for the model to interpret gets interpreted in its favour.</p>
+<p><strong>What would count as the intervention working</strong> (steering, decided in advance): on <strong>attempt 2</strong>,
+<code>top_action_share_excess</code> <strong>down</strong> and <code>distinct_targets</code> <strong>up</strong> against the control's attempt 2
+— the agent told it failed the actual goal explores more rather than re-committing. Any movement
+of <code>level1_ratio</code> toward 1.0, or a level-1 completion, is reported as outcome, never steered on.</p>
+<p><strong>What would count as it backfiring.</strong> The signal <em>entrenches</em> instead of redirecting: the agent
+reads "0 of 7 levels, reference is 22" and doubles down (excess <strong>up</strong>, distinct targets <strong>down</strong>
+on attempt 2 vs control). A real possibility — Experiment 3's carry-forward of the agent's own
+words is exactly what backfired in Experiment 1.</p>
+<p><strong>What would count as no result at all.</strong> No attempt-2 difference between the arms beyond the
+noise floor; or — a live risk named in advance — the scorecard does not return
+<code>level_baseline_actions</code> for the three non-<code>ls20</code> dev games (it was only <em>measured</em> for <code>ls20</code>),
+so the signal degrades to "you cleared 0 levels" with no reference scale. <strong>Attempt 1 of this run
+is the first time those games' scorecards are closed, so whether they carry reference data is
+itself a finding</strong>, and the mechanism already handles its absence (the reference sentence is
+omitted, not invented).</p>
+<p><strong>The noise floor constrains what may be claimed.</strong> A single seed; four dev games, one attempt-2
+each. This morning a metric moved 17 points in a game where the intervention never fired. So no
+difference that size is a result, and any claim must point at the games where the scorecard
+actually carried a usable signal.</p>
+<p><strong>Cost expected:</strong> 2× the calls of a single-attempt arm (240/arm; an A/B is 480, which just fits
+one day's 500), plus the block's tokens on attempt-2 turns only.</p>
+<p><strong>Decision: mechanism kept in the code, off by default; the experiment is not yet run.</strong> The
+infrastructure — <code>harness/progress_signal.py</code>, <code>--attempts</code>/<code>--progress</code> in <code>run_evals.py</code>, the
+<code>attempt</code> field on <code>Metrics</code>, and <code>--attempt</code> slicing in <code>compare_evals.py</code> — is not tuning; it
+is the harness gaining the ability to ask this question at all. No default moves until the numbers
+come in.</p>
+<h3>RESULTS (appended after the run)</h3>
+<p><em>Not yet run — quota-blocked on 2026-07-23. To be appended after the A/B completes.</em></p>
+<hr />
 <h2>2026-07-23 (later) — Experiment 3, PRE-REGISTERED before the run: make the theory explicit and falsifiable</h2>
 <p><em>This half of the entry was written and committed </em><em>before</em><em> the arm was run. The results
 section below it was appended afterwards. That order is the point: the last two experiments

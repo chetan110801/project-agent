@@ -20,6 +20,7 @@ Three things this does that a hand-typed table cannot:
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -38,7 +39,7 @@ ARROW = {"better": "better", "worse": "WORSE", "same": "same", "": ""}
 _METRIC_FIELDS = set(Metrics.__dataclass_fields__)
 
 
-def load(name: str) -> dict[str, Any]:
+def load(name: str, attempt: int | None = None) -> dict[str, Any]:
     """Read an arm, and **recompute its aggregate from its per-episode metrics.**
 
     The stored `aggregate` block is advisory. The per-episode numbers are the data; how
@@ -48,18 +49,27 @@ def load(name: str) -> dict[str, Any]:
     every old comparison move together. Trusting the stored block would silently compare
     an arm measured under yesterday's definition against one measured under today's, which
     is the exact class of error this whole module exists to prevent.
+
+    `attempt` slices to one replay of each game before aggregating. The progress signal only
+    acts from attempt 2 on, so judging it means comparing attempt 2 of the treatment against
+    attempt 2 of the control — a plain aggregate would dilute that with attempt 1, which is
+    identical in both arms by construction. Episodes with no `attempt` field read as 1, so an
+    old single-play arm is untouched by `--attempt 1`.
     """
     path = EVAL_DIR / f"{name.removesuffix('.json')}.json"
     if not path.exists():
         raise SystemExit(f"no such arm: {path}")
     data = json.loads(path.read_text(encoding="utf-8"))
+    episodes = data["episodes"]
+    if attempt is not None:
+        episodes = [ep for ep in episodes if ep.get("attempt", 1) == attempt]
     arm = Arm(
         name=data["arm"],
         suite=data["suite"],
         games=data["games"],
         episodes=[
             Metrics(**{k: v for k, v in ep.items() if k in _METRIC_FIELDS})
-            for ep in data["episodes"]
+            for ep in episodes
         ],
         config=data["config"],
     )
@@ -85,16 +95,25 @@ def fmt(v: Any) -> str:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print(__doc__)
-        return 1
-    before, after = load(argv[0]), load(argv[1])
+    ap = argparse.ArgumentParser(description="Compare two eval arms in one table.")
+    ap.add_argument("before", help="artifacts/evals/<before>.json")
+    ap.add_argument("after", help="artifacts/evals/<after>.json")
+    ap.add_argument(
+        "--attempt",
+        type=int,
+        default=None,
+        help="compare only this attempt index (for multi-attempt / --progress arms)",
+    )
+    args = ap.parse_args(argv)
+    before, after = load(args.before, args.attempt), load(args.after, args.attempt)
 
     changed = config_diff(before, after)
     same_games = before["games"] == after["games"]
 
-    print(f"before : {argv[0]}  ({before['aggregate']['episodes']} games)")
-    print(f"after  : {argv[1]}  ({after['aggregate']['episodes']} games)")
+    if args.attempt is not None:
+        print(f"attempt : {args.attempt} only (episodes sliced to this replay of each game)")
+    print(f"before : {args.before}  ({before['aggregate']['episodes']} games)")
+    print(f"after  : {args.after}  ({after['aggregate']['episodes']} games)")
     print()
     if not changed:
         print("what changed: NOTHING in the config — this is a re-run, not an experiment.")
@@ -139,12 +158,14 @@ def main(argv: list[str]) -> int:
             print("-" * (w + 34))
         print(f"  {name:{w}}  {x:>12}  {y:>12}   {ARROW[d]}")
 
-    out = EVAL_DIR / f"comparison-{argv[0]}-vs-{argv[1]}.json"
+    suffix = f"-attempt{args.attempt}" if args.attempt is not None else ""
+    out = EVAL_DIR / f"comparison-{args.before}-vs-{args.after}{suffix}.json"
     out.write_text(
         json.dumps(
             {
-                "before": argv[0],
-                "after": argv[1],
+                "before": args.before,
+                "after": args.after,
+                "attempt": args.attempt,
                 "config_changed": changed,
                 "single_variable": len(changed) == 1,
                 "same_games": same_games,

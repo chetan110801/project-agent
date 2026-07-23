@@ -28,6 +28,7 @@ from .hypothesis import (
     strip_hypothesis_lines,
 )
 from .llm import Completion
+from .progress_signal import AttemptSummary, render_progress_block
 
 
 @runtime_checkable
@@ -140,7 +141,7 @@ def blocked_label(frames: list[FrameData], limit: int) -> str | None:
     return tail[0] if len(set(tail)) == 1 else None
 
 
-PROMPT = """You are playing a puzzle video game. You see the screen as a grid of colours.
+PROMPT = """{progress}You are playing a puzzle video game. You see the screen as a grid of colours.
 
 {screen}
 
@@ -196,6 +197,7 @@ class LLMPolicy:
         history: int = 0,
         repeat_limit: int = 0,
         hypothesis: bool = False,
+        progress: AttemptSummary | None = None,
     ) -> None:
         from .frames import main_grid, render_objects
 
@@ -211,6 +213,13 @@ class LLMPolicy:
         # Ask the agent to state a theory of the goal and a checkable prediction, and hold
         # it to both (`harness/hypothesis.py`). Off by default, like every other addition.
         self.hypothesis = hypothesis
+        # A summary of the previous attempt at THIS game, from the server's scorecard close
+        # (`harness/progress_signal.py`). None for a first attempt and for every arm that
+        # does not carry it — in which case the prompt is the Phase B control byte for byte.
+        # It is a whole-episode fact, so it is shown on every turn of the attempt, not just
+        # the first: our loop makes stateless calls, and a fact shown once is forgotten by
+        # turn two.
+        self.progress = progress
         self._fallback = RandomPolicy(seed=fallback_seed, name="fallback")
         self.calls = 0
         self.parse_failures = 0
@@ -292,6 +301,7 @@ class LLMPolicy:
             )
 
         return PROMPT.format(
+            progress=render_progress_block(self.progress),
             screen=self.encode(latest),
             last_action=last_action,
             feedback=feedback,

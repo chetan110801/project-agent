@@ -68,12 +68,18 @@ from harness.policies import (  # noqa: E402
     played_labels,
 )
 from harness.progress import measure_progress, render_progress  # noqa: E402
+from harness.progress_signal import (  # noqa: E402
+    AttemptSummary,
+    render_progress_block,
+    summary_from_scorecard,
+)
 from harness.tokens import measure  # noqa: E402
 from harness.trace import Tracer  # noqa: E402
 from scripts.analyze_run import load as load_recording  # noqa: E402
 from scripts.run_agent import RecordingEnv, resolve_game  # noqa: E402
 from scripts.run_evals import main as run_evals_main  # noqa: E402
 from scripts import compare_evals  # noqa: E402
+from scripts import run_evals  # noqa: E402
 
 
 class TestAction(unittest.TestCase):
@@ -902,6 +908,100 @@ class TestHypothesisPolicy(unittest.TestCase):
         self.assertIn("row 1, column 52", result.steps[0].reasoning)
 
 
+class TestProgressSignal(unittest.TestCase):
+    """The after-the-fact signal: the previous attempt's scorecard, carried into the next.
+
+    The mechanism is off by default and the golden control-prompt test above pins the Phase B
+    prompt byte for byte, so these tests own the new behaviour: what the block says, that it
+    reads the scorecard the same way the metric does, and that it is shown on every turn.
+    """
+
+    # The shape the live server returns from POST /api/scorecard/close, measured for `ls20`
+    # on 2026-07-22 (`harness/arc_env.close_scorecard`, `harness/evals.from_scorecard`).
+    SCORECARD = {
+        "environments": [
+            {
+                "id": "ls20-9607627b",
+                "levels_completed": 0,
+                "level_count": 7,
+                "runs": [
+                    {
+                        "level_actions": [30],
+                        "level_baseline_actions": [22, 123, 73, 84, 96, 192, 186],
+                    }
+                ],
+            }
+        ]
+    }
+
+    def _bare_metrics(self, game_id: str):
+        return evals.Metrics(
+            game_id=game_id, policy="x", actions=30, illegal_actions=0,
+            no_change_actions=0, unique_screens=30, top_action_count=1,
+            longest_repeat_streak=1, distinct_actions=1, game_overs=0, resets=0,
+            final_score=0, final_state="NOT_FINISHED", wall_seconds=0.0,
+        )
+
+    def test_no_summary_renders_nothing(self):
+        """None and an empty attempt both produce "" — the control prompt stays byte-identical."""
+        self.assertEqual(render_progress_block(None), "")
+        self.assertEqual(render_progress_block(AttemptSummary(actions_spent=0)), "")
+
+    def test_a_missing_scorecard_or_absent_game_is_none_not_a_zero(self):
+        """None means 'say nothing', which is not the claim 'you cleared zero levels'."""
+        self.assertIsNone(summary_from_scorecard(None, "ls20-9607627b", 30))
+        self.assertIsNone(summary_from_scorecard(self.SCORECARD, "not-in-card", 30))
+
+    def test_the_failed_attempt_is_a_verdict_with_a_scale(self):
+        summary = summary_from_scorecard(self.SCORECARD, "ls20-9607627b", actions_spent=30)
+        block = render_progress_block(summary)
+        self.assertIn("30 actions", block)
+        self.assertIn("cleared 0 of 7 levels", block)
+        self.assertIn("did not clear even level 1", block)
+        self.assertIn("22 actions", block)  # the reference, next to the failure
+
+    def test_the_summary_reads_the_same_scorecard_fields_as_the_metric(self):
+        """The number in the prompt and the number in the report come from one place."""
+        summary = summary_from_scorecard(self.SCORECARD, "ls20-9607627b", actions_spent=30)
+        self.assertEqual((summary.levels_cleared, summary.level_count), (0, 7))
+        self.assertEqual(summary.level1_reference, 22)
+        # The metric side, reading the same dict, must agree on the reference.
+        m = evals.from_scorecard(self._bare_metrics("ls20-9607627b"), self.SCORECARD)
+        self.assertEqual(m.level1_reference, summary.level1_reference)
+        self.assertEqual(m.levels_completed, summary.levels_cleared)
+
+    def test_a_missing_reference_is_omitted_not_invented(self):
+        card = {"environments": [{"id": "g", "levels_completed": 0, "level_count": 3,
+                                  "runs": [{"level_actions": [12]}]}]}
+        block = render_progress_block(summary_from_scorecard(card, "g", 12))
+        self.assertIn("did not clear even level 1", block)
+        self.assertNotIn("reference", block)
+
+    def test_a_cleared_level_is_reported_without_the_failure_verdict(self):
+        card = {"environments": [{"id": "g", "levels_completed": 1, "level_count": 7,
+                                  "runs": [{"level_actions": [22, 8],
+                                            "level_baseline_actions": [22, 123]}]}]}
+        block = render_progress_block(summary_from_scorecard(card, "g", 30))
+        self.assertIn("cleared 1 of 7 levels", block)
+        self.assertNotIn("did not clear even level 1", block)
+
+    def test_the_signal_is_absent_from_the_prompt_by_default(self):
+        g = MockGame()
+        frame = g.reset()
+        self.assertNotIn(
+            "last attempt", LLMPolicy(ScriptedClient(["ACTION1"])).build_prompt([frame], frame)
+        )
+
+    def test_the_signal_is_shown_on_every_turn_not_just_the_first(self):
+        """A whole-episode fact: our loop is stateless, so once at the top is forgotten by turn 2."""
+        summary = summary_from_scorecard(self.SCORECARD, "ls20-9607627b", 30)
+        client = ScriptedClient(["ACTION1"])
+        policy = LLMPolicy(client, progress=summary)
+        run_episode(MockGame(), policy, max_actions=4)
+        self.assertEqual(len(client.prompts), 4)
+        self.assertTrue(all("last attempt" in p for p in client.prompts))
+
+
 def max_streak(labels):
     best = run = 0
     previous = None
@@ -1193,6 +1293,82 @@ class TestCompareEvals(unittest.TestCase):
         for row in out["rows"]:
             if row["kind"] == "outcome":
                 self.assertEqual(row["direction"], "")
+
+    def _write_two_attempt_arm(self, name: str, progress: bool) -> None:
+        e1 = evals.measure(run_episode(MockGame(), _AlwaysDead(), max_actions=10))
+        e1.attempt = 1
+        e2 = evals.measure(run_episode(MockGame(), RandomPolicy(seed=1), max_actions=10))
+        e2.attempt = 2
+        arm = evals.Arm(
+            name=name, suite="dev", games=["mock01"], episodes=[e1, e2],
+            config={"policy": "llm", "progress": progress, "seed": 0, "mock": True},
+        )
+        (compare_evals.EVAL_DIR / f"{name}.json").write_text(
+            json.dumps(arm.to_dict(), indent=2), encoding="utf-8"
+        )
+
+    def test_the_attempt_filter_slices_to_one_replay(self):
+        """The progress signal only acts from attempt 2, so the judging comparison slices to it."""
+        self._write_two_attempt_arm("before", progress=False)
+        self._write_two_attempt_arm("after", progress=True)
+        # The slice really drops attempt 1: two episodes unfiltered, one at --attempt 2.
+        self.assertEqual(compare_evals.load("before")["aggregate"]["episodes"], 2)
+        self.assertEqual(compare_evals.load("before", attempt=2)["aggregate"]["episodes"], 1)
+
+        compare_evals.main(["before", "after", "--attempt", "2"])
+        out = json.loads(
+            (compare_evals.EVAL_DIR / "comparison-before-vs-after-attempt2.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(out["attempt"], 2)
+        self.assertEqual(out["config_changed"], ["progress: False -> True"])
+        self.assertTrue(out["single_variable"])
+
+
+class TestMultiAttemptRun(unittest.TestCase):
+    """`--attempts` replays each game; the runner tags every episode with its attempt index.
+
+    Offline through the mock (no key, no quota): the mock has no scorecard, so the *signal*
+    itself cannot flow here — that is unit-tested in `TestProgressSignal`. What this proves is
+    the plumbing: each game is played once per attempt, the episodes are tagged, and the arm's
+    config records what it ran.
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        base = Path(self._tmp.name)
+        self._saved = (run_evals.RUNS, run_evals.EVAL_DIR)
+        run_evals.RUNS = base / "runs"
+        run_evals.EVAL_DIR = base / "evals"
+        run_evals.RUNS.mkdir(parents=True, exist_ok=True)
+        run_evals.EVAL_DIR.mkdir(parents=True, exist_ok=True)
+        self._stdout = contextlib.redirect_stdout(io.StringIO())
+        self._stdout.__enter__()
+
+    def tearDown(self):
+        self._stdout.__exit__(None, None, None)
+        run_evals.RUNS, run_evals.EVAL_DIR = self._saved
+        self._tmp.cleanup()
+
+    def test_each_game_is_played_once_per_attempt_and_tagged(self):
+        run_evals.main([
+            "--arm", "t", "--policy", "llm", "--mock",
+            "--attempts", "2", "--progress", "--max-actions", "3",
+        ])
+        data = json.loads((run_evals.EVAL_DIR / "t.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["config"]["attempts"], 2)
+        self.assertTrue(data["config"]["progress"])
+        # --mock plays two games; two attempts each => four episodes, tagged 1,1,2,2.
+        self.assertEqual(len(data["episodes"]), 4)
+        self.assertEqual(sorted(e["attempt"] for e in data["episodes"]), [1, 1, 2, 2])
+
+    def test_attempts_default_to_one_and_reproduce_the_single_play(self):
+        run_evals.main(["--arm", "s", "--policy", "llm", "--mock", "--max-actions", "3"])
+        data = json.loads((run_evals.EVAL_DIR / "s.json").read_text(encoding="utf-8"))
+        self.assertEqual(data["config"]["attempts"], 1)
+        self.assertEqual(len(data["episodes"]), 2)  # two mock games, once each
+        self.assertTrue(all(e["attempt"] == 1 for e in data["episodes"]))
 
 
 class TestSuiteSplit(unittest.TestCase):

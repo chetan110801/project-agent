@@ -5,6 +5,96 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-23 (next session, after the quota wall) — Experiment 4, built and PRE-REGISTERED; not yet run (quota-blocked)
+
+*Same discipline as Experiment 3: the design and the reading are written **before** the arm
+runs, and this whole entry except the RESULTS section was committed first. The mechanism was
+built and tested this session (149 tests, all offline); the A/B could not run because the free
+quota was nearly gone — 87 of 500 calls left, and each arm needs 240. It runs when the window
+rolls. The order is fixed: finish Experiment 3 first (re-run `dev-llm-y1`, 120 calls), then
+this.*
+
+**The question.** Experiment 3 established that premature commitment is *breakable* (14 theories
+in 30 turns, up from 1 in 41) and *not sufficient*: with nothing in the loop that knows the
+goal, the agent falsified its way straight back into the same wrong theory ("grow the tower
+higher"). The diagnosis carried forward is therefore **the absence of any goal signal**, and
+the morning's impossibility result named why no *inside-the-episode* signal can supply it —
+progress is undefined without a goal, and the screen does not know the goal. Exactly one thing
+in this system does: the server's scorecard, closed at the end of a play, which reports how
+many levels were actually cleared and how many actions a reference solution needs per level
+(`ls20` = `[22, 123, 73, 84, 96, 192, 186]`, measured 2026-07-22). That number cannot help the
+play it came from — it arrives only at the end. So the last untried idea is an **after-the-fact**
+signal: carry the summary of one attempt into the *opening prompt of the next attempt at the
+same game*. Does telling the agent "last time you used 30 actions and did not clear even level
+1, which a reference clears in 22" change how it plays the next attempt?
+
+**Why this needed a new eval mode, and the structural finding behind it.** The current runner
+plays **each game exactly once per arm**, so "the next episode's opening prompt" did not exist
+to feed anything into. The experiment is therefore not a prompt tweak but a **multi-attempt**
+mode: `--attempts N` replays each game N times, and `--progress` threads attempt K's
+scorecard-close summary into attempt K+1's opening prompt (`harness/progress_signal.py`, wired
+as `LLMPolicy(progress=…)`). Both flags are **off by default** — `--attempts 1`, `--progress`
+absent — so every earlier arm reproduces byte for byte, and the golden control-prompt test
+still passes.
+
+**The change (one variable).** `--progress` on vs off, arm `dev-llm-p1` against `dev-llm-p0`,
+**both running `--attempts 2`**. Everything else identical — dev suite, seed 0, 30 actions,
+`repeat_limit 3`, no hypothesis, `gemini-3.5-flash-lite`, objects encoder. The single variable
+is whether attempt 2's opening prompt carries attempt 1's scorecard summary.
+
+**Why the control also replays twice.** To isolate the *signal* from mere *replay-familiarity*.
+If the control played each game once, any attempt-2 difference could be "the agent has seen this
+game before" rather than "the signal helped". Both arms replay; only the treatment's attempt 2
+gets the signal. Attempt 1 of the treatment arm is the control prompt byte for byte (no previous
+attempt to summarise), so it is the null check, and the comparison that judges the experiment
+slices to **attempt 2 only** (`scripts/compare_evals.py --attempt 2`) — a plain aggregate would
+dilute the effect with an attempt-1 that is identical in both arms by construction.
+
+**The signal is the server's, not ours.** `harness/progress_signal.py` reads the same
+scorecard-close fields as the metric (`levels_completed`, `level_baseline_actions`), so the
+number in the prompt and the number in the report come from one place and cannot drift. The
+wording is the harness's flat voice — "you did not clear even level 1" is a verdict the model
+cannot argue with, because the number came from the game — for the reason Experiment 1
+established: a fact left for the model to interpret gets interpreted in its favour.
+
+**What would count as the intervention working** (steering, decided in advance): on **attempt 2**,
+`top_action_share_excess` **down** and `distinct_targets` **up** against the control's attempt 2
+— the agent told it failed the actual goal explores more rather than re-committing. Any movement
+of `level1_ratio` toward 1.0, or a level-1 completion, is reported as outcome, never steered on.
+
+**What would count as it backfiring.** The signal *entrenches* instead of redirecting: the agent
+reads "0 of 7 levels, reference is 22" and doubles down (excess **up**, distinct targets **down**
+on attempt 2 vs control). A real possibility — Experiment 3's carry-forward of the agent's own
+words is exactly what backfired in Experiment 1.
+
+**What would count as no result at all.** No attempt-2 difference between the arms beyond the
+noise floor; or — a live risk named in advance — the scorecard does not return
+`level_baseline_actions` for the three non-`ls20` dev games (it was only *measured* for `ls20`),
+so the signal degrades to "you cleared 0 levels" with no reference scale. **Attempt 1 of this run
+is the first time those games' scorecards are closed, so whether they carry reference data is
+itself a finding**, and the mechanism already handles its absence (the reference sentence is
+omitted, not invented).
+
+**The noise floor constrains what may be claimed.** A single seed; four dev games, one attempt-2
+each. This morning a metric moved 17 points in a game where the intervention never fired. So no
+difference that size is a result, and any claim must point at the games where the scorecard
+actually carried a usable signal.
+
+**Cost expected:** 2× the calls of a single-attempt arm (240/arm; an A/B is 480, which just fits
+one day's 500), plus the block's tokens on attempt-2 turns only.
+
+**Decision: mechanism kept in the code, off by default; the experiment is not yet run.** The
+infrastructure — `harness/progress_signal.py`, `--attempts`/`--progress` in `run_evals.py`, the
+`attempt` field on `Metrics`, and `--attempt` slicing in `compare_evals.py` — is not tuning; it
+is the harness gaining the ability to ask this question at all. No default moves until the numbers
+come in.
+
+### RESULTS (appended after the run)
+
+*Not yet run — quota-blocked on 2026-07-23. To be appended after the A/B completes.*
+
+---
+
 ## 2026-07-23 (later) — Experiment 3, PRE-REGISTERED before the run: make the theory explicit and falsifiable
 
 *This half of the entry was written and committed **before** the arm was run. The results

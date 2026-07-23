@@ -1,0 +1,379 @@
+{
+  "arm": "dev-llm-y1",
+  "generated_from": [
+    "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1.30.dbec901c-cbd7-42d4-8d58-4589fad6489d.trace.jsonl"
+  ],
+  "totals": {
+    "actions": 30,
+    "goals_stated": 28,
+    "goal_changes": 13,
+    "predictions": 28,
+    "checked": 28,
+    "wrong": 5
+  },
+  "prediction_mix": {
+    "NONE": 1,
+    "FEW": 4,
+    "MANY": 23
+  },
+  "changed_theory_after": {
+    "wrong": {
+      "n": 5,
+      "changed": 4,
+      "rate": 0.8
+    },
+    "held": {
+      "n": 23,
+      "changed": 9,
+      "rate": 0.3913
+    }
+  },
+  "episodes": [
+    {
+      "trace": "ls20-9607627b.eval-dev-llm-y1.llm-gemini-3.5-flash-lite-objects-h0-r3-y1.30.dbec901c-cbd7-42d4-8d58-4589fad6489d.trace.jsonl",
+      "game": "ls20-9607627b",
+      "actions": 30,
+      "goals_stated": 28,
+      "goal_changes": 13,
+      "predictions": 28,
+      "checked": 28,
+      "wrong": 5,
+      "prediction_mix": {
+        "NONE": 1,
+        "FEW": 4,
+        "MANY": 23
+      },
+      "changed_after": {
+        "wrong": {
+          "n": 5,
+          "changed": 4,
+          "rate": 0.8
+        },
+        "held": {
+          "n": 23,
+          "changed": 9,
+          "rate": 0.3913
+        }
+      },
+      "distinct_theories": 14,
+      "theories": [
+        "Interact with the colored elements to solve the puzzle.",
+        "Complete the puzzle by manipulating the colored grid elements.",
+        "Interact with grid objects to solve the puzzle.",
+        "Navigate the character and avoid obstacles",
+        "Activate the sequence of coloured blocks in correct order",
+        "Connect and route power through wires and blocks.",
+        "Connect power wires to activate the machine components",
+        "Destroy obstacles by matching colours and clearing paths",
+        "Clear paths and destroy matching color obstacles",
+        "Clear obstacles and navigate paths.",
+        "Clear obstacles and navigate paths through the grid.",
+        "Grow the central structure upward using puzzle actions",
+        "Grow the central vertical structure further upward.",
+        "Build the central tower higher."
+      ],
+      "steps": [
+        {
+          "index": 0,
+          "action": "ACTION1",
+          "goal": "Interact with the colored elements to solve the puzzle.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 1,
+          "action": "ACTION1",
+          "goal": "Complete the puzzle by manipulating the colored grid elements.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 2,
+          "action": "ACTION1",
+          "goal": "Complete the puzzle by manipulating the colored grid elements.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 3,
+          "action": "ACTION2",
+          "goal": "Interact with grid objects to solve the puzzle.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 52,
+          "verdict": "wrong"
+        },
+        {
+          "index": 4,
+          "action": "ACTION1",
+          "goal": "Navigate the character and avoid obstacles",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "NONE",
+          "cells_changed": 52,
+          "verdict": "wrong"
+        },
+        {
+          "index": 5,
+          "action": "ACTION3",
+          "goal": "Activate the sequence of coloured blocks in correct order",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 2,
+          "verdict": "wrong"
+        },
+        {
+          "index": 6,
+          "action": "ACTION3",
+          "goal": "Connect and route power through wires and blocks.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 2,
+          "verdict": "held"
+        },
+        {
+          "index": 7,
+          "action": "ACTION3",
+          "goal": "Connect power wires to activate the machine components",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "FEW",
+          "cells_changed": 2,
+          "verdict": "held"
+        },
+        {
+          "index": 8,
+          "action": "ACTION1",
+          "goal": "Connect power wires to activate the machine components",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "FEW",
+          "cells_changed": 52,
+          "verdict": "wrong"
+        },
+        {
+          "index": 9,
+          "action": "ACTION1",
+          "goal": "Destroy obstacles by matching colours and clearing paths",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 10,
+          "action": "ACTION1",
+          "goal": "Clear paths and destroy matching color obstacles",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 11,
+          "action": "ACTION2",
+          "goal": "Clear paths and destroy matching color obstacles",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 12,
+          "action": "ACTION2",
+          "goal": "Clear paths and destroy matching color obstacles",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 13,
+          "action": "ACTION2",
+          "goal": "Clear paths and destroy matching color obstacles",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 14,
+          "action": "ACTION1",
+          "goal": "Clear paths and destroy matching color obstacles",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 15,
+          "action": "ACTION1",
+          "goal": "Clear obstacles and navigate paths.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 16,
+          "action": "ACTION1",
+          "goal": "Clear obstacles and navigate paths through the grid.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 17,
+          "action": "ACTION2",
+          "goal": "Clear obstacles and navigate paths through the grid.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 18,
+          "action": "ACTION2",
+          "goal": "Grow the central structure upward using puzzle actions",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 19,
+          "action": "ACTION2",
+          "goal": "Grow the central vertical structure further upward.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 20,
+          "action": "ACTION1",
+          "goal": "Grow the central vertical structure further upward.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 21,
+          "action": "ACTION1",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": true,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 22,
+          "action": "ACTION1",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 23,
+          "action": "ACTION2",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 24,
+          "action": "ACTION2",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 25,
+          "action": "ACTION2",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 26,
+          "action": "ACTION3",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 2,
+          "verdict": "wrong"
+        },
+        {
+          "index": 27,
+          "action": "ACTION4",
+          "goal": "Build the central tower higher.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 52,
+          "verdict": null
+        },
+        {
+          "index": 28,
+          "action": "ACTION4",
+          "goal": "Build the central tower higher.",
+          "goal_stated": true,
+          "goal_changed": false,
+          "prediction": "MANY",
+          "cells_changed": 52,
+          "verdict": "held"
+        },
+        {
+          "index": 29,
+          "action": "ACTION4",
+          "goal": "Build the central tower higher.",
+          "goal_stated": false,
+          "goal_changed": false,
+          "prediction": null,
+          "cells_changed": 52,
+          "verdict": null
+        }
+      ]
+    }
+  ]
+}

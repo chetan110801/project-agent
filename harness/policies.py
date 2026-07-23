@@ -322,6 +322,13 @@ class LLMPolicy:
 
         if not completion.ok:
             self.client_errors += 1
+            # The turn the agent never got to answer. Its previous prediction must be
+            # dropped rather than carried: the harness is about to play a random fallback
+            # action, and grading "MANY cells will change" against the result of an action
+            # the agent did not choose is a verdict about the wrong thing. The *goal*
+            # stands — an outage is not a retraction. MEASURED: this happened on 2 of 30
+            # turns in the first live run of this arm before it was fixed.
+            self.theory = Hypothesis(goal=self.theory.goal)
             return self._fall_back(frames, latest, f"client error: {completion.error}")
 
         text = completion.text
@@ -334,6 +341,11 @@ class LLMPolicy:
         action = parse_action(text)
         if action is None:
             self.parse_failures += 1
+            # Same reasoning as the client-error branch above: a prediction is a claim about
+            # the action the agent named, and when we could not read that action the harness
+            # plays a random one instead. Nothing about that turn is the agent's to be
+            # judged on, except the theory, which stands.
+            self.theory = Hypothesis(goal=self.theory.goal)
             # The WHOLE reply, not its first line. The first-line version of this message
             # recorded 14 unparseable replies on `tn36` as the single word "ACTION6" and
             # left no way to find out what the rest of them said — a diagnostic that

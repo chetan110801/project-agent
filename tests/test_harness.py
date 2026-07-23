@@ -31,7 +31,17 @@ from harness.frames import (  # noqa: E402
     render_history,
     render_objects,
 )
-from harness.budget import LIMITS, BudgetExhausted, Limits, RateLimiter  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+from harness.budget import (  # noqa: E402
+    LIMITS,
+    BudgetExhausted,
+    Limits,
+    RateLimiter,
+    budget_check as _budget_check,
+    calls_in_window,
+    record_call,
+)
 from harness.hypothesis import (  # noqa: E402
     FEW,
     FEW_MANY_BOUNDARY,
@@ -1254,6 +1264,84 @@ class TestRateLimiter(unittest.TestCase):
     def test_measured_limits_are_present_for_the_model_we_use(self):
         self.assertIn("gemini-3.5-flash-lite", LIMITS)
         self.assertEqual(LIMITS["gemini-3.5-flash-lite"].rpd, 500)
+
+
+class TestCrossProcessBudget(unittest.TestCase):
+    """The wall the per-process counter could not see: four arms, one day, one quota."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.log = Path(self._tmp.name) / "usage.jsonl"
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def test_calls_are_counted_across_processes_via_a_file(self):
+        for _ in range(5):
+            record_call("gemini-3.5-flash-lite", ok=True, path=self.log)
+        self.assertEqual(calls_in_window(path=self.log), 5)
+
+    def test_a_refused_request_still_counts(self):
+        """A 429 is a request the server received — assuming it was free is the bug."""
+        record_call("m", ok=True, path=self.log)
+        record_call("m", ok=False, path=self.log)
+        self.assertEqual(calls_in_window(model="m", path=self.log), 2)
+
+    def test_calls_outside_the_window_fall_off(self):
+        old = datetime.now(timezone.utc) - timedelta(hours=30)
+        recent = datetime.now(timezone.utc) - timedelta(hours=1)
+        self.log.write_text(
+            json.dumps({"ts": old.isoformat(), "model": "m", "ok": True}) + "\n"
+            + json.dumps({"ts": recent.isoformat(), "model": "m", "ok": True}) + "\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(calls_in_window(model="m", path=self.log), 1)
+
+    def test_a_torn_line_is_skipped_not_fatal(self):
+        record_call("m", path=self.log)
+        with self.log.open("a", encoding="utf-8") as fh:
+            fh.write("{ this is not json\n")
+        record_call("m", path=self.log)
+        self.assertEqual(calls_in_window(path=self.log), 2)
+
+    def test_budget_check_reports_the_shortfall_that_bit_us(self):
+        """Three arms of 120 leave 140, and a fourth 120-call arm does not fit."""
+        for _ in range(360):
+            record_call("gemini-3.5-flash-lite", path=self.log)
+        with contextlib.redirect_stdout(io.StringIO()):
+            b = _budget_check("gemini-3.5-flash-lite", planned=120, path=self.log)
+        self.assertEqual(b["used_last_24h"], 360)
+        self.assertEqual(b["remaining"], 140)
+        self.assertTrue(b["fits"])
+        for _ in range(60):
+            record_call("gemini-3.5-flash-lite", path=self.log)
+        self.assertFalse(_budget_check("gemini-3.5-flash-lite", planned=120, path=self.log)["fits"])
+
+
+class TestStalePredictionIsDropped(unittest.TestCase):
+    """The bug the first live run of the hypothesis arm exposed."""
+
+    def test_a_prediction_is_not_graded_when_the_model_never_answered(self):
+        """A 429 plays a random fallback; grading last turn's PREDICT against it is a
+        verdict about an action the agent did not choose."""
+        replies = [
+            "GOAL: reach the exit\nACTION5\nPREDICT: MANY",  # a real theory + prediction
+            RuntimeError("429 quota"),                        # the outage
+            "GOAL: reach the exit\nACTION5\nPREDICT: MANY",
+        ]
+        policy = LLMPolicy(ScriptedClient(replies), hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=4)
+        # Turn 1's prediction is checked against turn 1's action; the 429 turn's stale
+        # prediction is dropped, so it is not one of the checks and not one of the misses.
+        self.assertEqual(policy.client_errors, 1)
+        self.assertLessEqual(policy.predictions_checked, 2)
+
+    def test_the_goal_survives_an_outage_even_though_the_prediction_does_not(self):
+        replies = ["GOAL: reach the exit\nACTION1\nPREDICT: FEW", RuntimeError("429")]
+        client = ScriptedClient(replies)
+        policy = LLMPolicy(client, hypothesis=True)
+        run_episode(MockGame(), policy, max_actions=3)
+        self.assertIn("reach the exit", client.prompts[-1])  # goal carried through
 
 
 if __name__ == "__main__":

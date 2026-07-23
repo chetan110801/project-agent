@@ -23,12 +23,101 @@ Definitions, since the dashboard's abbreviations are not obvious:
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 SOURCE = "aistudio.google.com/rate-limit, free tier, read 2026-07-22"
+
+# --------------------------------------------------------------------------- #
+# The day's usage, across processes
+# --------------------------------------------------------------------------- #
+# MEASURED THE HARD WAY, 2026-07-22: four eval arms were run on one calendar day — 120
+# calls each — and the fourth one died 19 actions into its second game with
+# `429 RESOURCE_EXHAUSTED`. The limiter below had been counting requests correctly the whole
+# time and still could not see it coming, because **its day counter is per-process**: each
+# arm started at zero and believed it had the full 500.
+#
+# So the count has to outlive the process. Every attempt is appended here, and a run reads
+# the file back before it starts.
+USAGE_LOG = Path(__file__).resolve().parents[1] / "artifacts" / "llm-usage.jsonl"
+
+# We count the trailing 24 hours rather than "today", because **we do not know when this
+# provider's daily window resets** and guessing would be a number from nowhere. A rolling
+# window can only over-state what the server thinks we have used — never under-state it —
+# so the error lands on the safe side: it can make us wait when we did not have to, and it
+# cannot walk us into a wall. When the quota does come back, the hour it happens is a
+# measurement, and it goes in `notes/DECISIONS.md` rather than into an assumption here.
+USAGE_WINDOW_HOURS = 24
+
+
+def record_call(model: str, ok: bool = True, path: Path = USAGE_LOG) -> None:
+    """Append one line for one request attempt. Never raises.
+
+    Failed attempts are logged too. A 429 is a request the server received and refused, and
+    assuming refusals are free is exactly the assumption that produces a surprise.
+    """
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        line = json.dumps(
+            {
+                "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "model": model,
+                "ok": bool(ok),
+            }
+        )
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(line + "\n")
+    except Exception:
+        # Bookkeeping must never be able to kill a run that is costing quota.
+        pass
+
+
+def calls_in_window(
+    model: str | None = None,
+    hours: int = USAGE_WINDOW_HOURS,
+    path: Path = USAGE_LOG,
+    now: datetime | None = None,
+) -> int:
+    """How many request attempts the log shows in the trailing `hours`."""
+    if not path.exists():
+        return 0
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(hours=hours)
+    count = 0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+            ts = datetime.fromisoformat(row["ts"])
+        except Exception:
+            continue  # a torn line is not a reason to refuse to run
+        if ts >= cutoff and (model is None or row.get("model") == model):
+            count += 1
+    return count
+
+
+def budget_check(model: str, planned: int, path: Path = USAGE_LOG) -> dict:
+    """What a run of `planned` calls would do to the day's allowance.
+
+    Returns the numbers rather than deciding, so the caller prints them whether or not it
+    refuses. A budget that is only mentioned when it stops you teaches nobody anything.
+    """
+    limits = LIMITS.get(model)
+    used = calls_in_window(model, path=path)
+    rpd = limits.rpd if limits else 0
+    return {
+        "model": model,
+        "used_last_24h": used,
+        "daily_limit": rpd,
+        "remaining": max(0, rpd - used),
+        "planned": planned,
+        "fits": planned <= max(0, rpd - used),
+    }
 
 
 @dataclass(frozen=True)
@@ -107,8 +196,10 @@ class RateLimiter:
     """Blocks until the next call is allowed. Thread-safe, though we are single-threaded.
 
     Tracks a rolling 60-second window for RPM and TPM, and a simple counter for RPD. The
-    day counter is per-process: it protects a run, not a whole day across restarts, and
-    saying so is more useful than pretending otherwise.
+    day counter here is still per-process — it protects a run. What protects a *day* is
+    `USAGE_LOG` above, which every caller writes to and every run reads back before it
+    starts; the two are separate because pacing must stay a pure function of a clock so it
+    can be tested with a fake one.
     """
 
     def __init__(
@@ -177,4 +268,15 @@ class RateLimiter:
             return waited
 
 
-__all__ = ["LIMITS", "SOURCE", "BudgetExhausted", "Limits", "RateLimiter"]
+__all__ = [
+    "LIMITS",
+    "SOURCE",
+    "USAGE_LOG",
+    "USAGE_WINDOW_HOURS",
+    "BudgetExhausted",
+    "Limits",
+    "RateLimiter",
+    "budget_check",
+    "calls_in_window",
+    "record_call",
+]

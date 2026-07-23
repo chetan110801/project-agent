@@ -5,3 +5,8 @@ __pycache__/
 node_modules/
 *.log
 .pytest_cache/
+
+# The cross-process request-usage counter (harness/budget.py). Append-only local state that
+# grows every run and is per-machine; it is reconstructable from the traces in runs/ (see
+# the backfill in notes/DECISIONS.md, 2026-07-23), so it is derived data, not a source.
+artifacts/llm-usage.jsonl

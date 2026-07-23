@@ -55,6 +55,72 @@ the games where the mechanism actually fired.
 
 **Cost expected:** roughly +5-8% input tokens for the extra block, and the same 120 calls.
 
+### RESULTS (appended after the run) — the arm did not finish, and the wall is itself the finding
+
+**The run hit the daily quota wall part-way through the second game and was stopped.** Only
+`ls20` completed cleanly (30/30 actions, 2 client errors at the very end as the wall began);
+`sb26` recorded 18 `429 RESOURCE_EXHAUSTED` in 23 actions and is quarantined in
+`runs/quota-wall-2026-07-22/` — it measures the quota, not the agent, and is kept out of
+every aggregate. So there is **no four-game A/B** yet. Reproduce the rest after the 24h
+window rolls: `py scripts/run_evals.py --arm dev-llm-y1 --policy llm --hypothesis --max-actions 30`.
+
+**Why the wall was invisible until it hit** (the reusable lesson): four LLM arms ran on one
+calendar day — h0, h8, r3, y1 — at 120 calls each, and the flash-lite key allows **500
+requests/day**. Reconstructing the day from the traces (`artifacts/llm-usage.jsonl`,
+backfilled by reading every `runs/**/trace.jsonl`) shows **524 attempts in the trailing 24h**
+— past the cap. The `RateLimiter` had counted correctly all along and still could not see it
+coming, because **its day counter is per-process**: each arm started at zero believing it had
+the full 500. Fixed: `harness/budget.py` now appends every attempt (successes *and* 429s) to
+a cross-process log, and `run_evals.py` **refuses to start an arm that does not fit the
+remaining quota** (`--force-budget` overrides). Two smaller repairs the wall exposed — the
+429 body was truncated one field before it named *which* limit was hit (200 → 500 chars), and
+the usage log now records refused requests, because a 429 is a request the server received.
+
+**What the one clean game says — reported as one game, per the pre-registration.** On `ls20`,
+`dev-llm-r3` vs `dev-llm-y1`, the two metrics named in advance moved the intended way but by
+less than the noise floor: favourite-action excess **+21.7% → +18.3%**, streak 3 → 3, distinct
+actions and targets flat (4 → 4), score **0 → 0**, tokens **+8.1%**. A 3.4-point excess
+difference on a single game is inside the 17-point single-seed noise established this morning,
+so **this is not evidence the intervention helps.** It is not allowed to be.
+
+**What the one clean game does establish — because it is about the mechanism, not the score.**
+The falsification loop **ran**, and provably:
+
+- **Premature commitment broke.** The stuck run held **one** theory for 41 turns. Under the
+  falsification prompt the agent stated **14 distinct theories in 30 turns**
+  (`artifacts/hypothesis-report-dev-llm-y1.json`).
+- **The revision was driven by the verdicts, not by noise.** The agent changed its theory on
+  **80% (4/5)** of turns *after the harness told it a prediction was WRONG*, against **39%
+  (9/23)** after one that HELD. That conditional is the whole point of the design: being
+  refuted is what moves it, roughly twice as often as not being refuted. `scripts/hypothesis_report.py`
+  reads this back out of the trace so it can never be an artefact of the policy's own counters.
+- **And it still did not help, in a way that is the real result.** Theories 12–14 of the 14
+  were *"Grow the central structure upward"*, *"Grow the central vertical structure further
+  upward"*, *"Build the central tower higher"* — the agent falsified its way through a dozen
+  guesses and **drifted straight back into the bar/tower delusion** that has defeated every
+  previous experiment. So breaking premature commitment is **necessary and not sufficient**:
+  you can make the agent stop clinging to one wrong theory and it will still, absent any
+  signal of what the goal actually is, converge on the same wrong theory by a longer road.
+  This is consistent with the impossibility result from this morning — nothing in the loop
+  knows the goal — and it sharpens the next question rather than answering it.
+
+**Decision: not kept, not reverted — held pending the completed arm.** `--hypothesis` stays
+off by default and the control prompt is unchanged; the one-game numbers do not clear the bar
+to change a default (CLAUDE.md §5), and the mechanism finding is interesting enough that the
+four-game arm is worth the quota when it returns. The infrastructure fixes (budget log,
+pre-flight refusal, error-body length, dropped-stale-prediction) **are kept** — they are not
+tuning, they are the harness telling the truth about what it spent.
+
+**Diagnosis carried forward.** The fault is no longer "premature commitment" alone — that is
+now shown to be breakable without helping. It is **the absence of any goal signal**, exactly
+what the morning's impossibility result named. The three remaining routes from study note 09
+are unchanged in rank, and the top one shifts: the server's per-level action counts are the
+only thing in this whole system that knows the goal, and they arrive at scorecard-close. The
+next experiment is whether an *after-the-fact* signal — "on the last episode you spent 30
+actions and completed 0 levels; the reference solves level 1 in 22" — fed into the *next*
+episode's opening prompt changes anything. It is the only progress signal that can exist,
+because it is the only one sourced from something that knows the goal.
+
 ---
 
 ## 2026-07-23 — The progress signal cannot exist. Four candidates, all refuted offline; a repetition guard shipped instead

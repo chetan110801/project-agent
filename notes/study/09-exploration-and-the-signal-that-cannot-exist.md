@@ -1,10 +1,11 @@
 # Study 09 — Exploration: why the agent got stuck, and the signal that cannot exist
 
 *Written 2026-07-23. Every number here comes from a file in this repo you can regenerate:
-`artifacts/progress-signals.json` (built by `scripts/progress_signals.py` from the
-recordings in `runs/`) and `artifacts/evals/*.json` (built by `scripts/run_evals.py`).
-The code was run: 109 tests pass offline, and the experiment below was played against the
-live server.*
+`artifacts/progress-signals.json` and `artifacts/change-sizes.json` (from the recordings in
+`runs/`), `artifacts/evals/*.json` (from `scripts/run_evals.py`), and
+`artifacts/hypothesis-report-*.json` (from `scripts/hypothesis_report.py`). The code was run:
+138 tests pass offline, and the experiments below were played against the live server — the
+last of them until the free quota ran out mid-run, which is itself part of the story.*
 
 > **You are here:** rung 9. Part 2, the engineering.
 > **Assumes you read:** [08](08-evals.md) (evals). One line so you are not stranded: an
@@ -359,6 +360,154 @@ words, not dressed up.
 
 ---
 
+## Part 8 — The third attempt: make the agent's theory falsifiable
+
+The guard stopped the symptom. The diagnosis it left standing was **premature commitment**:
+one theory of the goal, never tested. So the next experiment attacks that directly, and it
+borrows an idea that is older than computers.
+
+::: key
+**Falsifiable** (*can be shown false*): a claim counts as a real theory only if you can say
+in advance what would prove it wrong. "The bar is the goal" is not falsifiable as stated —
+whatever happens, you can keep believing it. "If I press this, more than five cells will
+change" is falsifiable: the very next screen settles it.
+:::
+
+This is the whole reason the agent could hold a wrong theory for forty turns. Nothing it
+believed ever *risked* anything. So the harness now makes it risk something every turn.
+
+::: key
+**The change.** The agent must answer in three lines instead of one:
+> `GOAL:` what it thinks the game wants — under twelve words
+> `ACTION3` — the button
+> `PREDICT:` how much of the screen that button will change — **NONE, FEW or MANY**
+
+The harness carries the goal forward into the next prompt, **checks the prediction against
+the screen that comes back**, and when it was wrong says so in its own voice and orders the
+agent to state a *different* theory.
+:::
+
+Three design decisions in there are worth more than the feature itself.
+
+**The harness grades, never the model.** We could have asked the model "was your prediction
+right?". Experiment 1 already showed what happens when you leave a fact for the model to
+interpret: it interprets it in its own favour. The count of changed cells comes from the
+game, so there is nothing to argue with.
+
+**The prediction is about the world, not about the agent.** "I predict I will make progress"
+is unfalsifiable again — that was Part 5's whole lesson. "I predict more than five cells
+change" is a claim the frame settles by itself.
+
+**The boundary between FEW and MANY is measured, not chosen.** This is the part to say out
+loud in an interview, because it is where a prompt idea becomes engineering. If MANY were
+set too high, every prediction would be FEW and always right; too low and every prediction
+would be MANY and always right. Either way the agent would never be told it was wrong, and
+the whole intervention would be a formality. So we counted, over every recording we already
+had (`scripts/change_sizes.py`):
+
+::: key
+These screens change **bimodally** (*in two clumps*): an action moves either **about two
+cells or about fifty**, with almost nothing in between. Every boundary from 3 to 20
+classifies the same actions the same way — under 1% move — so the number is not a knob
+anyone can turn to manufacture a result. We set it at 5.
+:::
+
+That measurement paid for itself twice, because it also gave us a number the eval suite had
+never looked at: **how big a change each agent's actions actually cause**, holding the game
+constant.
+
+| ls20, 30 actions | nothing | a few cells | many cells |
+|---|---:|---:|---:|
+| random button-pressing | 0% | 23% | **77%** |
+| our LLM, before the repetition guard | 3% | 87% | **10%** |
+| our LLM, with the guard | 0% | 10% | **90%** |
+
+Read the middle row. Before the guard, the agent almost never made anything big happen — it
+had found the two-cell nudge and stayed on it, while *random play* set off something large
+three times in four. That is what premature commitment looks like as a number, and we only
+saw it because a later question forced us to measure the size of what actions do.
+
+---
+
+## Part 9 — What the falsification loop actually did (and the wall it ran into)
+
+Two honest things happened, and the order matters.
+
+**The run did not finish.** Four LLM experiments were run on one day — the two earlier ones,
+the repetition guard, and this one. The free key allows **500 requests a day**. The fourth
+arm ran into that wall part-way through its second game: eighteen of its next twenty-three
+turns came back `429 RESOURCE_EXHAUSTED` (*quota used up*), which the harness turns into a
+random fallback. So only **one game finished cleanly** before the wall, and one game is not
+an A/B test.
+
+::: warn
+The wall was invisible until we hit it, and *why* is a lesson worth more than the experiment.
+The rate-limiter that is supposed to stop exactly this had been counting requests correctly
+the whole time — but its counter **resets every time the program starts**, and each of the
+four arms was a fresh program that believed it had the full 500. Four times 120 is 480; add
+the earlier runs and the day was already over quota. The counter was per-*run* when the limit
+is per-*day*.
+:::
+
+The fix is the kind of unglamorous plumbing that separates a harness from a script: every
+request now writes one line to a file that outlives the program, and a run **reads that file
+before it starts and refuses to begin an arm that will not fit in what is left of the day**.
+An arm that dies half-way is not a cheap failure — it spends the quota *and* leaves a table
+full of random fallbacks that look like play. Better to not start.
+
+**Now, the one game we do have.** Report it as one game — a single-seed difference of 17
+points was shown this morning to be within noise, so nothing small on one game is a result.
+On `ls20`, with the falsification prompt against the same setup without it:
+
+| ls20, 30 actions | guard only | + falsification | |
+|---|---:|---:|---|
+| repetition above chance | +21.7 pts | +18.3 pts | within noise |
+| longest identical streak | 3 | 3 | same |
+| different targets tried | 4 | 4 | same |
+| **score** | **0** | **0** | — |
+| tokens | 21,480 | 23,212 | +8% |
+
+Nothing there clears the noise floor. **On the numbers, this changed nothing.** But the
+numbers are not where this experiment's finding is.
+
+::: key
+The finding is about the *mechanism*, and it is visible in one game because it is not a
+question of degree. The stuck agent held **one theory for 41 turns**. The falsifying agent
+stated **14 different theories in 30 turns** — and it changed its mind **80% of the time right
+after the harness told it a prediction was wrong**, versus **39% of the time** after a
+prediction that held. Being refuted is what moved it, about twice as often as not being
+refuted. That is the loop working exactly as designed.
+:::
+
+So premature commitment — the disease we diagnosed — **broke**. The agent stopped clinging to
+one guess. And here is the part you must not round off:
+
+::: warn
+It did not help. Look at the last three theories the falsifying agent landed on:
+*"Grow the central structure upward"*, *"Grow the central vertical structure further upward"*,
+*"Build the central tower higher."* It falsified its way through a dozen guesses and **walked
+straight back into the same bar-growing delusion** that has beaten every experiment in this
+note. Breaking premature commitment is **necessary but not sufficient.**
+:::
+
+This is not a disappointment; it is the morning's impossibility result coming back around,
+sharper. Nothing in the loop knows the goal. Stop the agent committing too early and it will
+simply take a longer, more varied road to the *same* wrong theory — because there is still no
+signal telling it which theory is right. You can cure the symptom of commitment and the
+underlying blindness is untouched.
+
+::: key
+**What this leaves for next time.** There is exactly one thing in the whole system that knows
+the goal: the server's own count, at the end of a game, of how many actions each level took
+against its reference solution. It cannot be computed from the screen — that was Part 5 — but
+it *is* handed to us when the scorecard closes. So the only progress signal that can exist is
+an **after-the-fact** one: tell the *next* game's opening prompt "last time you spent 30
+actions and finished 0 levels; the reference finishes level 1 in 22." That is the experiment
+the diagnosis now points to, and it is the last idea in this note that has not yet been tried.
+:::
+
+---
+
 ## Say it in an interview
 
 **"Tell me about a time you disproved your own idea."**
@@ -409,14 +558,34 @@ words, not dressed up.
 > project, which recovered 47.5% of the action budget for one line of code — the model asks,
 > the harness guarantees."
 
-**Follow-up: "How would you get a real progress signal?"**
-> "It has to come from something that knows the goal, so it cannot come from the screen. The
-> options I would rank are: the server's per-level action counts, which we only get when the
-> scorecard closes, so it is an after-the-fact signal, not an in-prompt one; getting the
-> agent to state a hypothesis and what would disprove it, so a wrong theory is falsifiable
-> instead of self-confirming; or a novelty-seeking objective, which rewards reaching states
-> unlike anything seen before and does not need a goal at all. I would try the second next,
-> because it attacks the diagnosis directly and costs only prompt tokens."
+**Follow-up: "So did making the theory falsifiable fix it?"**
+> "It fixed the thing I aimed it at and taught me that thing wasn't the real problem. I made
+> the agent state a theory of the goal and, alongside its action, a prediction I could check
+> — how many cells the screen would change, NONE, FEW or MANY, with the boundary read off the
+> recordings so it wasn't a number I could fiddle. The harness grades the prediction against
+> the actual frame and, when it's wrong, tells the agent so and demands a different theory.
+> The mechanism worked: the stuck agent had held one theory for forty turns; this one stated
+> fourteen theories in thirty and revised eighty percent of the time right after being told
+> it was wrong, versus thirty-nine percent after a prediction that held. So being refuted
+> genuinely moved it. But the score stayed zero — and the last three theories it landed on
+> were 'grow the tower higher', which is the exact wrong idea that started the whole
+> investigation. Breaking premature commitment turned out to be necessary and not sufficient:
+> with nothing in the loop that knows the goal, the agent just takes a longer road to the
+> same wrong guess. That sends me back to the one signal that does know the goal — the
+> server's end-of-game level counts — fed into the next game's prompt after the fact."
+
+**Follow-up: "Anything go wrong while running it?"**
+> "Yes, and it's my favourite bug on the project because it's a pure systems mistake, not a
+> modelling one. My fourth experiment of the day died half-way through with quota-exceeded
+> errors. My rate-limiter had been counting requests perfectly — but per process. The limit
+> is five hundred a *day*, and every experiment was a fresh process starting its count at
+> zero, so four runs of a hundred-and-twenty sailed past the cap while each one believed it
+> was well under. I'd been measuring the right number in the wrong scope. The fix was to
+> persist the count to a file every request writes and every run reads before it starts, and
+> to refuse to begin an arm that won't fit in what's left of the day — because an arm that
+> dies half-way still spends the quota and leaves a table full of random fallbacks that look
+> like real play. I reconstructed the day's true usage from the traces I'd kept, which is the
+> second time on this project that recording everything turned a mystery into a lookup."
 
 **Follow-up: "What if you'd shipped the progress signal without checking?"**
 > "I would have shipped a line that congratulates the agent exactly when it is stuck, and

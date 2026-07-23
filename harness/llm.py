@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from .budget import LIMITS, Limits, RateLimiter
+from .budget import LIMITS, Limits, RateLimiter, record_call
 
 
 @dataclass
@@ -162,9 +162,18 @@ class GeminiClient:
                         ),
                     ),
                 )
+                record_call(self.model, ok=True)
                 break
             except Exception as exc:
-                last_error = f"{type(exc).__name__}: {str(exc)[:200]}"
+                # Logged as an attempt, not skipped: a 429 is a request the server received
+                # and refused, and treating refusals as free is how a day's quota
+                # disappears without anything noticing.
+                record_call(self.model, ok=False)
+                # 500 characters, not 200. MEASURED 2026-07-22: the truncation cut this
+                # provider's 429 body off just before the field that names *which* limit was
+                # hit, so a day-quota wall and a per-minute burst were indistinguishable in
+                # the trace at the moment we most needed to tell them apart.
+                last_error = f"{type(exc).__name__}: {str(exc)[:500]}"
                 if attempt == 0 and "429" in str(exc):
                     self.retries += 1
                     backoff = self.retry_seconds

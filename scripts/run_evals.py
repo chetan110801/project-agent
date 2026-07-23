@@ -41,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from harness import evals  # noqa: E402
 from harness.arc_env import ArcEnv  # noqa: E402
+from harness.budget import budget_check  # noqa: E402
 from harness.evals import Arm, HeldOutViolation, Metrics  # noqa: E402
 from harness.loop import run_episode  # noqa: E402
 from harness.mock_game import MockGame  # noqa: E402
@@ -193,6 +194,11 @@ def main(argv: list[str]) -> int:
     p.add_argument("--max-actions", type=int, default=80)
     p.add_argument("--mock", action="store_true", help="offline: no key, no quota, no meaning")
     p.add_argument("--report", action="store_true", help="required to touch the held-out set")
+    p.add_argument(
+        "--force-budget",
+        action="store_true",
+        help="run even when the arm does not fit in the remaining daily quota",
+    )
     p.add_argument("--tag", action="append", default=["project-agent", "eval"])
     p.add_argument("--check-games", action="store_true", help="compare the frozen list to live")
     args = p.parse_args(argv)
@@ -238,6 +244,23 @@ def main(argv: list[str]) -> int:
     print(f"config  : {arm.config}")
     if args.mock:
         print("MOCK    : offline rehearsal. These numbers prove plumbing, not play.")
+    if args.policy == "llm" and not args.mock:
+        budget = budget_check(args.model, planned=len(games) * args.max_actions)
+        print(
+            f"budget  : {budget['used_last_24h']} calls in the last 24h, "
+            f"{budget['remaining']} left of {budget['daily_limit']}/day; "
+            f"this arm needs about {budget['planned']}"
+        )
+        if not budget["fits"] and not args.force_budget:
+            raise SystemExit(
+                "\nREFUSING TO START: this arm does not fit in the remaining daily quota.\n"
+                "An arm that dies half way is not a cheap failure — it spends the quota and\n"
+                "produces episodes whose actions were random fallbacks, which look like play\n"
+                "in every table that reads them. Wait for the window to roll, run fewer games\n"
+                "with --games, or pass --force-budget if you mean to spend what is left.\n"
+                "(This check exists because on 2026-07-22 the fourth arm of the day died 19\n"
+                "actions into its second game; see notes/DECISIONS.md.)"
+            )
     print()
 
     for i, game in enumerate(games, 1):

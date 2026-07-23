@@ -95,8 +95,12 @@ this project does not do guesswork.
 | 09 | **Exploration** ✅ | why the agent got stuck, and the progress signal I proved could not exist before I built it |
 | 10 | Traces and observability | answering "why did it do that?" with receipts |
 | 11 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
-| 12 | Budgets: tokens, cost, latency | making cost a dial you control, not a surprise |
+| 12 | **Budgets: tokens, cost, latency** ✅ | the three budgets you actually spend on a free tier, and why the fastest model on paper was the wrong one |
 | 13 | The interview story | the whole project as a 3-minute answer, with the hard follow-ups |
+
+Note 12 is written **out of build-order** on purpose: it stands only on notes you have already
+read (03, 06, 08, 09) and needs nothing from 10 or 11, so it is ready now while those two wait
+for the parts they describe to be built. When you reach the gap at 10–11, skip to 12.
 
 Alongside the course there are two other kinds of file in this repo, and it helps to
 know what they are so you don't confuse them with teaching:
@@ -110,7 +114,8 @@ know what they are so you don't confuse them with teaching:
 
 ## How to actually read this
 
-1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08. Don't skip ahead; the ladder only
+1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09, then jump to **12** (10 and 11
+   are not written yet — see the note under the ladder above). Don't skip ahead; the ladder only
    works as a ladder.
 2. **One note per sitting.** Each is a 10–20 minute read. Finishing one and stopping
    beats skimming three.

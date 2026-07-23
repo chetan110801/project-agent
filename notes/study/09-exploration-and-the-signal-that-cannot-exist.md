@@ -597,6 +597,11 @@ the diagnosis now points to, and it is the last idea in this note that has not y
 
 ---
 
-**Next:** note 10 — traces: how you answer "*why* did it do that?" for any single action the
-agent ever took, with receipts. It gets written when the failure taxonomy exists, because a
-note about an unbuilt thing is guesswork.
+**Next to write:** note 10 — traces: how you answer "*why* did it do that?" for any single
+action the agent ever took, with receipts. It gets written when the failure taxonomy exists,
+because a note about an unbuilt thing is guesswork.
+
+**Next to read:** [note 12 — budgets](12-budgets-tokens-cost-latency.md). It is written ahead
+of 10 and 11 because it needs nothing from them, and it turns the quota wall you just met in
+Part 9 into the worked example: the three budgets you spend on a free tier, and why the model
+with the most throughput on paper could not play the game at all.

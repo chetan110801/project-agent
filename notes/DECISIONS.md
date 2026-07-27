@@ -5,6 +5,33 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-27 — Next work is the capstone (study note 13), not the far-side rebuild yet
+
+*Decided at Chetan's request ("you pick the good one") once Experiment 4 closed the
+four-experiment steering arc. This is a task choice inside the existing ladder, not a scope
+change — note 13 was always planned (CLAUDE.md §6A) and only gated on the arc closing, which it
+now has.*
+
+**Decision.** The next session writes **study note 13 — the capstone**: the one note that tells the
+whole project as a single story — what the harness is and why; the agent loop; the encoders and the
+token-cost correction; evals-first and the steering / outcome / cost split; the four experiments and
+the wall they locate; budgets and the free-tier constraint as part of the engineering story — ending
+with an extended *Say it in an interview* that lets Chetan narrate the project end to end.
+
+**Why this over the alternatives.** (1) Highest-value output for the project's actual purpose —
+Chetan explaining the work in interviews (§6) — and the moment is right, consolidating an arc that
+*just* closed. (2) No quota, no new code, no run risk, unlike anything that touches the live server.
+(3) Decision discipline: it is on the planned ladder, whereas the far-side work is a new direction.
+
+**Rejected for now, not dropped.** *Learning across attempts* (credit assignment / an action-model)
+— the real "what's next for the agent," the far side of the wall Exp 4 named — is **deferred**. It
+is a new direction and must get its own dated entry and Chetan's explicit agreement before any build
+(§2), ideally chosen *after* the capstone exists so the whole story is in view. Also deferred: a
+failure taxonomy to unblock note 10 (traces) — useful but lower value than the capstone, and it can
+follow it.
+
+---
+
 ## 2026-07-23 (next session, after the quota wall) — Experiment 4, built and PRE-REGISTERED; not yet run (quota-blocked)
 
 *Same discipline as Experiment 3: the design and the reading are written **before** the arm

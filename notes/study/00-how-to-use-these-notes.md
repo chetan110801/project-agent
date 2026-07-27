@@ -96,7 +96,7 @@ this project does not do guesswork.
 | 10 | Traces and observability | answering "why did it do that?" with receipts |
 | 11 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
 | 12 | **Budgets: tokens, cost, latency** ✅ | the three budgets you actually spend on a free tier, and why the fastest model on paper was the wrong one |
-| 13 | The interview story | the whole project as a 3-minute answer, with the hard follow-ups |
+| 13 | **The interview story** ✅ | the whole project as a 3-minute answer, with the hard follow-ups |
 
 Note 12 is written **out of build-order** on purpose: it stands only on notes you have already
 read (03, 06, 08, 09) and needs nothing from 10 or 11, so it is ready now while those two wait
@@ -114,9 +114,9 @@ know what they are so you don't confuse them with teaching:
 
 ## How to actually read this
 
-1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09, then jump to **12** (10 and 11
-   are not written yet — see the note under the ladder above). Don't skip ahead; the ladder only
-   works as a ladder.
+1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09, then jump to **12 → 13** (10 and
+   11 are not written yet — see the note under the ladder above). Don't skip ahead; the ladder
+   only works as a ladder.
 2. **One note per sitting.** Each is a 10–20 minute read. Finishing one and stopping
    beats skimming three.
 3. **Read the "Say it in an interview" section out loud.** Silently reading a sentence

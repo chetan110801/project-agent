@@ -351,8 +351,9 @@ dashboard.
 
 ---
 
-**Next:** note 13 — the interview story: the whole project compressed into a three-minute
-answer, with the hard follow-ups. It gets written once the current experiment arc closes,
-because a capstone about an unfinished investigation would have to guess its own ending.
-Notes 10 (traces) and 11 (memory and retrieval) are still owed too — traces waits for the
-failure taxonomy to organise it around, and memory waits until the agent actually has one.
+**Next:** [note 13 — the interview story](13-the-interview-story.md): the whole project
+compressed into a three-minute answer, with the hard follow-ups. It was written on 2026-07-27,
+once the four-experiment arc closed — a capstone about an unfinished investigation would have
+had to guess its own ending. Notes 10 (traces) and 11 (memory and retrieval) are still owed —
+traces waits for the failure taxonomy to organise it around, and memory waits until the agent
+actually has one.

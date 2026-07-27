@@ -89,9 +89,62 @@ infrastructure — `harness/progress_signal.py`, `--attempts`/`--progress` in `r
 is the harness gaining the ability to ask this question at all. No default moves until the numbers
 come in.
 
-### RESULTS (appended after the run)
+### RESULTS (appended after the run, 2026-07-27)
 
-*Not yet run — quota-blocked on 2026-07-23. To be appended after the A/B completes.*
+*Ran 2026-07-27, both arms same day: the quota wall that had blocked this since 2026-07-23
+rolled clean while the session waited, so the full A/B (480 calls) fit one day after all.
+One false start worth recording: the first control launch on 2026-07-23 died after 40 clean
+calls when the laptop slept mid-run — no traceback, no ERROR episode, which is exactly the
+signature of an OS kill rather than a bug (a real exception is caught in `main` and written).
+Those 41 calls aged out; both arms re-ran clean. `dev-llm-p0` and `dev-llm-p1`, 8/8 episodes
+each, 0 failed, 240 real calls each.*
+
+**The live risk resolved — the signal fired on all four games.** The pre-registered worry was
+that only `ls20`'s scorecard carries `level_baseline_actions`. It does not: all four dev games
+returned a level-1 reference — **ls20 22, sb26 18, ar25 32, tn36 32** — and a level count
+(7/8/8/7), so attempt 2 of every game opened with a complete verdict, e.g. *"you used 30 actions
+and cleared 0 of 7 levels. You did not clear even level 1. A reference player clears level 1 in
+22 actions. What you did last time did not work; do something different."* Verified three ways:
+the rendered block is non-empty for all four games; the signal appears **only** in `p1` attempt 2
+(attempt 1 is the control prompt byte for byte, `p0` never carries it); and the agent **read it** —
+`ls20` attempt-2's first reasoning line was *"Need to do something different this time to clear
+level 1."* Whether the non-`ls20` cards carry reference data was itself a pre-registered finding:
+**they do.**
+
+**Verdict: the signal changed behaviour but not progress — a null on steering, with the wasted-
+motion metrics moving clearly *worse*.** The pre-registered "works" pattern (excess **down** +
+`distinct_targets` **up** on attempt 2) held only in aggregate and only at noise scale: excess
+0.185→0.160, targets 10.75→11.25 (+0.5). Two things dissolve it. (1) Per-game excess moved in
+**both** directions — ar25 −0.13, ls20 −0.03, sb26 **+0.07**, tn36 0 — no consistent steering.
+(2) The aggregate `distinct_targets` gain is an artefact of averaging: the two multi-option games
+where targeting is real gained a lot (sb26 8→14, ar25 4→10) while the degenerate 1-option `tn36`
+*lost* variety (27→17), netting +0.5. Meanwhile the metrics that moved **most and most
+consistently moved the wrong way**: `no_change_rate` rose on **all four** games (0.117→0.25),
+`revisit_rate` on three (0.125→0.325, a 20-point move that clears the 17-point noise band),
+`illegal_action_rate` on ls20 (0→0.33), longest streak 3→6. **Score 0→0 and levels 0→0 on every
+game.** +6% tokens.
+
+**What it means.** Told flatly by the one thing in the system that knows the goal that it had
+failed and to do something different, the agent *complied* — visibly, in its own words, and by
+pressing a wider set of targets on the games where that is possible — but the wider set was
+mostly **dead**: more actions that changed nothing, more revisits, more rejected clicks, and not
+one extra cell of actual progress. "You failed, do something different" moves *what* the agent
+does, not *whether* it succeeds, because **knowing you failed is not knowing what would work.**
+This is the same missing ingredient as Experiments 1 and 3, now shown for the strongest possible
+signal: nothing in the loop can turn "that didn't work" into a **better-chosen** next action —
+that needs credit assignment or a learned model of what actions accomplish, and a stateless
+per-turn prompt has neither. The one game that did look like clean steering (ar25: excess down
+hard, targets up hard, yet still 0 progress) is the honest caveat on a single-seed, four-game
+run — the claim is "no consistent effect and no progress," not "provably zero."
+
+**Decision: `--progress` stays OFF by default; mechanism kept in the code.** No default moves on a
+noise-scale, mixed-direction, zero-progress result whose above-noise metrics are adverse. This
+**closes the four-experiment steering arc** (memory → repetition guard → falsifiable theory →
+after-the-fact goal signal): every one changed the agent's behaviour, none moved the score,
+and together they locate the wall precisely — the agent has no mechanism to convert feedback,
+however truthful, into a better action. The next idea, if pursued, is on the far side of that
+wall (credit assignment / action-model / learning across attempts), not another way to phrase
+"you're not there yet."
 
 ---
 

@@ -405,7 +405,7 @@ body.on-nav:not(.full-width) .content{max-width:min(1120px,100%)}
 <div class="group-body"><a class="tab" data-target="claude" href="#claude" title="CLAUDE.md — binding rules for every Claude session in this project"><span class="tab-title">binding rules for every Claude session in this project</span></a></div></details>
 <details class="group" open><summary>Deferred: TRM<span class="group-count">2</span></summary>
 <div class="group-body"><a class="tab" data-target="readme" href="#readme" title="TRM reproduction on free Kaggle GPUs — ⏸ DEFERRED (2026-07-21)"><span class="tab-title">⏸ DEFERRED (2026-07-21)</span></a><a class="tab" data-target="ablation-plan" href="#ablation-plan" title="The recursion-depth ablation — experiment design"><span class="tab-title">experiment design</span></a></div></details>
-    <p class="built">Built 2026-07-23 · rebuild: <code>py build_site.py</code></p>
+    <p class="built">Built 2026-07-27 · rebuild: <code>py build_site.py</code></p>
   </nav>
   <main class="main" id="main">
     <div class="content" id="content">
@@ -3672,8 +3672,9 @@ to be impossible rather than merely difficult.</p><nav class="pager"><a class="p
 <code>artifacts/progress-signals.json</code> and <code>artifacts/change-sizes.json</code> (from the recordings in
 <code>runs/</code>), <code>artifacts/evals/*.json</code> (from <code>scripts/run_evals.py</code>), and
 <code>artifacts/hypothesis-report-*.json</code> (from <code>scripts/hypothesis_report.py</code>). The code was run:
-138 tests pass offline, and the experiments below were played against the live server — the
-last of them until the free quota ran out mid-run, which is itself part of the story.</em></p>
+150 tests pass offline, and the experiments below were played against the live server — one of
+them ran out of free quota mid-run, which is itself part of the story. Part 10 (the after-the-fact
+progress signal) was added 2026-07-27, after that experiment finally ran to completion.</em></p>
 <blockquote>
 <p><strong>You are here:</strong> rung 9. Part 2, the engineering.
 <strong>Assumes you read:</strong> <a href="#08-evals" class="wikilink" data-target="08-evals">08</a> (evals). One line so you are not stranded: an
@@ -3685,7 +3686,8 @@ score, which never moves) and <em>cost</em>.
 any agent working in a world it was not told the rules of; describe how you diagnose
 (work out the cause of) an agent failure from recordings instead of guessing; and — the
 part that lands in an interview — explain a measurement that proved an idea was
-impossible, not merely bad, and what you built instead.</p>
+impossible, not merely bad, what you built instead, and how a four-experiment arc changed
+the agent's behaviour four times without ever moving its score — and what that locates.</p>
 </blockquote>
 <hr />
 <h2>Where we left off</h2>
@@ -4266,8 +4268,112 @@ against its reference solution. It cannot be computed from the screen — that w
 it <em>is</em> handed to us when the scorecard closes. So the only progress signal that can exist is
 an <strong>after-the-fact</strong> one: tell the <em>next</em> game's opening prompt "last time you spent 30
 actions and finished 0 levels; the reference finishes level 1 in 22." That is the experiment
-the diagnosis now points to, and it is the last idea in this note that has not yet been tried.</p>
+the diagnosis now points to, and <strong>Part 10 runs it.</strong></p>
 </div>
+<hr />
+<h2>Part 10 — The signal that <em>can</em> exist, built and tried</h2>
+<p>Part 9 named the one signal allowed to exist: an <strong>after-the-fact</strong> one. The screen cannot tell
+you whether you are winning (Part 5), and the agent's own words cannot (Experiments 1 and 3) —
+but when a game <em>ends</em>, the server closes a <strong>scorecard</strong> (its end-of-game report) that says, in
+numbers, how many levels you actually cleared and how many actions a <strong>reference</strong> (a known-good)
+solution needs for each. That number knows the goal, because it comes from the game, not from the
+agent's reading of the screen. It is useless to the game it came from — it arrives at the end. So
+the experiment is to carry it into the <strong>next attempt at the same game.</strong></p>
+<p>Asking the question at all needed a new ability in the harness: play each game <strong>more than once.</strong>
+Until now every game was played exactly once per arm, so "the next attempt's opening prompt" did
+not exist to write into. So the change is two switches — <em>play each game twice</em>, and <em>thread
+attempt 1's scorecard into attempt 2's opening line</em> — both off by default, so every earlier arm
+still reproduces to the byte. The line the agent reads at the top of its second try is the
+harness's flat, unencouraging voice, for the reason Experiment 1 nailed down — a fact left for the
+model to interpret gets interpreted in its favour:</p>
+<blockquote>
+<p><em>On your last attempt at this game you used 30 actions and cleared 0 of 7 levels. You did not
+clear even level 1. A reference player clears level 1 in 22 actions. What you did last time did
+not work; do something different.</em></p>
+</blockquote>
+<p><strong>Two things had to be true for a result to mean anything, and both were checked before reading it.</strong></p>
+<div class="callout key">
+<p><strong>Did the signal even fire?</strong> A worry written down before the run: the reference number (the "22")
+had only ever been <em>measured</em> for one game; the other three might not report it, and then the line
+would collapse to "you cleared 0 levels" with no scale. In the event <strong>all four games reported
+it</strong> — 22, 18, 32, 32 — so every second attempt opened with a full verdict. And the line was
+present in exactly the right place and nowhere else: it appears only in the treatment arm's
+<em>second</em> attempts, never the first (a first attempt has no previous try to summarise, so it is the
+control prompt to the byte). The agent even <strong>read it back</strong> — the first thing it reasoned on one
+game's retry was <em>"do something different this time to clear level 1."</em> You cannot call a result a
+null if the thing you tested was never there. Here it demonstrably was.</p>
+</div>
+<p>And then: <strong>it did not help.</strong> The table the experiment was pre-committed to reading — <em>told it
+failed, does the agent explore more?</em> — moved the right way by an amount too small to trust, while
+the numbers that moved enough to trust moved the <em>wrong</em> way.</p>
+<table>
+<thead>
+<tr>
+<th>attempt 2, 4 dev games</th>
+<th style="text-align: right;">control</th>
+<th style="text-align: right;">+ progress signal</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>repetition above chance</td>
+<td style="text-align: right;">18.5 pts</td>
+<td style="text-align: right;">16.0 pts</td>
+<td>−2.5, within noise</td>
+</tr>
+<tr>
+<td>different targets tried</td>
+<td style="text-align: right;">10.75</td>
+<td style="text-align: right;">11.25</td>
+<td>+0.5, within noise</td>
+</tr>
+<tr>
+<td>actions that changed nothing</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">25%</td>
+<td><strong>worse</strong></td>
+</tr>
+<tr>
+<td>screens revisited</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">32%</td>
+<td><strong>worse — clears the noise band</strong></td>
+</tr>
+<tr>
+<td><strong>score</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Read it honestly. "Repetition down, targets up" is the pattern that would have said <em>working</em> — and
+it is there, but at half a point and two-and-a-half points, well inside the 17-point noise floor
+Part 9 established. Break it out by game and it dissolves. Repetition-above-chance <em>fell</em> on two
+games — on <code>ar25</code> sharply (0.36 → 0.22), and that game also tripled its distinct targets (4 → 10),
+the one case that looks like the pattern working — but <em>rose</em> on a third (<code>sb26</code>), and could not
+move on the fourth, the single-action game. And the +0.5 on "targets" is an averaging trick: the two
+multi-choice games gained (<code>sb26</code> 8 → 14, <code>ar25</code> 4 → 10) while the single-action game <em>lost</em>
+(27 → 17). No consistent direction anywhere. Meanwhile the number that moved <em>most</em> and <em>most
+consistently</em> is the ugly one: on every game but the single-action one, the agent took more actions
+that did nothing — a wider set of buttons pressed, more of them dead.</p>
+<div class="callout warn">
+<p>This is the strongest form of the whole project's lesson, so say it precisely. This was not a weak
+signal or a guess off the screen. It was the <strong>one legitimate progress signal</strong> — from the only
+thing that knows the goal — delivered in plain words and provably read by the agent. And it still
+did not move the score, because <strong>knowing you failed is not knowing what would work.</strong> "Do
+something different" changes <em>what</em> the agent does, never <em>whether</em> it succeeds. All four
+experiments — memory of actions, the repetition guard, the falsifiable theory, and now the
+after-the-fact goal signal — changed the agent's behaviour, and not one moved the score. Put
+together they are not four failures; they <strong>locate the wall</strong>: the agent has no way to turn
+feedback, however truthful, into a <em>better-chosen</em> next action. That takes either working out which
+past action deserves the credit or blame for an outcome, or a learned model of what each action
+does — and a fresh prompt every turn, remembering nothing it learned, has neither.</p>
+</div>
+<p>That is where the experiment arc closes — not on a fix, but on a wall named exactly. The next idea
+worth trying is on the far side of it, <em>learning across attempts</em>, not one more sentence telling the
+agent it is not there yet.</p>
 <hr />
 <h2>Say it in an interview</h2>
 <p><strong>"Tell me about a time you disproved your own idea."</strong></p>
@@ -4365,7 +4471,28 @@ turned out to be blind to that failure. The first time I found out afterwards. T
 found out before it reached a model, which is the only real difference between the two,
 and it is entirely down to keeping the recordings."</p>
 </blockquote>
+<p><strong>Follow-up: "Did the after-the-fact progress signal work?"</strong></p>
+<blockquote>
+<p>"No — and it's the cleanest negative on the project, because I can't wave it away as a weak
+signal. I fed the next attempt at a game the server's own end-of-game verdict on the last one:
+'you used 30 actions, cleared 0 of 7 levels, didn't clear level 1, a reference clears it in 22,
+do something different.' I checked two things before reading the result — that the reference
+number came back for all four games, which it did, 22, 18, 32, 32, and that the line appeared
+only where it should, the second attempts of the treatment arm. The agent even read it back; its
+first reasoning on one retry was 'do something different this time to clear level 1.' And the
+score stayed zero. The metric that would have meant success moved the right way by less than the
+noise; the one that cleared the noise was the agent taking more actions that did nothing. So the
+single signal that actually knows the goal, delivered in plain words and provably read, still
+didn't help — because telling something it failed isn't telling it what would work. That closed
+the arc for me: four experiments, each changed the behaviour, none moved the score, and together
+they point at the real gap — the agent can't turn feedback into a better next action without
+learning across attempts."</p>
+</blockquote>
 <hr />
+<p>With Part 10 the four-experiment steering arc is <strong>closed</strong> — four interventions, four behaviour
+changes, no score movement, one wall named. What comes next in the <em>project</em> is on the far side of
+that wall (learning across attempts); what comes next in this <em>course</em> is the tooling that made all
+four experiments legible in the first place.</p>
 <p><strong>Next to write:</strong> note 10 — traces: how you answer "<em>why</em> did it do that?" for any single
 action the agent ever took, with receipts. It gets written when the failure taxonomy exists,
 because a note about an unbuilt thing is guesswork.</p>
@@ -5444,8 +5571,57 @@ infrastructure — <code>harness/progress_signal.py</code>, <code>--attempts</co
 <code>attempt</code> field on <code>Metrics</code>, and <code>--attempt</code> slicing in <code>compare_evals.py</code> — is not tuning; it
 is the harness gaining the ability to ask this question at all. No default moves until the numbers
 come in.</p>
-<h3>RESULTS (appended after the run)</h3>
-<p><em>Not yet run — quota-blocked on 2026-07-23. To be appended after the A/B completes.</em></p>
+<h3>RESULTS (appended after the run, 2026-07-27)</h3>
+<p><em>Ran 2026-07-27, both arms same day: the quota wall that had blocked this since 2026-07-23
+rolled clean while the session waited, so the full A/B (480 calls) fit one day after all.
+One false start worth recording: the first control launch on 2026-07-23 died after 40 clean
+calls when the laptop slept mid-run — no traceback, no ERROR episode, which is exactly the
+signature of an OS kill rather than a bug (a real exception is caught in <code>main</code> and written).
+Those 41 calls aged out; both arms re-ran clean. <code>dev-llm-p0</code> and <code>dev-llm-p1</code>, 8/8 episodes
+each, 0 failed, 240 real calls each.</em></p>
+<p><strong>The live risk resolved — the signal fired on all four games.</strong> The pre-registered worry was
+that only <code>ls20</code>'s scorecard carries <code>level_baseline_actions</code>. It does not: all four dev games
+returned a level-1 reference — <strong>ls20 22, sb26 18, ar25 32, tn36 32</strong> — and a level count
+(7/8/8/7), so attempt 2 of every game opened with a complete verdict, e.g. <em>"you used 30 actions
+and cleared 0 of 7 levels. You did not clear even level 1. A reference player clears level 1 in
+22 actions. What you did last time did not work; do something different."</em> Verified three ways:
+the rendered block is non-empty for all four games; the signal appears <strong>only</strong> in <code>p1</code> attempt 2
+(attempt 1 is the control prompt byte for byte, <code>p0</code> never carries it); and the agent <strong>read it</strong> —
+<code>ls20</code> attempt-2's first reasoning line was <em>"Need to do something different this time to clear
+level 1."</em> Whether the non-<code>ls20</code> cards carry reference data was itself a pre-registered finding:
+<strong>they do.</strong></p>
+<p><strong>Verdict: the signal changed behaviour but not progress — a null on steering, with the wasted-
+motion metrics moving clearly <em>worse</em>.</strong> The pre-registered "works" pattern (excess <strong>down</strong> +
+<code>distinct_targets</code> <strong>up</strong> on attempt 2) held only in aggregate and only at noise scale: excess
+0.185→0.160, targets 10.75→11.25 (+0.5). Two things dissolve it. (1) Per-game excess moved in
+<strong>both</strong> directions — ar25 −0.13, ls20 −0.03, sb26 <strong>+0.07</strong>, tn36 0 — no consistent steering.
+(2) The aggregate <code>distinct_targets</code> gain is an artefact of averaging: the two multi-option games
+where targeting is real gained a lot (sb26 8→14, ar25 4→10) while the degenerate 1-option <code>tn36</code>
+<em>lost</em> variety (27→17), netting +0.5. Meanwhile the metrics that moved <strong>most and most
+consistently moved the wrong way</strong>: <code>no_change_rate</code> rose on <strong>all four</strong> games (0.117→0.25),
+<code>revisit_rate</code> on three (0.125→0.325, a 20-point move that clears the 17-point noise band),
+<code>illegal_action_rate</code> on ls20 (0→0.33), longest streak 3→6. <strong>Score 0→0 and levels 0→0 on every
+game.</strong> +6% tokens.</p>
+<p><strong>What it means.</strong> Told flatly by the one thing in the system that knows the goal that it had
+failed and to do something different, the agent <em>complied</em> — visibly, in its own words, and by
+pressing a wider set of targets on the games where that is possible — but the wider set was
+mostly <strong>dead</strong>: more actions that changed nothing, more revisits, more rejected clicks, and not
+one extra cell of actual progress. "You failed, do something different" moves <em>what</em> the agent
+does, not <em>whether</em> it succeeds, because <strong>knowing you failed is not knowing what would work.</strong>
+This is the same missing ingredient as Experiments 1 and 3, now shown for the strongest possible
+signal: nothing in the loop can turn "that didn't work" into a <strong>better-chosen</strong> next action —
+that needs credit assignment or a learned model of what actions accomplish, and a stateless
+per-turn prompt has neither. The one game that did look like clean steering (ar25: excess down
+hard, targets up hard, yet still 0 progress) is the honest caveat on a single-seed, four-game
+run — the claim is "no consistent effect and no progress," not "provably zero."</p>
+<p><strong>Decision: <code>--progress</code> stays OFF by default; mechanism kept in the code.</strong> No default moves on a
+noise-scale, mixed-direction, zero-progress result whose above-noise metrics are adverse. This
+<strong>closes the four-experiment steering arc</strong> (memory → repetition guard → falsifiable theory →
+after-the-fact goal signal): every one changed the agent's behaviour, none moved the score,
+and together they locate the wall precisely — the agent has no mechanism to convert feedback,
+however truthful, into a better action. The next idea, if pursued, is on the far side of that
+wall (credit assignment / action-model / learning across attempts), not another way to phrase
+"you're not there yet."</p>
 <hr />
 <h2>2026-07-23 (later) — Experiment 3, PRE-REGISTERED before the run: make the theory explicit and falsifiable</h2>
 <p><em>This half of the entry was written and committed </em><em>before</em><em> the arm was run. The results

@@ -121,7 +121,7 @@ it takes chances — varied, creative, less reliable.
 weird thing on the menu.
 *Why it matters:* a real design decision for us. Deciding *which action to take* wants
 low temperature (be consistent). *Generating candidate theories about the game* may want
-higher (be varied). Both are testable choices, and note 07's eval suite is how we test
+higher (be varied). Both are testable choices, and note 08's eval suite is how we test
 them instead of guessing.
 
 **Sampling.** The general name for how the model picks each next token from its ranked
@@ -240,7 +240,7 @@ whether the change helped.
 *Picture:* a blood test. Same test, same conditions, so the before/after comparison is
 real.
 *Why it matters:* this is the single most-probed skill in 2026 AI-engineering interviews,
-and note 07's subject. Our project rule: **no prompt, model or loop change is kept
+and note 08's subject. Our project rule: **no prompt, model or loop change is kept
 without before/after eval numbers.**
 
 **Dev set and held-out set.** Split your test cases in two. You tune against the *dev*
@@ -278,7 +278,7 @@ took, what it cost. For an LLM call: the exact prompt, the exact reply, token co
 latency, price.
 *Picture:* a flight recorder. After a crash you don't guess — you read the box.
 *Why it matters:* it's how "why did it do that?" gets an answer instead of a theory.
-Note 08.
+Note 10.
 
 **Observability.** The general property of a system you can inspect from the outside well
 enough to explain its behaviour. Traces and logs are how you get it.
@@ -295,7 +295,7 @@ interview.
 
 **Token budget.** A hard cap on tokens spent per game or per run, enforced in code.
 *Why it matters:* it makes cost a *design parameter* instead of a monthly surprise, and
-it gives us the cost-versus-score curve in note 10.
+it gives us the cost-versus-score curve in note 12.
 
 **Caching.** Saving the result of expensive work so an identical request is answered from
 storage instead of being recomputed.
@@ -342,7 +342,7 @@ model answer about *your* documents.
 *Why it matters:* interviews ask about RAG constantly. **Our project does the same
 mechanics, but over the agent's own past experience instead of a document folder** — so
 you can discuss chunking, retrieval quality and relevance from something you actually
-built, without shipping the same doc-chatbot everyone else has. Note 09.
+built, without shipping the same doc-chatbot everyone else has. Note 11.
 
 **Chunking.** Splitting long text into pieces small enough to embed and retrieve
 usefully. Chunk too big and you retrieve noise; too small and you lose the context that

@@ -8,8 +8,8 @@ re-measured this session with `harness.budget.budget_check` and is a moving targ
 design, which is the whole point of this note.*
 
 > **You are here:** rung 12 of the ladder. It sits in Part 2 (the engineering), but it does
-> **not** stand on notes 10 (traces) or 11 (memory) — those are still to be written and this
-> note does not need them. You can read it now, straight after note 09.
+> **not** stand on note 10 (traces) or note 11 (memory) — it needs neither. You can read it now,
+> straight after note 09 (note 10 is written; note 11 is still to come).
 > **Assumes you read:** [03](03-what-an-llm-really-is.md) (tokens and the context window),
 > [06](06-context-engineering.md) (encodings — the different ways we turn a game screen into
 > text), [08](08-evals.md) (the eval suite — a fixed set of games we replay to judge a
@@ -354,6 +354,6 @@ dashboard.
 **Next:** [note 13 — the interview story](13-the-interview-story.md): the whole project
 compressed into a three-minute answer, with the hard follow-ups. It was written on 2026-07-27,
 once the four-experiment arc closed — a capstone about an unfinished investigation would have
-had to guess its own ending. Notes 10 (traces) and 11 (memory and retrieval) are still owed —
-traces waits for the failure taxonomy to organise it around, and memory waits until the agent
-actually has one.
+had to guess its own ending. Note 10 (traces and the failure taxonomy) is now written; note 11
+(memory and retrieval) is still owed — it waits until the agent actually has cross-attempt
+memory, which is the far-side work.

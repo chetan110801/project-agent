@@ -5,6 +5,45 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-28 — Next work: a failure taxonomy from the recorded traces (→ unblocks note 10); far-side agent work stays deferred
+
+*Chetan delegated the choice in-session ("you pick the best one"). Picking the on-ladder,
+zero-risk task over the new direction is itself a decision worth recording (§2), and it keeps
+the far-side work explicitly deferred rather than drifted into.*
+
+**Decision.** Build a **failure taxonomy** — a sorted catalogue of the distinct ways the agent
+wastes a turn, with counts, computed from the committed traces (`scripts/failure_taxonomy.py`
+→ `artifacts/failure-taxonomy.json`). It is the promised content of **note 10 (traces)**: note
+02 named the taxonomy "the single most impressive thing a junior can bring to an interview," and
+note 10 was gated on it existing. Every action in every committed trace is sorted into one
+priority-ordered bucket (illegal → dead → revisit → perseveration → active-but-no-progress →
+progress) so the shares partition the actions and sum to 100%.
+
+**Why this over the far-side agent work.** (1) Highest-certainty value for the project's actual
+purpose — interview fluency (§6); a quantified failure catalogue is a story you can tell,
+whereas the far-side work is only a story *if* it moves the score, which four experiments just
+failed to do. (2) **Zero quota/run risk** — built entirely from traces already in `runs/`, no
+live server. (3) It stays on the locked scope and unblocks an owed rung. (4) It is the
+*prerequisite* for the far-side work: designing "learning across attempts" needs a named
+catalogue of how the agent fails first.
+
+**Rejected for now, not dropped.** *Learning across attempts* (credit assignment / an
+action-model) — the far side of the wall Exp 4 named — remains **deferred**: it is a genuinely
+new direction, is the highest quota/run risk left, and per §2 needs its own dated entry, a
+design pass, and Chetan's explicit agreement before any build. "You pick the best one" is a
+delegation of the *next* task, not agreement to a multi-session scope change.
+
+**Method note (the house rule this obeys).** A classifier of failures is a guess until it is
+run against a real failure (notes 08, 09). So the taxonomy reads the **committed** traces —
+including the 80-action stuck run where the agent pressed one button 41 times — and the summary
+singles that run out, so the buckets are checked against a failure we already understand.
+Perseveration is defined as ≥4 identical actions in a row, the first repetition count chance
+essentially never reaches (random's longest streak is 3; note 09). The quarantined runs
+(`runs/aborted-*`, `runs/quota-wall-*`) are excluded, exactly as every other aggregate excludes
+them.
+
+---
+
 ## 2026-07-27 — Next work is the capstone (study note 13), not the far-side rebuild yet
 
 *Decided at Chetan's request ("you pick the good one") once Experiment 4 closed the

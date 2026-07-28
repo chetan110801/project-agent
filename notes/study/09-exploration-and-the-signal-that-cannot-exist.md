@@ -708,11 +708,12 @@ changes, no score movement, one wall named. What comes next in the *project* is 
 that wall (learning across attempts); what comes next in this *course* is the tooling that made all
 four experiments legible in the first place.
 
-**Next to write:** note 10 — traces: how you answer "*why* did it do that?" for any single
-action the agent ever took, with receipts. It gets written when the failure taxonomy exists,
-because a note about an unbuilt thing is guesswork.
+**Next:** [note 10 — traces and the failure taxonomy](10-traces-and-the-failure-taxonomy.md).
+It answers "*why* did it do that?" for any single action the agent took, and turns the wall this
+note found into a *counted* catalogue of how the agent wastes its turns — the receipts, and what
+they add up to.
 
-**Next to read:** [note 12 — budgets](12-budgets-tokens-cost-latency.md). It is written ahead
-of 10 and 11 because it needs nothing from them, and it turns the quota wall you just met in
-Part 9 into the worked example: the three budgets you spend on a free tier, and why the model
-with the most throughput on paper could not play the game at all.
+**Also ready:** [note 12 — budgets](12-budgets-tokens-cost-latency.md). It was written ahead of
+note 11 because it needs nothing from it, and it turns the quota wall you just met in Part 9 into
+the worked example: the three budgets you spend on a free tier, and why the model with the most
+throughput on paper could not play the game at all.

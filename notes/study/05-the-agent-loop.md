@@ -159,7 +159,7 @@ Every step there is a named concept from the earlier notes:
 | 4 | **context engineering** — the highest-leverage work | 03, 06 |
 | 5 | the LLM call — one inference | 02, 03 |
 | 6 | **guardrail** — never trust the model's output shape | 02 |
-| 7 | **tracing** — the receipts | 08 |
+| 7 | **tracing** — the receipts | 10 |
 
 ::: warn
 Step 6 is not paranoia. The model *will* eventually reply "press ACTION9", or return

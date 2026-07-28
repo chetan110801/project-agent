@@ -80,6 +80,7 @@ from scripts.run_agent import RecordingEnv, resolve_game  # noqa: E402
 from scripts.run_evals import main as run_evals_main  # noqa: E402
 from scripts import compare_evals  # noqa: E402
 from scripts import run_evals  # noqa: E402
+from scripts import failure_taxonomy as ftax  # noqa: E402
 
 
 class TestAction(unittest.TestCase):
@@ -1547,6 +1548,71 @@ class TestStalePredictionIsDropped(unittest.TestCase):
         policy = LLMPolicy(client, hypothesis=True)
         run_episode(MockGame(), policy, max_actions=3)
         self.assertIn("reach the exit", client.prompts[-1])  # goal carried through
+
+
+class TestFailureTaxonomy(unittest.TestCase):
+    """The classifier that sorts each action into one failure bucket. The buckets partition
+    the actions (each lands in the FIRST it qualifies for) so the shares must sum to 1."""
+
+    @staticmethod
+    def _step(action, *, accepted=True, changed=5, delta=0, h="") -> dict:
+        return {"action": action, "accepted": accepted, "cells_changed": changed,
+                "score_delta": delta, "screen_hash": h}
+
+    def test_priority_partition_covers_every_bucket_once(self):
+        S = self._step
+        steps = [
+            S("ACTION1", accepted=False, changed=10, h="h1"),   # illegal wins over everything
+            S("ACTION2", delta=1, h="h2"),                       # progress (score up)
+            S("ACTION3", changed=0, h="h3"),                     # dead (nothing changed)
+            S("ACTION4", h="h4"),                                # active (first sight of h4)
+            S("ACTION5", h="h4"),                                # revisit (h4 seen before)
+            S("ACTION7", h="h5"),                                # active (streak 1)
+            S("ACTION7", h="h6"),                                # active (streak 2)
+            S("ACTION7", h="h7"),                                # active (streak 3)
+            S("ACTION7", h="h8"),                                # perseveration (streak 4)
+        ]
+        got = [bucket for bucket, _ in ftax.classify_episode(steps)]
+        self.assertEqual(got, [
+            "illegal_action", "progress", "dead_action",
+            "active_no_progress", "revisit",
+            "active_no_progress", "active_no_progress", "active_no_progress",
+            "perseveration",
+        ])
+        counts, longest = ftax.episode_counts(steps)
+        self.assertEqual(longest, 4)                             # the ACTION7 run
+        sh = ftax.shares(counts)
+        self.assertEqual(sh["actions"], 9)
+        # the partition guarantee is on the COUNTS (shares are rounded per-bucket for display,
+        # so nine actions sum to 0.9999, not 1.0 — that is display rounding, not a gap).
+        self.assertEqual(sum(r["count"] for r in sh["buckets"].values()), 9)
+        self.assertAlmostEqual(sum(r["share"] for r in sh["buckets"].values()), 1.0, places=2)
+
+    def test_empty_hash_is_never_a_revisit(self):
+        # Old traces predate screen_hash; two blank-hash actions must not read as revisits.
+        steps = [self._step("ACTION1", h=""), self._step("ACTION1", h="")]
+        # streak 2, changed, no hash -> both are active_no_progress, neither revisit
+        self.assertEqual([b for b, _ in ftax.classify_episode(steps)],
+                         ["active_no_progress", "active_no_progress"])
+
+    def test_perseveration_threshold_is_the_measured_chance_ceiling(self):
+        # Three-in-a-row is what chance reaches (note 09); only the 4th+ is perseveration.
+        steps = [self._step("ACTION1", h=f"h{i}") for i in range(5)]
+        buckets = [b for b, _ in ftax.classify_episode(steps)]
+        self.assertEqual(buckets.count("perseveration"), 2)      # the 4th and 5th
+        self.assertEqual(buckets.count("active_no_progress"), 3)
+
+    def test_parse_name_handles_eval_and_version_dot_standalone(self):
+        eval_arm, attempt, n = ftax.parse_name(Path(
+            "ls20-9607627b.eval-dev-llm-p1.llm-gemini-3.5-flash-lite-objects-h0-r3-y0-p1.30.a2.abc.trace.jsonl"))
+        self.assertEqual(eval_arm, "eval-dev-llm-p1")
+        self.assertEqual(attempt, "a2")
+        self.assertEqual(n, 30)
+        # standalone: the "3.5" version must not truncate the arm to "llm-gemini-3"
+        stand_arm, _, sn = ftax.parse_name(Path(
+            "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.80.def.trace.jsonl"))
+        self.assertEqual(stand_arm, "llm-gemini-3.5-flash-lite-objects")
+        self.assertEqual(sn, 80)
 
 
 if __name__ == "__main__":

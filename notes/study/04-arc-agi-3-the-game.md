@@ -162,7 +162,7 @@ After playing, you fetch a **scorecard**. Per game it records: every score acros
 repeated plays, every end state, how many actions each play took, how many resets. Across
 all games it computes: games won, games played, total actions, and total score.
 
-Two things to notice, because they shape our eval design in note 07:
+Two things to notice, because they shape our eval design in note 08:
 
 **Score is not the only signal.** *Actions taken* is recorded too — so "won in 40 actions"
 and "won in 400 actions" are distinguishable outcomes. Efficiency is measurable, not just

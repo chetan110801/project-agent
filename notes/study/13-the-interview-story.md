@@ -366,9 +366,10 @@ Honest status, no rounding up:
 - **The result is a negative one, reported as loudly as a win would be:** the agent is no
   better at the game than random on the outcome that counts. The value is in *how thoroughly
   that is established* and *what it locates*.
-- **Still owed on the course:** note 10 (traces) waits for a failure taxonomy to organise it
-  around; note 11 (memory and retrieval) waits until the agent actually has cross-attempt
-  memory — which is the far-side work.
+- **Still owed on the course:** note 11 (memory and retrieval) waits until the agent actually
+  has cross-attempt memory — which is the far-side work. (Note 10, traces and the failure
+  taxonomy, is now written: it says the wall as a number — 88% of the current agent's actions
+  are active-but-no-progress.)
 - **The next project direction** is on the far side of the wall — *learning across attempts*
   (credit assignment or an action-model). It is a genuinely new direction, so it gets its own
   dated decision and explicit agreement before any build, not a quiet drift into it.
@@ -469,10 +470,10 @@ That is the ladder, top to bottom, as one line. If you can say Movement 5 and th
 under it in your own words — four changes, no score movement, a wall named, and a habit that
 caught every lie a measurement told — you can carry this whole project into any room.
 
-Two rungs remain to be written, and they wait on purpose: **note 10 (traces)** for a failure
-taxonomy to organise it around, and **note 11 (memory and retrieval)** until the agent has
-the cross-attempt memory that the far side of the wall requires. When that work exists, the
-course grows one more rung to explain it — because a note about an unbuilt thing is guesswork,
-and this project does not publish guesswork.
+One rung remains to be written, and it waits on purpose: **note 11 (memory and retrieval)**,
+until the agent has the cross-attempt memory that the far side of the wall requires. (Note 10,
+traces and the failure taxonomy, was written 2026-07-28.) When that work exists, the course
+grows one more rung to explain it — because a note about an unbuilt thing is guesswork, and this
+project does not publish guesswork.
 
 **Back to the start:** [Study 00 — how to use these notes](00-how-to-use-these-notes.md).

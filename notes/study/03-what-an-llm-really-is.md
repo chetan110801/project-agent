@@ -125,7 +125,7 @@ measured, not remembered.
 **2. Filling the window is not free, and not even always good.** More tokens means more
 money, more waiting, and — counter-intuitively — often *worse* answers, because the
 thing that mattered is buried in noise. "It fits" and "it helps" are different
-questions, and only the eval suite (note 07) can tell them apart.
+questions, and only the eval suite (note 08) can tell them apart.
 
 ---
 
@@ -193,7 +193,7 @@ the one detail that mattered and the agent is confidently wrong.
 
 **4. Store it outside and fetch what's relevant.** Keep everything in a store, and each
 turn retrieve just the pieces relevant to right now. This is **retrieval** — the same
-machinery as RAG (note 02, Group F), applied to the agent's own past. Note 09.
+machinery as RAG (note 02, Group F), applied to the agent's own past. Note 11.
 
 ::: key
 These four moves — compress, drop, summarise, retrieve — **are** context engineering.
@@ -244,7 +244,7 @@ pays off from the second call onward. The catch — and this is the part people 
 **caching is a prefix match: one changed byte anywhere near the front invalidates
 everything after it.** Put a timestamp at the top of your system prompt and you've
 silently destroyed your cache and never see an error. This is why an agent's stable
-instructions go first and the volatile per-turn stuff goes last. (Note 10.)
+instructions go first and the volatile per-turn stuff goes last. (Note 12.)
 
 ### 2. Time
 
@@ -276,7 +276,7 @@ frequently false.
 repeatable and predictable. Higher, it takes chances: varied and creative, less
 reliable. For us: *deciding the next action* wants low (be consistent, be debuggable);
 *brainstorming theories about the game* may want higher (explore more possibilities).
-Which is better is an empirical question, and note 07 is how we answer it.
+Which is better is an empirical question, and note 08 is how we answer it.
 
 ::: note
 Worth knowing for interviews: on the newest models this dial is disappearing. Anthropic's

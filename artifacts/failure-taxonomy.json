@@ -1,0 +1,634 @@
+{
+  "generated_from": "runs/*.trace.jsonl (top-level only; aborted-* and quota-wall-* quarantined)",
+  "perseveration_streak_threshold": 4,
+  "bucket_order": [
+    "illegal_action",
+    "dead_action",
+    "revisit",
+    "perseveration",
+    "active_no_progress",
+    "progress"
+  ],
+  "bucket_meaning": {
+    "illegal_action": "asked for an unavailable button (loop rejected it, forced RESET)",
+    "dead_action": "legal, but changed nothing on screen",
+    "revisit": "returned to a screen already seen this episode",
+    "perseveration": "repeated one action beyond chance (>=4 in a row)",
+    "active_no_progress": "real, new activity on a fresh screen \u2014 and no progress",
+    "progress": "the score moved"
+  },
+  "episodes_read": 46,
+  "actions_classified": 2071,
+  "headline_llm_default_now": {
+    "arm": "eval-dev-llm-r3 (guards on, no hypothesis, no progress = current default)",
+    "episodes": 4,
+    "actions": 120,
+    "buckets": {
+      "illegal_action": {
+        "count": 0,
+        "share": 0.0
+      },
+      "dead_action": {
+        "count": 14,
+        "share": 0.1167
+      },
+      "revisit": {
+        "count": 0,
+        "share": 0.0
+      },
+      "perseveration": {
+        "count": 0,
+        "share": 0.0
+      },
+      "active_no_progress": {
+        "count": 106,
+        "share": 0.8833
+      },
+      "progress": {
+        "count": 0,
+        "share": 0.0
+      }
+    }
+  },
+  "by_family": {
+    "llm_all": {
+      "episodes": 35,
+      "actions": 1071,
+      "buckets": {
+        "illegal_action": {
+          "count": 12,
+          "share": 0.0112
+        },
+        "dead_action": {
+          "count": 138,
+          "share": 0.1289
+        },
+        "revisit": {
+          "count": 16,
+          "share": 0.0149
+        },
+        "perseveration": {
+          "count": 176,
+          "share": 0.1643
+        },
+        "active_no_progress": {
+          "count": 729,
+          "share": 0.6807
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "llm_eval_arms": {
+      "episodes": 32,
+      "actions": 960,
+      "buckets": {
+        "illegal_action": {
+          "count": 12,
+          "share": 0.0125
+        },
+        "dead_action": {
+          "count": 138,
+          "share": 0.1437
+        },
+        "revisit": {
+          "count": 16,
+          "share": 0.0167
+        },
+        "perseveration": {
+          "count": 113,
+          "share": 0.1177
+        },
+        "active_no_progress": {
+          "count": 681,
+          "share": 0.7094
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "random_all": {
+      "episodes": 11,
+      "actions": 1000,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 82,
+          "share": 0.082
+        },
+        "revisit": {
+          "count": 18,
+          "share": 0.018
+        },
+        "perseveration": {
+          "count": 14,
+          "share": 0.014
+        },
+        "active_no_progress": {
+          "count": 886,
+          "share": 0.886
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "llm_by_arm": {
+    "eval-dev-llm-h0": {
+      "episodes": 4,
+      "actions": 120,
+      "buckets": {
+        "illegal_action": {
+          "count": 1,
+          "share": 0.0083
+        },
+        "dead_action": {
+          "count": 10,
+          "share": 0.0833
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 49,
+          "share": 0.4083
+        },
+        "active_no_progress": {
+          "count": 60,
+          "share": 0.5
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "eval-dev-llm-h8": {
+      "episodes": 4,
+      "actions": 120,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 21,
+          "share": 0.175
+        },
+        "revisit": {
+          "count": 8,
+          "share": 0.0667
+        },
+        "perseveration": {
+          "count": 64,
+          "share": 0.5333
+        },
+        "active_no_progress": {
+          "count": 27,
+          "share": 0.225
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "eval-dev-llm-p0": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 29,
+          "share": 0.1208
+        },
+        "revisit": {
+          "count": 1,
+          "share": 0.0042
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 210,
+          "share": 0.875
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "eval-dev-llm-p1": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 11,
+          "share": 0.0458
+        },
+        "dead_action": {
+          "count": 49,
+          "share": 0.2042
+        },
+        "revisit": {
+          "count": 6,
+          "share": 0.025
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 174,
+          "share": 0.725
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "eval-dev-llm-r3": {
+      "episodes": 4,
+      "actions": 120,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 14,
+          "share": 0.1167
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 106,
+          "share": 0.8833
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "eval-dev-llm-y1": {
+      "episodes": 4,
+      "actions": 120,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 15,
+          "share": 0.125
+        },
+        "revisit": {
+          "count": 1,
+          "share": 0.0083
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 104,
+          "share": 0.8667
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "llm-gemini-3.5-flash-lite-objects": {
+      "episodes": 3,
+      "actions": 111,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 63,
+          "share": 0.5676
+        },
+        "active_no_progress": {
+          "count": 48,
+          "share": 0.4324
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "llm_by_game": {
+    "ar25-0c556536": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 27,
+          "share": 0.1125
+        },
+        "revisit": {
+          "count": 2,
+          "share": 0.0083
+        },
+        "perseveration": {
+          "count": 34,
+          "share": 0.1417
+        },
+        "active_no_progress": {
+          "count": 177,
+          "share": 0.7375
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "ls20-9607627b": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 12,
+          "share": 0.05
+        },
+        "dead_action": {
+          "count": 3,
+          "share": 0.0125
+        },
+        "revisit": {
+          "count": 6,
+          "share": 0.025
+        },
+        "perseveration": {
+          "count": 43,
+          "share": 0.1792
+        },
+        "active_no_progress": {
+          "count": 176,
+          "share": 0.7333
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "sb26-7fbdac44": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 108,
+          "share": 0.45
+        },
+        "revisit": {
+          "count": 8,
+          "share": 0.0333
+        },
+        "perseveration": {
+          "count": 9,
+          "share": 0.0375
+        },
+        "active_no_progress": {
+          "count": 115,
+          "share": 0.4792
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "tn36-ef4dde99": {
+      "episodes": 8,
+      "actions": 240,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 27,
+          "share": 0.1125
+        },
+        "active_no_progress": {
+          "count": 213,
+          "share": 0.8875
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "random_by_game": {
+    "ar25-0c556536": {
+      "episodes": 2,
+      "actions": 110,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 10,
+          "share": 0.0909
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 100,
+          "share": 0.9091
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "ls20-9607627b": {
+      "episodes": 5,
+      "actions": 670,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 1,
+          "share": 0.0015
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 12,
+          "share": 0.0179
+        },
+        "active_no_progress": {
+          "count": 657,
+          "share": 0.9806
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "sb26-7fbdac44": {
+      "episodes": 2,
+      "actions": 110,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 71,
+          "share": 0.6455
+        },
+        "revisit": {
+          "count": 0,
+          "share": 0.0
+        },
+        "perseveration": {
+          "count": 2,
+          "share": 0.0182
+        },
+        "active_no_progress": {
+          "count": 37,
+          "share": 0.3364
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    },
+    "tn36-ef4dde99": {
+      "episodes": 2,
+      "actions": 110,
+      "buckets": {
+        "illegal_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "dead_action": {
+          "count": 0,
+          "share": 0.0
+        },
+        "revisit": {
+          "count": 18,
+          "share": 0.1636
+        },
+        "perseveration": {
+          "count": 0,
+          "share": 0.0
+        },
+        "active_no_progress": {
+          "count": 92,
+          "share": 0.8364
+        },
+        "progress": {
+          "count": 0,
+          "share": 0.0
+        }
+      }
+    }
+  },
+  "validation_stuck_run": {
+    "file": "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.80.9669d0d5-f392-44d3-8064-31e06c9c2c7d.trace.jsonl",
+    "policy": "llm:gemini-3.5-flash-lite:objects",
+    "actions": 80,
+    "longest_identical_streak": 41,
+    "buckets": {
+      "illegal_action": {
+        "count": 0,
+        "share": 0.0
+      },
+      "dead_action": {
+        "count": 0,
+        "share": 0.0
+      },
+      "revisit": {
+        "count": 0,
+        "share": 0.0
+      },
+      "perseveration": {
+        "count": 48,
+        "share": 0.6
+      },
+      "active_no_progress": {
+        "count": 32,
+        "share": 0.4
+      },
+      "progress": {
+        "count": 0,
+        "share": 0.0
+      }
+    },
+    "note": "the classifier is run against a failure we already understand: this is the run study notes 05/08/09 describe (one button 41 times). perseveration should dominate \u2014 if it did not, the bucket would be wrong."
+  }
+}

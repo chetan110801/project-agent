@@ -166,23 +166,23 @@ that flails. → note 06.
 — score, how many actions until first real progress, how many tokens spent — that we
 re-run after every single change. So "did that prompt tweak help?" is answered with a
 number instead of a feeling. This is the single most important discipline in the whole
-project, and the one most beginner projects don't have. → note 07.
+project, and the one most beginner projects don't have. → note 08.
 
 **4. Traces.** Every decision the agent makes gets written down: exactly what the model
 was shown, exactly what it replied, how long it took, how much it cost. When the agent
 does something stupid, we can open the record and see *why*, instead of guessing. →
-note 08.
+note 10.
 
 **5. Memory and retrieval.** The agent plays hundreds of turns. It can't hold all of
 that in front of the model at once. So it needs a way to store what it learned and pull
 back the relevant bits later — which is the same set of ideas behind "RAG", the
 retrieval technique interviewers love asking about, except here it's over the agent's
-own experience rather than a folder of PDFs. → note 09.
+own experience rather than a folder of PDFs. → note 11.
 
 **6. Budget engineering.** Every call to a model costs money and time. We give the agent
 a spending limit per game, cache (save and re-use) repeated work, and try a cheap model
 first before escalating to an expensive one. Then we show the curve: how score changes
-as budget changes. → note 10.
+as budget changes. → note 12.
 
 ::: key
 Read those six again and notice: **only #1 is about the agent.** The other five are
@@ -214,7 +214,7 @@ care about are the same object.
 And one honest constraint on top: **free tiers only, no GPU training, must run on a
 Windows laptop.** No paid APIs, no rented servers. That's not a limitation we're
 apologising for — it's part of the engineering story. Building something that works
-inside a hard budget is a skill; it's why note 10 exists.
+inside a hard budget is a skill; it's why note 12 exists.
 
 ---
 

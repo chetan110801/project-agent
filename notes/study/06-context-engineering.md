@@ -350,7 +350,7 @@ Built and tested today — `py -m unittest discover -s tests`, 35 tests, all pas
 | `harness/actions.py` | an immutable action record (see the footnote) |
 | `harness/policies.py` | the *decide* step, isolated and swappable; a seeded random baseline |
 | `harness/loop.py` | our loop: hard action cap, illegal-action rejection, stuck detection |
-| `harness/trace.py` | one JSON object per line, per decision — the receipts (note 08) |
+| `harness/trace.py` | one JSON object per line, per decision — the receipts (note 10) |
 | `harness/tokens.py` | sizes; never a token count without naming the tokeniser |
 | `harness/mock_game.py` | a fake game that runs offline, so all of the above is testable with no key and no quota |
 | `scripts/analyze_run.py` | turns a real recording into the numbers this note quotes |

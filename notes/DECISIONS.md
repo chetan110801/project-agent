@@ -5,6 +5,41 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-28 (later) — Design pass done for the far-side direction; the BUILD is still deferred pending Chetan's explicit pick
+
+*Chetan chose "Design pass first" when asked whether to open the far-side direction (the
+in-session decision the 2026-07-28 taxonomy entry pointed at). This entry records that the
+design pass happened and what it concluded. It is deliberately **not** an approval to build:
+§2 requires the new direction to get Chetan's explicit "build option X" first, and a design
+doc must not be a side door around that.*
+
+**What was produced.** `notes/04-learning-across-attempts-design.md` — a design-for-approval
+(no code, nothing run). It: (1) restates the wall as a build target using the taxonomy (move
+actions out of `active_no_progress` 88% into `progress` 0%); (2) names the crux —
+**reward-sparsity: with every attempt scoring 0, there is no success to learn credit from, so
+"learn across attempts" moves the wall up a level rather than dissolving it**; (3) assesses
+four candidate designs — A credit-assignment-on-score (blocked, no success to learn from),
+B goal-agnostic action/effect model, C count-based novelty exploration (the only path that
+can *manufacture* a first success, but largest build + highest quota + needs a hard state
+abstraction), D a cheap plain-language cross-attempt memory (closest to what failed, but the
+cheapest probe); (4) pre-registers a Stage-0 experiment (`--attempt-memory`, arms
+`dev-llm-m0/m1`, judged on attempt 2, ~480 calls = one free-tier day); (5) grounds every plug
+point in files actually read this session (`play()` attempts loop, `AttemptSummary` →
+`AttemptMemory`, `LLMPolicy(progress=)` slot).
+
+**Recommendation (not a decision).** Staged, falsification-first: **Stage 0 = the cheap probe
+(D)** first — smallest spend that buys a real answer, clean result either way — then **Stage 1
+= the real bet (C)** only if Stage 0 + Chetan's appetite justify it. Explicitly on the table
+as a peer option: **stop and declare the wall the project's finding** (§4) — a legitimate,
+interview-grade result, not a defeat.
+
+**What is NOT decided.** Which option (if any) gets built. That is Chetan's call (§8 of the
+design note), and it gets its own dated entry + explicit agreement before code. Until then the
+far-side build stays **deferred**, exactly as the earlier 2026-07-28 and 2026-07-27 entries
+left it.
+
+---
+
 ## 2026-07-28 — Next work: a failure taxonomy from the recorded traces (→ unblocks note 10); far-side agent work stays deferred
 
 *Chetan delegated the choice in-session ("you pick the best one"). Picking the on-ladder,

@@ -70,9 +70,9 @@ Two more habits you'll see throughout:
 
 ## The ladder — what you will read, in order
 
-The notes marked **✅ written** exist now. The rest get written as we build the thing
-they describe, because a note about a part we haven't built yet would be guesswork, and
-this project does not do guesswork.
+Every note below is now **✅ written**. Each was written as we built the thing it describes —
+a note about a part we hadn't built yet would be guesswork, and this project does not do
+guesswork.
 
 ### Part 1 — The ground (read these first)
 
@@ -94,14 +94,15 @@ this project does not do guesswork.
 | 08 | **Evals** ✅ | turning one-off comparisons into a suite that runs on every change — and the metric I built, ran, and found was measuring nothing |
 | 09 | **Exploration** ✅ | why the agent got stuck, and the progress signal I proved could not exist before I built it |
 | 10 | **Traces and the failure taxonomy** ✅ | answering "why did it do that?" with receipts — and the counted catalogue of how the agent wastes its turns |
-| 11 | Memory and retrieval | short-term vs long-term memory, embeddings, and the honest version of RAG |
+| 11 | **Memory and retrieval** ✅ | short-term vs long-term memory, embeddings, the honest version of RAG — and when *not* to reach for it |
 | 12 | **Budgets: tokens, cost, latency** ✅ | the three budgets you actually spend on a free tier, and why the fastest model on paper was the wrong one |
 | 13 | **The interview story** ✅ | the whole project as a 3-minute answer, with the hard follow-ups |
 
 Note 12 was written **out of build-order** on purpose: it stands only on notes you have already
 read (03, 06, 08, 09) and needs nothing from 10 or 11, so it was ready while those waited for
-the parts they describe to be built. Note 10 now exists; only **note 11 (memory)** is still to
-be written, because the agent does not yet have the cross-attempt memory it would describe.
+the parts they describe to be built. **The whole ladder is now written** — note 11 (memory) was
+the last, once the agent's own two memory mechanisms (the history window and the progress
+signal) gave it real, built cases to teach from instead of guesswork.
 
 Alongside the course there are two other kinds of file in this repo, and it helps to
 know what they are so you don't confuse them with teaching:
@@ -115,9 +116,8 @@ know what they are so you don't confuse them with teaching:
 
 ## How to actually read this
 
-1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10, then jump to **12 → 13**
-   (11 is not written yet — see the note under the ladder above). Don't skip ahead; the ladder
-   only works as a ladder.
+1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13.
+   Don't skip ahead; the ladder only works as a ladder.
 2. **One note per sitting.** Each is a 10–20 minute read. Finishing one and stopping
    beats skimming three.
 3. **Read the "Say it in an interview" section out loud.** Silently reading a sentence

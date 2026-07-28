@@ -290,8 +290,8 @@ chasing. Saying that plainly is the difference between a taxonomy and a horoscop
 
 ---
 
-**Next:** note 11 — memory and retrieval: short-term versus long-term memory, embeddings, and the
-honest version of RAG, applied to the agent's own experience. It is still owed, and waits on
-purpose — the agent has no cross-attempt memory yet, and that is the far-side work note 09 pointed
-at. A note about an unbuilt thing would be guesswork, and this project does not publish guesswork.
-For the whole project as one story, see [note 13 — the interview story](13-the-interview-story.md).
+**Next:** [note 11 — memory and retrieval](11-memory-and-retrieval.md): short-term versus
+long-term memory, embeddings, and the honest version of RAG, applied to the agent's own
+experience — grounded in the two memory mechanisms this project already built and ran, and
+honest about the principled reason it uses no RAG at all. For the whole project as one story,
+see [note 13 — the interview story](13-the-interview-story.md).

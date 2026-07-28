@@ -5,6 +5,38 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-28 (end of session) — Consolidation executed: the project is presentable-complete
+
+*Closing summary for the consolidation plan (`notes/05`) chosen in the entry below. All three
+milestones are done bar Chetan's own read-through; recorded here so the project's "done" state is
+explicit and dated.*
+
+**What was built this session (all committed + pushed):**
+- **Study note 11 (memory & retrieval)** — the last owed rung. **The teaching ladder is now
+  complete, 00–13.** Grounded in the two built-and-run memory mechanisms (history window, progress
+  signal) + the honest reason this project uses no RAG. (`f272d84`)
+- **Top-level `README.md`** — the repo's first reader-facing front page, leading with the honest
+  headline; install/run steps verified against the real environment. (`d75608a`)
+- **`notes/06-interview-prep-pack.md`** — pitch at three lengths, a topic-indexed Q&A drill (every
+  answer a tightened line already in the course, so all verified), traps-to-avoid, and a
+  what-to-show checklist. Complements note 13 (the narrative) rather than repeating it.
+- **Consistency + reader:** note 00 ladder marks 11 ✅; note 10 footer and note 13's two
+  "note 11 owed" spots fixed; `index.html` rebuilt (26 documents); `MEMORY.md` compacted.
+
+**Status.** The project is **presentable-complete**: full harness (154 tests pass offline), full
+14-note course, full dated decision log, a README front page, and an interview rehearsal pack.
+The central result — the wall — is documented from four angles and reported as a genuine finding.
+
+**Remaining = optional only.** A fuller note-13 capstone refresh to fold in the memory chapter,
+and multi-seed/more-game eval robustness — neither needed for the interview goal. The far-side
+agent build stays deferred (design kept in notes 04/05). **Open action item unrelated to
+completion:** rotate the leaked ARC_API_KEY (see memory `security-key-rotation`).
+
+**Gate outstanding:** Chetan reads note 11 and the interview pack and confirms they read cleanly
+out loud (`notes/05` §3) — the one thing this session cannot do for him.
+
+---
+
 ## 2026-07-28 (latest) — Goal clarified = "present the complete project in interviews"; CONSOLIDATE-and-present chosen over the far-side build
 
 *Immediately after authorizing "complete the entire project," Chetan clarified the goal: "I

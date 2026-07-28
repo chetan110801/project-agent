@@ -5,6 +5,55 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-28 (latest) — Goal clarified = "present the complete project in interviews"; CONSOLIDATE-and-present chosen over the far-side build
+
+*Immediately after authorizing "complete the entire project," Chetan clarified the goal: "I
+just wanna present the complete project in the interviews." Asked to choose between building
+the far-side agent first vs. consolidating what exists into a finished, presentable artifact,
+he chose **Consolidate & present**. This entry records that and **supersedes the "far-side
+OPENED / staged build" decision made minutes earlier the same day** — that build is deferred
+again, not deleted.*
+
+**Why the reframe changes the answer.** The project's success was always the engineering
+artifact you can explain, not beating the game (note 03). Against the goal "present a finished
+project in interviews," the far-side build is the wrong investment: it is the highest quota/run
+risk, spans multiple sessions, most likely returns null (four experiments already did), and a
+half-built agent spread across sessions is *less* presentable than a cleanly finished project
+with a documented wall. Crucially, **note 04 (the design pass, done) already lets Chetan speak
+intelligently about the far-side approaches — credit assignment, novelty exploration, the
+reward-sparsity wall — without building them.** So the build adds little he can't already say.
+
+**Decision — the consolidation plan** (revised into `notes/05-completion-plan.md`):
+
+- **Milestone 1 — study note 11 (memory & retrieval).** Writable NOW, and not guesswork: the
+  agent already HAS the memory mechanisms note 11 teaches — the history window (Exp 1) is
+  short-term memory; the progress signal (Exp 4) is cross-attempt long-term memory. Note 11
+  teaches short-vs-long-term memory and embeddings/RAG grounded in those *built and run* cases,
+  and treats retrieval-over-experience honestly: the concept, plus the principled reason this
+  project's tiny discrete experience did **not** need embedding-based retrieval (knowing when
+  NOT to use RAG is itself the interview point). This corrects the earlier "note 11 is blocked
+  until the agent has cross-attempt memory" framing (note 10 footer / memory) — it wasn't, once
+  the progress signal is counted as the long-term memory it is.
+- **Milestone 2 — presentation surface.** A polished top-level `README.md` (project at a glance:
+  what/why/results/how-to-run — the first thing an interviewer sees) + an interview-prep pack
+  (likely questions with answers, the STAR-style project pitch, aggregating the "Say it in an
+  interview" sections).
+- **Milestone 3 — final consistency pass.** Mark note 00's ladder 11 ✅; fix note 10's footer;
+  refresh the capstone (note 13) to include 11; rebuild the site; a closing summary here. The
+  project reads end-to-end as one finished story.
+
+**What "complete" means, on the record.** All engineering built (done), all experiments run and
+written honestly (done), all teaching rungs written (00–13 after note 11), a presentation
+surface, and the wall documented as a genuine finding (CLAUDE.md §4). It does **not** require
+beating the game.
+
+**Rejected / deferred.** The far-side build (Stage 0 `--attempt-memory` probe + Stage 1 novelty
+exploration) — deferred; its *design* (notes 04, 05) is kept as presentable record. The leaner
+"also run the one cheap Stage-0 probe" option — declined for now; can be revisited if a live
+cross-attempt experiment is wanted behind note 11, but it is not needed for the interview goal.
+
+---
+
 ## 2026-07-28 (later) — Design pass done for the far-side direction; the BUILD is still deferred pending Chetan's explicit pick
 
 *Chetan chose "Design pass first" when asked whether to open the far-side direction (the

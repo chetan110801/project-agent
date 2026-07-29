@@ -53,24 +53,19 @@ last few turns. For our agent it is the **history window**: the agent's own last
 what each one changed on screen, pasted into the prompt (`harness/frames.render_history`).
 :::
 
-We built it for a concrete reason (note 05): in the very first LLM run the agent pressed
-`ACTION3` **forty-one times in a row**, writing a fresh justification each turn. It was not
-broken. It was being asked a question *with no memory in it* — it saw one screen, one last
-action, one diff (*what changed since the previous screen*), and from that spot pressing the button again is a perfectly reasonable
-answer. Forty times in a row is only visibly absurd **if you can see the other thirty-nine.**
-Short-term memory was meant to let it see them.
+Why we built it, in one line you already have: the agent pressed one button 41 times in a row
+because it was being asked a question *with no memory in it*, and forty times is only visibly
+absurd if you can see the other thirty-nine (note 05).
 
-Here is the part that makes this note worth reading. **It backfired.** The experiment (note 08)
-added the last 8 actions to the prompt, measured it against the same agent without them, and
-the version *with* memory came out **worse** on most of the steering metrics (*the numbers that track whether its play improved*), for more tokens.
-The change was reverted. And the reason is the lesson:
+And it **backfired** — [note 08 Part 6](08-evals.md) has the experiment and the numbers: eight
+past actions in the prompt, worse on most steering metrics (*the numbers that track whether its
+play improved*), reverted. What belongs in *this* note is the reason, because it is a fact about
+memory rather than about that one experiment:
 
 ::: warn
-After eight presses of the same button, the history block reads:
-`ACTION3 -> 2 cells changed` — eight times over. I read that block as *"you are stuck, stop."*
-**The model read it as *"this action reliably works — keep going."*** Eight lines of the same
-small effect are eight pieces of evidence *for* the very thing I wanted it to abandon. The
-memory was accurate. It just pointed the wrong way.
+Eight lines of `ACTION3 -> 2 cells changed` read to me as *"you are stuck, stop."* **The model
+read them as *"this action reliably works — keep going."*** The memory was perfectly accurate.
+It just pointed the wrong way.
 :::
 
 ::: key

@@ -53,6 +53,25 @@ def check_lib() -> None:
     ev = artifacts.list_evals()
     check("evals present", len(ev["arms"]) > 0, f"{len(ev['arms'])} arms, {len(ev['comparisons'])} comparisons")
     check("taxonomy present", artifacts.get_taxonomy() is not None)
+    nf = artifacts.get_noise_floor()
+    check("noise floor present", nf is not None and "headline" in nf,
+          f"{(nf or {}).get('headline', {}).get('pairs_enumerated')} change-free pairs")
+    # The comparison rows must arrive already judged against the band, since the view only
+    # displays that verdict and never computes one.
+    llm_cmp = next((c["name"] for c in ev["comparisons"]
+                    if "random" not in f"{c['before']} {c['after']}"), None)
+    if llm_cmp:
+        doc = artifacts.get_comparison(llm_cmp)
+        judged = [r for r in doc.get("rows", []) if r.get("noise")]
+        check("comparison rows carry a noise verdict", len(judged) > 0,
+              f"{len(judged)}/{len(doc.get('rows', []))} rows in {llm_cmp}")
+        check("noise scope marked in-scope for an LLM-vs-LLM pair",
+              (doc.get("noise_scope") or {}).get("in_scope") is True)
+    rnd_cmp = next((c["name"] for c in ev["comparisons"]
+                    if "random" in f"{c['before']} {c['after']}"), None)
+    if rnd_cmp:
+        scope = (artifacts.get_comparison(rnd_cmp) or {}).get("noise_scope") or {}
+        check("random-arm comparison is marked out of scope", scope.get("in_scope") is False)
     check("budgets present", "model_bakeoff" in artifacts.get_budgets())
     check("learn index has views", set(notes.learn_index()) >= {"home", "replay", "evals", "taxonomy", "traces", "budgets"})
     check("note serves markdown", (notes.get_note_markdown("notes/study/05-the-agent-loop.md") or "").strip() != "")
@@ -84,7 +103,7 @@ def check_server() -> None:
 
     try:
         for path in ["/", "/static/js/app.js", "/api/overview", "/api/runs",
-                     "/api/evals", "/api/taxonomy", "/api/budgets", "/api/learn",
+                     "/api/evals", "/api/noise", "/api/taxonomy", "/api/budgets", "/api/learn",
                      "/api/live/status"]:
             status, body = get(path)
             check(f"GET {path}", status == 200 and len(body) > 0, f"{status}, {len(body)}B")

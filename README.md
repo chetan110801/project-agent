@@ -33,7 +33,7 @@ leads with one:
   **changed the agent's behaviour and moved the score not at all.** That locates the wall exactly:
   nothing in the loop turns feedback into a better-chosen next action, because the games state no
   goal and only the server's end-of-game scorecard ever knows it.
-- **Every number here is re-runnable from this repo.** **154 tests, all offline, all passing.**
+- **Every number here is re-runnable from this repo.** **163 tests, all offline, all passing.**
 
 The value is in *how thoroughly* that is established and *what it locates* — which is exactly the
 kind of thing an interviewer is probing for.
@@ -48,6 +48,7 @@ kind of thing an interviewer is probing for.
 | **Policies** | the "decide" step, isolated so it can be swapped and compared — a seeded random baseline and an LLM policy | [`harness/policies.py`](harness/policies.py) |
 | **Context engineering** | three ways to turn a game screen into text the model can read (verbatim grid, objects, diff), measured against each other | [`harness/frames.py`](harness/frames.py) |
 | **Evals** | a fixed dev / held-out / reserve game split, per-game metrics tagged **steering / outcome / cost**, and a runner that refuses to touch held-out data without `--report` | [`harness/evals.py`](harness/evals.py), [`scripts/run_evals.py`](scripts/run_evals.py) |
+| **Noise band** | how far each metric drifts when *nothing* changed — 20,736 change-free A/Bs enumerated from 16 replicate episodes already on disk, so a difference can be read instead of guessed at | [`scripts/noise_floor.py`](scripts/noise_floor.py) |
 | **Traces** | one append-only JSONL record per decision — including the model's own stated reason — so "why did it do that?" has an answer | [`harness/trace.py`](harness/trace.py) |
 | **Failure taxonomy** | every recorded action sorted into one of six priority buckets; the wall as a counted table | [`scripts/failure_taxonomy.py`](scripts/failure_taxonomy.py) |
 | **Budgets** | the three budgets you actually spend on a free tier — tokens, requests/day, latency — with a pre-flight quota check that refuses an arm that would die half-run | [`harness/budget.py`](harness/budget.py) |
@@ -91,6 +92,7 @@ py scripts/run_agent.py --policy llm --model gemini-3.5-flash-lite
 # 5. (optional) run one eval configuration and compare two of them
 py scripts/run_evals.py --arm smoke --mock        # offline rehearsal, no quota
 py scripts/compare_evals.py dev-llm-p0 dev-llm-p1 --attempt 2
+py scripts/noise_floor.py                         # the noise band; offline, no quota
 
 # 6. (optional) explore the whole project in a local browser dashboard — offline, no keys
 py explorer/app.py                                # http://localhost:8000; see notes/howto/03

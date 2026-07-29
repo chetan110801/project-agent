@@ -1,0 +1,3067 @@
+{
+  "generated_from": "artifacts/evals/*.json (arm files); no new runs, no quota spent",
+  "what_this_is": "the differences a change-free A/B produces on this suite, by exhaustive enumeration of every way of dealing runs of ONE configuration into two arms that share no episode. an A/B difference no larger than null_p95 is not evidence.",
+  "limits": [
+    "the null is built from 4 runs of each of 4 games, so it inherits their luck: more runs can only widen it. a difference inside the band is decisively not evidence; one just outside is suggestive, not proven",
+    "both sides of a real A/B are single runs, so clearing null_p95 means 'larger than 95% of change-free differences', not a p-value from a replicated test",
+    "the null is measured on one configuration and applied only to comparisons between two LLM arms; a random-policy arm is a different generator",
+    "intervention counts (repeat_blocks, hypothesis_*) are excluded: they are 0 or absent across a control group by construction, so their spread is not noise"
+  ],
+  "headline": {
+    "config": "llm gemini-3.5-flash-lite objects h0 30a seed0 r3",
+    "replicates": 4,
+    "runs": [
+      "dev-llm-p0 attempt 1",
+      "dev-llm-p0 attempt 2",
+      "dev-llm-p1 attempt 1",
+      "dev-llm-r3"
+    ],
+    "games": [
+      "ar25-0c556536",
+      "ls20-9607627b",
+      "sb26-7fbdac44",
+      "tn36-ef4dde99"
+    ],
+    "pairs_enumerated": 20736,
+    "steering_p95": {
+      "distinct_actions": 0.75,
+      "distinct_targets": 2.0,
+      "game_overs": 0,
+      "illegal_action_rate": 0.0083,
+      "level1_ratio": 0.0113,
+      "longest_repeat_streak": 0,
+      "no_change_rate": 0.0833,
+      "revisit_rate": 0.0667,
+      "top_action_share": 0.0917,
+      "top_action_share_excess": 0.0916
+    },
+    "widest_rate_p95": {
+      "metric": "top_action_share",
+      "null_p95": 0.0917,
+      "null_max": 0.1167
+    },
+    "never_moved_metrics": [
+      "final_score",
+      "game_overs",
+      "levels_completed",
+      "llm_calls",
+      "longest_repeat_streak"
+    ],
+    "noisiest_single_game_rate": {
+      "game": "ar25-0c556536",
+      "metric": "top_action_share_excess",
+      "band": 0.2,
+      "values": [
+        0.3571,
+        0.3571,
+        0.1571,
+        0.2905
+      ],
+      "kind": "steering"
+    }
+  },
+  "groups": [
+    {
+      "config": "llm gemini-3.5-flash-lite objects h0 30a seed0 r3",
+      "config_fields": {
+        "encoder": "objects",
+        "history": 0,
+        "hypothesis": false,
+        "max_actions": 30,
+        "model": "gemini-3.5-flash-lite",
+        "policy": "llm",
+        "repeat_limit": 3,
+        "seed": 0,
+        "progress_active": false
+      },
+      "replicates": 4,
+      "runs": [
+        "dev-llm-p0 attempt 1",
+        "dev-llm-p0 attempt 2",
+        "dev-llm-p1 attempt 1",
+        "dev-llm-r3"
+      ],
+      "games": [
+        "ar25-0c556536",
+        "ls20-9607627b",
+        "sb26-7fbdac44",
+        "tn36-ef4dde99"
+      ],
+      "aggregates": {
+        "dev-llm-p0 attempt 1": {
+          "episodes": 4,
+          "failed_episodes": 0,
+          "actions": 120,
+          "illegal_action_rate": 0.0,
+          "no_change_rate": 0.125,
+          "revisit_rate": 0.125,
+          "top_action_share": 0.625,
+          "top_action_share_excess": 0.1935,
+          "longest_repeat_streak": 3,
+          "distinct_actions": 3.25,
+          "distinct_targets": 11.25,
+          "game_overs": 0,
+          "level1_ratio": 1.2263,
+          "repeat_blocks": 0,
+          "hypothesis_changes": null,
+          "prediction_hit_rate": null,
+          "hypothesis_stated_rate": null,
+          "final_score": 0,
+          "levels_completed": 0,
+          "wins": 0,
+          "wall_seconds": 521.4,
+          "llm_calls": 120,
+          "llm_input_tokens": 102358,
+          "seconds_waited": 322.8,
+          "llm_retries": 3,
+          "usable_reply_rate": 0.8833
+        },
+        "dev-llm-p0 attempt 2": {
+          "episodes": 4,
+          "failed_episodes": 0,
+          "actions": 120,
+          "illegal_action_rate": 0.0,
+          "no_change_rate": 0.1167,
+          "revisit_rate": 0.125,
+          "top_action_share": 0.6167,
+          "top_action_share_excess": 0.1851,
+          "longest_repeat_streak": 3,
+          "distinct_actions": 3.0,
+          "distinct_targets": 10.75,
+          "game_overs": 0,
+          "level1_ratio": 1.2263,
+          "repeat_blocks": 0,
+          "hypothesis_changes": null,
+          "prediction_hit_rate": null,
+          "hypothesis_stated_rate": null,
+          "final_score": 0,
+          "levels_completed": 0,
+          "wins": 0,
+          "wall_seconds": 522.0,
+          "llm_calls": 120,
+          "llm_input_tokens": 103309,
+          "seconds_waited": 312.0,
+          "llm_retries": 5,
+          "usable_reply_rate": 0.8667
+        },
+        "dev-llm-p1 attempt 1": {
+          "episodes": 4,
+          "failed_episodes": 0,
+          "actions": 120,
+          "illegal_action_rate": 0.0083,
+          "no_change_rate": 0.2083,
+          "revisit_rate": 0.1833,
+          "top_action_share": 0.5333,
+          "top_action_share_excess": 0.1018,
+          "longest_repeat_streak": 3,
+          "distinct_actions": 3.75,
+          "distinct_targets": 13.0,
+          "game_overs": 0,
+          "level1_ratio": 1.215,
+          "repeat_blocks": 0,
+          "hypothesis_changes": null,
+          "prediction_hit_rate": null,
+          "hypothesis_stated_rate": null,
+          "final_score": 0,
+          "levels_completed": 0,
+          "wins": 0,
+          "wall_seconds": 523.3,
+          "llm_calls": 120,
+          "llm_input_tokens": 104045,
+          "seconds_waited": 328.8,
+          "llm_retries": 2,
+          "usable_reply_rate": 0.85
+        },
+        "dev-llm-r3": {
+          "episodes": 4,
+          "failed_episodes": 0,
+          "actions": 120,
+          "illegal_action_rate": 0.0,
+          "no_change_rate": 0.1167,
+          "revisit_rate": 0.1,
+          "top_action_share": 0.6083,
+          "top_action_share_excess": 0.1768,
+          "longest_repeat_streak": 3,
+          "distinct_actions": 3.25,
+          "distinct_targets": 12.25,
+          "game_overs": 0,
+          "level1_ratio": 1.2263,
+          "repeat_blocks": 0,
+          "hypothesis_changes": null,
+          "prediction_hit_rate": null,
+          "hypothesis_stated_rate": null,
+          "final_score": 0,
+          "levels_completed": 0,
+          "wins": 0,
+          "wall_seconds": 526.0,
+          "llm_calls": 120,
+          "llm_input_tokens": 104376,
+          "seconds_waited": 325.3,
+          "llm_retries": 1,
+          "usable_reply_rate": 0.85
+        }
+      },
+      "observed_bands": {
+        "illegal_action_rate": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0.0,
+            0.0,
+            0.0083,
+            0.0
+          ],
+          "min": 0.0,
+          "max": 0.0083,
+          "band": 0.0083,
+          "mean": 0.0021,
+          "sd": 0.0042
+        },
+        "no_change_rate": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0.125,
+            0.1167,
+            0.2083,
+            0.1167
+          ],
+          "min": 0.1167,
+          "max": 0.2083,
+          "band": 0.0916,
+          "mean": 0.1417,
+          "sd": 0.0446
+        },
+        "revisit_rate": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0.125,
+            0.125,
+            0.1833,
+            0.1
+          ],
+          "min": 0.1,
+          "max": 0.1833,
+          "band": 0.0833,
+          "mean": 0.1333,
+          "sd": 0.0353
+        },
+        "top_action_share_excess": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0.1935,
+            0.1851,
+            0.1018,
+            0.1768
+          ],
+          "min": 0.1018,
+          "max": 0.1935,
+          "band": 0.0917,
+          "mean": 0.1643,
+          "sd": 0.0422
+        },
+        "top_action_share": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0.625,
+            0.6167,
+            0.5333,
+            0.6083
+          ],
+          "min": 0.5333,
+          "max": 0.625,
+          "band": 0.0917,
+          "mean": 0.5958,
+          "sd": 0.0422
+        },
+        "longest_repeat_streak": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "min": 3,
+          "max": 3,
+          "band": 0,
+          "mean": 3.0,
+          "sd": 0.0
+        },
+        "distinct_actions": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            3.25,
+            3.0,
+            3.75,
+            3.25
+          ],
+          "min": 3.0,
+          "max": 3.75,
+          "band": 0.75,
+          "mean": 3.3125,
+          "sd": 0.3146
+        },
+        "distinct_targets": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            11.25,
+            10.75,
+            13.0,
+            12.25
+          ],
+          "min": 10.75,
+          "max": 13.0,
+          "band": 2.25,
+          "mean": 11.8125,
+          "sd": 1.0078
+        },
+        "game_overs": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "min": 0,
+          "max": 0,
+          "band": 0,
+          "mean": 0.0,
+          "sd": 0.0
+        },
+        "level1_ratio": {
+          "kind": "steering",
+          "n": 4,
+          "values": [
+            1.2263,
+            1.2263,
+            1.215,
+            1.2263
+          ],
+          "min": 1.215,
+          "max": 1.2263,
+          "band": 0.0113,
+          "mean": 1.2235,
+          "sd": 0.0056
+        },
+        "final_score": {
+          "kind": "outcome",
+          "n": 4,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "min": 0,
+          "max": 0,
+          "band": 0,
+          "mean": 0.0,
+          "sd": 0.0
+        },
+        "levels_completed": {
+          "kind": "outcome",
+          "n": 4,
+          "values": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "min": 0,
+          "max": 0,
+          "band": 0,
+          "mean": 0.0,
+          "sd": 0.0
+        },
+        "wall_seconds": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            521.4,
+            522.0,
+            523.3,
+            526.0
+          ],
+          "min": 521.4,
+          "max": 526.0,
+          "band": 4.6,
+          "mean": 523.175,
+          "sd": 2.0435
+        },
+        "llm_calls": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            120,
+            120,
+            120,
+            120
+          ],
+          "min": 120,
+          "max": 120,
+          "band": 0,
+          "mean": 120.0,
+          "sd": 0.0
+        },
+        "llm_input_tokens": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            102358,
+            103309,
+            104045,
+            104376
+          ],
+          "min": 102358,
+          "max": 104376,
+          "band": 2018,
+          "mean": 103522.0,
+          "sd": 895.0065
+        },
+        "seconds_waited": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            322.8,
+            312.0,
+            328.8,
+            325.3
+          ],
+          "min": 312.0,
+          "max": 328.8,
+          "band": 16.8,
+          "mean": 322.225,
+          "sd": 7.2472
+        },
+        "llm_retries": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            3,
+            5,
+            2,
+            1
+          ],
+          "min": 1,
+          "max": 5,
+          "band": 4,
+          "mean": 2.75,
+          "sd": 1.7078
+        },
+        "usable_reply_rate": {
+          "kind": "cost",
+          "n": 4,
+          "values": [
+            0.8833,
+            0.8667,
+            0.85,
+            0.85
+          ],
+          "min": 0.85,
+          "max": 0.8833,
+          "band": 0.0333,
+          "mean": 0.8625,
+          "sd": 0.0159
+        }
+      },
+      "null_pairs_enumerated": 20736,
+      "null": {
+        "illegal_action_rate": {
+          "kind": "steering",
+          "null_p50": 0.0083,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "null_mean": 0.0042,
+          "never_moved": false
+        },
+        "no_change_rate": {
+          "kind": "steering",
+          "null_p50": 0.0333,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "null_mean": 0.0339,
+          "never_moved": false
+        },
+        "revisit_rate": {
+          "kind": "steering",
+          "null_p50": 0.025,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "null_mean": 0.0303,
+          "never_moved": false
+        },
+        "top_action_share_excess": {
+          "kind": "steering",
+          "null_p50": 0.0333,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "null_mean": 0.0373,
+          "never_moved": false
+        },
+        "top_action_share": {
+          "kind": "steering",
+          "null_p50": 0.0333,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "null_mean": 0.0374,
+          "never_moved": false
+        },
+        "longest_repeat_streak": {
+          "kind": "steering",
+          "null_p50": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "null_mean": 0.0,
+          "never_moved": true
+        },
+        "distinct_actions": {
+          "kind": "steering",
+          "null_p50": 0.5,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "null_mean": 0.375,
+          "never_moved": false
+        },
+        "distinct_targets": {
+          "kind": "steering",
+          "null_p50": 1.0,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "null_mean": 0.9375,
+          "never_moved": false
+        },
+        "game_overs": {
+          "kind": "steering",
+          "null_p50": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "null_mean": 0.0,
+          "never_moved": true
+        },
+        "level1_ratio": {
+          "kind": "steering",
+          "null_p50": 0.0113,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "null_mean": 0.0056,
+          "never_moved": false
+        },
+        "final_score": {
+          "kind": "outcome",
+          "null_p50": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "null_mean": 0.0,
+          "never_moved": true
+        },
+        "levels_completed": {
+          "kind": "outcome",
+          "null_p50": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "null_mean": 0.0,
+          "never_moved": true
+        },
+        "wall_seconds": {
+          "kind": "cost",
+          "null_p50": 2.4,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "null_mean": 2.7463,
+          "never_moved": false
+        },
+        "llm_calls": {
+          "kind": "cost",
+          "null_p50": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "null_mean": 0.0,
+          "never_moved": true
+        },
+        "llm_input_tokens": {
+          "kind": "cost",
+          "null_p50": 1220,
+          "null_p95": 3348,
+          "null_max": 5264,
+          "null_mean": 1398.2818,
+          "never_moved": false
+        },
+        "seconds_waited": {
+          "kind": "cost",
+          "null_p50": 10.6,
+          "null_p95": 28.8,
+          "null_max": 44.9,
+          "null_mean": 12.188,
+          "never_moved": false
+        },
+        "llm_retries": {
+          "kind": "cost",
+          "null_p50": 2,
+          "null_p95": 4,
+          "null_max": 6,
+          "null_mean": 1.7838,
+          "never_moved": false
+        },
+        "usable_reply_rate": {
+          "kind": "cost",
+          "null_p50": 0.0333,
+          "null_p95": 0.0667,
+          "null_max": 0.0917,
+          "null_mean": 0.032,
+          "never_moved": false
+        }
+      },
+      "per_game_bands": {
+        "ar25-0c556536": {
+          "illegal_action_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "no_change_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.1,
+              0.1,
+              0.1333,
+              0.0333
+            ],
+            "min": 0.0333,
+            "max": 0.1333,
+            "band": 0.1,
+            "mean": 0.0917,
+            "sd": 0.0419
+          },
+          "revisit_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.1,
+              0.1333,
+              0.1,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.1333,
+            "band": 0.1333,
+            "mean": 0.0833,
+            "sd": 0.0577
+          },
+          "top_action_share_excess": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.3571,
+              0.3571,
+              0.1571,
+              0.2905
+            ],
+            "min": 0.1571,
+            "max": 0.3571,
+            "band": 0.2,
+            "mean": 0.2904,
+            "sd": 0.0943
+          },
+          "top_action_share": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.5,
+              0.5,
+              0.3,
+              0.4333
+            ],
+            "min": 0.3,
+            "max": 0.5,
+            "band": 0.2,
+            "mean": 0.4333,
+            "sd": 0.0943
+          },
+          "longest_repeat_streak": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              3,
+              3,
+              3,
+              3
+            ],
+            "min": 3,
+            "max": 3,
+            "band": 0,
+            "mean": 3.0,
+            "sd": 0.0
+          },
+          "distinct_actions": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              5,
+              4,
+              7,
+              5
+            ],
+            "min": 4,
+            "max": 7,
+            "band": 3,
+            "mean": 5.25,
+            "sd": 1.2583
+          },
+          "distinct_targets": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              5,
+              4,
+              8,
+              5
+            ],
+            "min": 4,
+            "max": 8,
+            "band": 4,
+            "mean": 5.5,
+            "sd": 1.7321
+          },
+          "game_overs": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "level1_ratio": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.9375,
+              0.9375,
+              0.9375,
+              0.9375
+            ],
+            "min": 0.9375,
+            "max": 0.9375,
+            "band": 0.0,
+            "mean": 0.9375,
+            "sd": 0.0
+          },
+          "final_score": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "levels_completed": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "wall_seconds": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              129.6981,
+              130.1227,
+              129.8894,
+              129.9791
+            ],
+            "min": 129.6981,
+            "max": 130.1227,
+            "band": 0.4246,
+            "mean": 129.9223,
+            "sd": 0.1777
+          },
+          "llm_calls": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              30,
+              30,
+              30,
+              30
+            ],
+            "min": 30,
+            "max": 30,
+            "band": 0,
+            "mean": 30.0,
+            "sd": 0.0
+          },
+          "llm_input_tokens": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              14270,
+              13792,
+              13589,
+              14711
+            ],
+            "min": 13589,
+            "max": 14711,
+            "band": 1122,
+            "mean": 14090.5,
+            "sd": 502.6082
+          },
+          "seconds_waited": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              89.692,
+              76.638,
+              76.461,
+              86.315
+            ],
+            "min": 76.461,
+            "max": 89.692,
+            "band": 13.231,
+            "mean": 82.2765,
+            "sd": 6.7555
+          },
+          "llm_retries": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              0,
+              2,
+              2,
+              0
+            ],
+            "min": 0,
+            "max": 2,
+            "band": 2,
+            "mean": 1.0,
+            "sd": 1.1547
+          },
+          "usable_reply_rate": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              1.0,
+              0.9667,
+              0.9667,
+              1.0
+            ],
+            "min": 0.9667,
+            "max": 1.0,
+            "band": 0.0333,
+            "mean": 0.9833,
+            "sd": 0.0192
+          }
+        },
+        "ls20-9607627b": {
+          "illegal_action_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0333,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0333,
+            "band": 0.0333,
+            "mean": 0.0083,
+            "sd": 0.0167
+          },
+          "no_change_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.1333,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.1333,
+            "band": 0.1333,
+            "mean": 0.0333,
+            "sd": 0.0667
+          },
+          "revisit_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.1,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.1,
+            "band": 0.1,
+            "mean": 0.025,
+            "sd": 0.05
+          },
+          "top_action_share_excess": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.15,
+              0.1167,
+              0.15,
+              0.2167
+            ],
+            "min": 0.1167,
+            "max": 0.2167,
+            "band": 0.1,
+            "mean": 0.1583,
+            "sd": 0.0419
+          },
+          "top_action_share": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.4,
+              0.3667,
+              0.4,
+              0.4667
+            ],
+            "min": 0.3667,
+            "max": 0.4667,
+            "band": 0.1,
+            "mean": 0.4083,
+            "sd": 0.0419
+          },
+          "longest_repeat_streak": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              3,
+              3,
+              3,
+              3
+            ],
+            "min": 3,
+            "max": 3,
+            "band": 0,
+            "mean": 3.0,
+            "sd": 0.0
+          },
+          "distinct_actions": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "min": 4,
+            "max": 4,
+            "band": 0,
+            "mean": 4.0,
+            "sd": 0.0
+          },
+          "distinct_targets": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              4,
+              4,
+              4,
+              4
+            ],
+            "min": 4,
+            "max": 4,
+            "band": 0,
+            "mean": 4.0,
+            "sd": 0.0
+          },
+          "game_overs": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "level1_ratio": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              1.3636,
+              1.3636,
+              1.3182,
+              1.3636
+            ],
+            "min": 1.3182,
+            "max": 1.3636,
+            "band": 0.0454,
+            "mean": 1.3522,
+            "sd": 0.0227
+          },
+          "final_score": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "levels_completed": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "wall_seconds": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              128.8307,
+              128.5817,
+              130.4223,
+              130.6518
+            ],
+            "min": 128.5817,
+            "max": 130.6518,
+            "band": 2.0701,
+            "mean": 129.6216,
+            "sd": 1.066
+          },
+          "llm_calls": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              30,
+              30,
+              30,
+              30
+            ],
+            "min": 30,
+            "max": 30,
+            "band": 0,
+            "mean": 30.0,
+            "sd": 0.0
+          },
+          "llm_input_tokens": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              21465,
+              20274,
+              21796,
+              21480
+            ],
+            "min": 20274,
+            "max": 21796,
+            "band": 1522,
+            "mean": 21253.75,
+            "sd": 670.7609
+          },
+          "seconds_waited": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              87.51,
+              78.27,
+              86.36,
+              83.681
+            ],
+            "min": 78.27,
+            "max": 87.51,
+            "band": 9.24,
+            "mean": 83.9553,
+            "sd": 4.1157
+          },
+          "llm_retries": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              0,
+              2,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 2,
+            "band": 2,
+            "mean": 0.5,
+            "sd": 1.0
+          },
+          "usable_reply_rate": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              1.0,
+              0.9333,
+              1.0,
+              1.0
+            ],
+            "min": 0.9333,
+            "max": 1.0,
+            "band": 0.0667,
+            "mean": 0.9833,
+            "sd": 0.0333
+          }
+        },
+        "sb26-7fbdac44": {
+          "illegal_action_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "no_change_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.4,
+              0.3667,
+              0.5667,
+              0.4333
+            ],
+            "min": 0.3667,
+            "max": 0.5667,
+            "band": 0.2,
+            "mean": 0.4417,
+            "sd": 0.0877
+          },
+          "revisit_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.4,
+              0.3667,
+              0.5333,
+              0.4
+            ],
+            "min": 0.3667,
+            "max": 0.5333,
+            "band": 0.1666,
+            "mean": 0.425,
+            "sd": 0.0739
+          },
+          "top_action_share_excess": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.2667,
+              0.2667,
+              0.1,
+              0.2
+            ],
+            "min": 0.1,
+            "max": 0.2667,
+            "band": 0.1667,
+            "mean": 0.2084,
+            "sd": 0.0788
+          },
+          "top_action_share": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.6,
+              0.6,
+              0.4333,
+              0.5333
+            ],
+            "min": 0.4333,
+            "max": 0.6,
+            "band": 0.1667,
+            "mean": 0.5416,
+            "sd": 0.0788
+          },
+          "longest_repeat_streak": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              3,
+              3,
+              3,
+              3
+            ],
+            "min": 3,
+            "max": 3,
+            "band": 0,
+            "mean": 3.0,
+            "sd": 0.0
+          },
+          "distinct_actions": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              3,
+              3,
+              3,
+              3
+            ],
+            "min": 3,
+            "max": 3,
+            "band": 0,
+            "mean": 3.0,
+            "sd": 0.0
+          },
+          "distinct_targets": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              8,
+              8,
+              12,
+              13
+            ],
+            "min": 8,
+            "max": 13,
+            "band": 5,
+            "mean": 10.25,
+            "sd": 2.63
+          },
+          "game_overs": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "level1_ratio": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              1.6667,
+              1.6667,
+              1.6667,
+              1.6667
+            ],
+            "min": 1.6667,
+            "max": 1.6667,
+            "band": 0.0,
+            "mean": 1.6667,
+            "sd": 0.0
+          },
+          "final_score": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "levels_completed": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "wall_seconds": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              131.085,
+              132.7867,
+              132.1865,
+              135.6331
+            ],
+            "min": 131.085,
+            "max": 135.6331,
+            "band": 4.5481,
+            "mean": 132.9228,
+            "sd": 1.9394
+          },
+          "llm_calls": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              30,
+              30,
+              30,
+              30
+            ],
+            "min": 30,
+            "max": 30,
+            "band": 0,
+            "mean": 30.0,
+            "sd": 0.0
+          },
+          "llm_input_tokens": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              25503,
+              26704,
+              26121,
+              25646
+            ],
+            "min": 25503,
+            "max": 26704,
+            "band": 1201,
+            "mean": 25993.5,
+            "sd": 542.3446
+          },
+          "seconds_waited": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              66.328,
+              69.655,
+              80.741,
+              71.529
+            ],
+            "min": 66.328,
+            "max": 80.741,
+            "band": 14.413,
+            "mean": 72.0632,
+            "sd": 6.172
+          },
+          "llm_retries": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              2,
+              1,
+              0,
+              1
+            ],
+            "min": 0,
+            "max": 2,
+            "band": 2,
+            "mean": 1.0,
+            "sd": 0.8165
+          },
+          "usable_reply_rate": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              0.8,
+              0.8333,
+              0.8,
+              0.8667
+            ],
+            "min": 0.8,
+            "max": 0.8667,
+            "band": 0.0667,
+            "mean": 0.825,
+            "sd": 0.0319
+          }
+        },
+        "tn36-ef4dde99": {
+          "illegal_action_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "no_change_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "revisit_rate": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "top_action_share_excess": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "min": 0.0,
+            "max": 0.0,
+            "band": 0.0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "top_action_share": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "min": 1.0,
+            "max": 1.0,
+            "band": 0.0,
+            "mean": 1.0,
+            "sd": 0.0
+          },
+          "longest_repeat_streak": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              30,
+              30,
+              30,
+              30
+            ],
+            "min": 30,
+            "max": 30,
+            "band": 0,
+            "mean": 30.0,
+            "sd": 0.0
+          },
+          "distinct_actions": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "min": 1,
+            "max": 1,
+            "band": 0,
+            "mean": 1.0,
+            "sd": 0.0
+          },
+          "distinct_targets": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              28,
+              27,
+              28,
+              27
+            ],
+            "min": 27,
+            "max": 28,
+            "band": 1,
+            "mean": 27.5,
+            "sd": 0.5774
+          },
+          "game_overs": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "level1_ratio": {
+            "kind": "steering",
+            "n": 4,
+            "values": [
+              0.9375,
+              0.9375,
+              0.9375,
+              0.9375
+            ],
+            "min": 0.9375,
+            "max": 0.9375,
+            "band": 0.0,
+            "mean": 0.9375,
+            "sd": 0.0
+          },
+          "final_score": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "levels_completed": {
+            "kind": "outcome",
+            "n": 4,
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 0,
+            "band": 0,
+            "mean": 0.0,
+            "sd": 0.0
+          },
+          "wall_seconds": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              131.74,
+              130.4626,
+              130.7529,
+              129.77
+            ],
+            "min": 129.77,
+            "max": 131.74,
+            "band": 1.97,
+            "mean": 130.6814,
+            "sd": 0.8174
+          },
+          "llm_calls": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              30,
+              30,
+              30,
+              30
+            ],
+            "min": 30,
+            "max": 30,
+            "band": 0,
+            "mean": 30.0,
+            "sd": 0.0
+          },
+          "llm_input_tokens": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              41120,
+              42539,
+              42539,
+              42539
+            ],
+            "min": 41120,
+            "max": 42539,
+            "band": 1419,
+            "mean": 42184.25,
+            "sd": 709.5
+          },
+          "seconds_waited": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              79.293,
+              87.403,
+              85.256,
+              83.774
+            ],
+            "min": 79.293,
+            "max": 87.403,
+            "band": 8.11,
+            "mean": 83.9315,
+            "sd": 3.4325
+          },
+          "llm_retries": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "min": 0,
+            "max": 1,
+            "band": 1,
+            "mean": 0.25,
+            "sd": 0.5
+          },
+          "usable_reply_rate": {
+            "kind": "cost",
+            "n": 4,
+            "values": [
+              0.7333,
+              0.7333,
+              0.6333,
+              0.5333
+            ],
+            "min": 0.5333,
+            "max": 0.7333,
+            "band": 0.2,
+            "mean": 0.6583,
+            "sd": 0.0957
+          }
+        }
+      }
+    }
+  ],
+  "comparison_audit": [
+    {
+      "comparison": "comparison-dev-llm-h0-vs-dev-llm-h8.json",
+      "before": "dev-llm-h0",
+      "after": "dev-llm-h8",
+      "single_variable": true,
+      "in_scope": true,
+      "scope_note": "both arms are LLM arms of the measured configuration family",
+      "rows_judged": 18,
+      "rows_inside_noise": 11,
+      "survivors": [
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.075,
+          "after": 0.2333,
+          "abs_diff": 0.1583,
+          "null_p95": 0.0667,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.3685,
+          "after": 0.4685,
+          "abs_diff": 0.1,
+          "null_p95": 0.0916,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.8,
+          "after": 0.9,
+          "abs_diff": 0.1,
+          "null_p95": 0.0917,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 26,
+          "after": 30,
+          "abs_diff": 4,
+          "null_p95": 0,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 10.75,
+          "after": 4.75,
+          "abs_diff": 6.0,
+          "null_p95": 2.0,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 103162,
+          "after": 117824,
+          "abs_diff": 14662,
+          "null_p95": 3348,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.9,
+          "after": 0.975,
+          "abs_diff": 0.075,
+          "null_p95": 0.0667,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        }
+      ],
+      "rows": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0083,
+          "after": 0.0,
+          "abs_diff": 0.0083,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.0917,
+          "after": 0.175,
+          "abs_diff": 0.0833,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.075,
+          "after": 0.2333,
+          "abs_diff": 0.1583,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.3685,
+          "after": 0.4685,
+          "abs_diff": 0.1,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "inside_noise": false,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.8,
+          "after": 0.9,
+          "abs_diff": 0.1,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "inside_noise": false,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 26,
+          "after": 30,
+          "abs_diff": 4,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 2.5,
+          "after": 1.75,
+          "abs_diff": 0.75,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 10.75,
+          "after": 4.75,
+          "abs_diff": 6.0,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "game_overs",
+          "kind": "steering",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.215,
+          "after": 1.2263,
+          "abs_diff": 0.0113,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "final_score",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "levels_completed",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 522.4,
+          "after": 520.1,
+          "abs_diff": 2.3,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_calls",
+          "kind": "cost",
+          "before": 120,
+          "after": 120,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 103162,
+          "after": 117824,
+          "abs_diff": 14662,
+          "null_p95": 3348,
+          "null_max": 5264,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "seconds_waited",
+          "kind": "cost",
+          "before": 333.6,
+          "after": 317.9,
+          "abs_diff": 15.7,
+          "null_p95": 28.8,
+          "null_max": 44.9,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_retries",
+          "kind": "cost",
+          "before": 1,
+          "after": 4,
+          "abs_diff": 3,
+          "null_p95": 4,
+          "null_max": 6,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.9,
+          "after": 0.975,
+          "abs_diff": 0.075,
+          "null_p95": 0.0667,
+          "null_max": 0.0917,
+          "inside_noise": false,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        }
+      ]
+    },
+    {
+      "comparison": "comparison-dev-llm-h0-vs-dev-llm-r3.json",
+      "before": "dev-llm-h0",
+      "after": "dev-llm-r3",
+      "single_variable": true,
+      "in_scope": true,
+      "scope_note": "both arms are LLM arms of the measured configuration family",
+      "rows_judged": 18,
+      "rows_inside_noise": 15,
+      "survivors": [
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.3685,
+          "after": 0.1768,
+          "abs_diff": 0.1917,
+          "null_p95": 0.0916,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.8,
+          "after": 0.6083,
+          "abs_diff": 0.1917,
+          "null_p95": 0.0917,
+          "exceeds_null_max": true,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 26,
+          "after": 3,
+          "abs_diff": 23,
+          "null_p95": 0,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        }
+      ],
+      "rows": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0083,
+          "after": 0.0,
+          "abs_diff": 0.0083,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.0917,
+          "after": 0.1167,
+          "abs_diff": 0.025,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.075,
+          "after": 0.1,
+          "abs_diff": 0.025,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.3685,
+          "after": 0.1768,
+          "abs_diff": 0.1917,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.8,
+          "after": 0.6083,
+          "abs_diff": 0.1917,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 26,
+          "after": 3,
+          "abs_diff": 23,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 2.5,
+          "after": 3.25,
+          "abs_diff": 0.75,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 10.75,
+          "after": 12.25,
+          "abs_diff": 1.5,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "game_overs",
+          "kind": "steering",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.215,
+          "after": 1.2263,
+          "abs_diff": 0.0113,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "final_score",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "levels_completed",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 522.4,
+          "after": 526.0,
+          "abs_diff": 3.6,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "llm_calls",
+          "kind": "cost",
+          "before": 120,
+          "after": 120,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 103162,
+          "after": 104376,
+          "abs_diff": 1214,
+          "null_p95": 3348,
+          "null_max": 5264,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "seconds_waited",
+          "kind": "cost",
+          "before": 333.6,
+          "after": 325.3,
+          "abs_diff": 8.3,
+          "null_p95": 28.8,
+          "null_max": 44.9,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_retries",
+          "kind": "cost",
+          "before": 1,
+          "after": 1,
+          "abs_diff": 0,
+          "null_p95": 4,
+          "null_max": 6,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.9,
+          "after": 0.85,
+          "abs_diff": 0.05,
+          "null_p95": 0.0667,
+          "null_max": 0.0917,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        }
+      ]
+    },
+    {
+      "comparison": "comparison-dev-llm-p0-vs-dev-llm-p1-attempt2.json",
+      "before": "dev-llm-p0",
+      "after": "dev-llm-p1",
+      "single_variable": true,
+      "in_scope": true,
+      "scope_note": "both arms are LLM arms of the measured configuration family",
+      "rows_judged": 18,
+      "rows_inside_noise": 11,
+      "survivors": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0,
+          "after": 0.0833,
+          "abs_diff": 0.0833,
+          "null_p95": 0.0083,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.1167,
+          "after": 0.25,
+          "abs_diff": 0.1333,
+          "null_p95": 0.0833,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.125,
+          "after": 0.325,
+          "abs_diff": 0.2,
+          "null_p95": 0.0667,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 3,
+          "after": 6,
+          "abs_diff": 3,
+          "null_p95": 0,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.2263,
+          "after": 1.1695,
+          "abs_diff": 0.0568,
+          "null_p95": 0.0113,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 103309,
+          "after": 109594,
+          "abs_diff": 6285,
+          "null_p95": 3348,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.8667,
+          "after": 0.9667,
+          "abs_diff": 0.1,
+          "null_p95": 0.0667,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        }
+      ],
+      "rows": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0,
+          "after": 0.0833,
+          "abs_diff": 0.0833,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.1167,
+          "after": 0.25,
+          "abs_diff": 0.1333,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.125,
+          "after": 0.325,
+          "abs_diff": 0.2,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.1851,
+          "after": 0.1601,
+          "abs_diff": 0.025,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.6167,
+          "after": 0.5917,
+          "abs_diff": 0.025,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 3,
+          "after": 6,
+          "abs_diff": 3,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 3.0,
+          "after": 3.25,
+          "abs_diff": 0.25,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 10.75,
+          "after": 11.25,
+          "abs_diff": 0.5,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "game_overs",
+          "kind": "steering",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.2263,
+          "after": 1.1695,
+          "abs_diff": 0.0568,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "final_score",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "levels_completed",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 522.0,
+          "after": 526.2,
+          "abs_diff": 4.2,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "llm_calls",
+          "kind": "cost",
+          "before": 120,
+          "after": 120,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 103309,
+          "after": 109594,
+          "abs_diff": 6285,
+          "null_p95": 3348,
+          "null_max": 5264,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "seconds_waited",
+          "kind": "cost",
+          "before": 312.0,
+          "after": 323.3,
+          "abs_diff": 11.3,
+          "null_p95": 28.8,
+          "null_max": 44.9,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "llm_retries",
+          "kind": "cost",
+          "before": 5,
+          "after": 3,
+          "abs_diff": 2,
+          "null_p95": 4,
+          "null_max": 6,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.8667,
+          "after": 0.9667,
+          "abs_diff": 0.1,
+          "null_p95": 0.0667,
+          "null_max": 0.0917,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        }
+      ]
+    },
+    {
+      "comparison": "comparison-dev-llm-r3-vs-dev-llm-y1.json",
+      "before": "dev-llm-r3",
+      "after": "dev-llm-y1",
+      "single_variable": true,
+      "in_scope": true,
+      "scope_note": "both arms are LLM arms of the measured configuration family",
+      "rows_judged": 18,
+      "rows_inside_noise": 17,
+      "survivors": [
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 104376,
+          "after": 114142,
+          "abs_diff": 9766,
+          "null_p95": 3348,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        }
+      ],
+      "rows": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0,
+          "after": 0.0,
+          "abs_diff": 0.0,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.1167,
+          "after": 0.125,
+          "abs_diff": 0.0083,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.1,
+          "after": 0.125,
+          "abs_diff": 0.025,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.1768,
+          "after": 0.1768,
+          "abs_diff": 0.0,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.6083,
+          "after": 0.6083,
+          "abs_diff": 0.0,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 3,
+          "after": 3,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 3.25,
+          "after": 3.25,
+          "abs_diff": 0.0,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 12.25,
+          "after": 13.25,
+          "abs_diff": 1.0,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "game_overs",
+          "kind": "steering",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.2263,
+          "after": 1.2263,
+          "abs_diff": 0.0,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "final_score",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "levels_completed",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 526.0,
+          "after": 525.9,
+          "abs_diff": 0.1,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_calls",
+          "kind": "cost",
+          "before": 120,
+          "after": 120,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "llm_input_tokens",
+          "kind": "cost",
+          "before": 104376,
+          "after": 114142,
+          "abs_diff": 9766,
+          "null_p95": 3348,
+          "null_max": 5264,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "seconds_waited",
+          "kind": "cost",
+          "before": 325.3,
+          "after": 320.6,
+          "abs_diff": 4.7,
+          "null_p95": 28.8,
+          "null_max": 44.9,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "llm_retries",
+          "kind": "cost",
+          "before": 1,
+          "after": 4,
+          "abs_diff": 3,
+          "null_p95": 4,
+          "null_max": 6,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "usable_reply_rate",
+          "kind": "cost",
+          "before": 0.85,
+          "after": 0.8667,
+          "abs_diff": 0.0167,
+          "null_p95": 0.0667,
+          "null_max": 0.0917,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        }
+      ]
+    },
+    {
+      "comparison": "comparison-dev-random-30-vs-dev-llm-h0.json",
+      "before": "dev-random-30",
+      "after": "dev-llm-h0",
+      "single_variable": false,
+      "in_scope": false,
+      "scope_note": "OUT OF SCOPE: a random-policy arm is a different generator with its own variance; the null measured here does not apply to it",
+      "rows_judged": 13,
+      "rows_inside_noise": 5,
+      "survivors": [
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.2,
+          "after": 0.0917,
+          "abs_diff": 0.1083,
+          "null_p95": 0.0833,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.1833,
+          "after": 0.075,
+          "abs_diff": 0.1083,
+          "null_p95": 0.0667,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.0435,
+          "after": 0.3685,
+          "abs_diff": 0.325,
+          "null_p95": 0.0916,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.475,
+          "after": 0.8,
+          "abs_diff": 0.325,
+          "null_p95": 0.0917,
+          "exceeds_null_max": true,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 3,
+          "after": 26,
+          "abs_diff": 23,
+          "null_p95": 0,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 3.75,
+          "after": 2.5,
+          "abs_diff": 1.25,
+          "null_p95": 0.75,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 13.5,
+          "after": 10.75,
+          "abs_diff": 2.75,
+          "null_p95": 2.0,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 65.4,
+          "after": 522.4,
+          "abs_diff": 457.0,
+          "null_p95": 6.3,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        }
+      ],
+      "rows": [
+        {
+          "metric": "illegal_action_rate",
+          "kind": "steering",
+          "before": 0.0,
+          "after": 0.0083,
+          "abs_diff": 0.0083,
+          "null_p95": 0.0083,
+          "null_max": 0.0083,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "no_change_rate",
+          "kind": "steering",
+          "before": 0.2,
+          "after": 0.0917,
+          "abs_diff": 0.1083,
+          "null_p95": 0.0833,
+          "null_max": 0.1083,
+          "inside_noise": false,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "revisit_rate",
+          "kind": "steering",
+          "before": 0.1833,
+          "after": 0.075,
+          "abs_diff": 0.1083,
+          "null_p95": 0.0667,
+          "null_max": 0.1,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "top_action_share_excess",
+          "kind": "steering",
+          "before": 0.0435,
+          "after": 0.3685,
+          "abs_diff": 0.325,
+          "null_p95": 0.0916,
+          "null_max": 0.1166,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "top_action_share",
+          "kind": "steering",
+          "before": 0.475,
+          "after": 0.8,
+          "abs_diff": 0.325,
+          "null_p95": 0.0917,
+          "null_max": 0.1167,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "longest_repeat_streak",
+          "kind": "steering",
+          "before": 3,
+          "after": 26,
+          "abs_diff": 23,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_actions",
+          "kind": "steering",
+          "before": 3.75,
+          "after": 2.5,
+          "abs_diff": 1.25,
+          "null_p95": 0.75,
+          "null_max": 0.75,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "distinct_targets",
+          "kind": "steering",
+          "before": 13.5,
+          "after": 10.75,
+          "abs_diff": 2.75,
+          "null_p95": 2.0,
+          "null_max": 2.5,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        },
+        {
+          "metric": "game_overs",
+          "kind": "steering",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "same"
+        },
+        {
+          "metric": "level1_ratio",
+          "kind": "steering",
+          "before": 1.2263,
+          "after": 1.215,
+          "abs_diff": 0.0113,
+          "null_p95": 0.0113,
+          "null_max": 0.0113,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": "better"
+        },
+        {
+          "metric": "final_score",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "levels_completed",
+          "kind": "outcome",
+          "before": 0,
+          "after": 0,
+          "abs_diff": 0,
+          "null_p95": 0,
+          "null_max": 0,
+          "inside_noise": true,
+          "exceeds_null_max": false,
+          "direction_claimed": ""
+        },
+        {
+          "metric": "wall_seconds",
+          "kind": "cost",
+          "before": 65.4,
+          "after": 522.4,
+          "abs_diff": 457.0,
+          "null_p95": 6.3,
+          "null_max": 9.0,
+          "inside_noise": false,
+          "exceeds_null_max": true,
+          "direction_claimed": "worse"
+        }
+      ]
+    }
+  ]
+}

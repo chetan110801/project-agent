@@ -210,9 +210,12 @@ Written *before* the arm runs, same discipline as Exp 3 and Exp 4.
   not dilute the effect.
 - **Metrics, tagged as always.** *Steering* (decides keep/revert): `top_action_share_excess`,
   `distinct_targets`, `no_change_rate`, `revisit_rate`. *Outcome*: `final_score`,
-  `levels_completed`. *Cost*: `input_tokens`, wall seconds. Only steering decides; the
-  17-point single-seed noise floor (`eval-noise-floor`) applies, so a verdict needs a
-  consistent cross-game direction, not one game's swing.
+  `levels_completed`. *Cost*: `input_tokens`, wall seconds. Only steering decides, and each
+  metric is judged against **its own** measured band from `artifacts/noise-floor.json`
+  (`py scripts/noise_floor.py`) — 9.2 points for `top_action_share_excess`, 8.3 for
+  `no_change_rate`, 6.7 for `revisit_rate`, 2.0 for `distinct_targets`. Those replace the old
+  blanket 17-point figure, which was a per-game band being applied to suite averages. A verdict
+  still needs a consistent cross-game direction, not one game's swing.
 - **Kept-or-reverted rule.** `--attempt-memory` stays **off by default** and the mechanism
   is reverted unless steering improves with no outcome regression, recorded with before/after
   numbers (§5). A null is written up as a null (§4).

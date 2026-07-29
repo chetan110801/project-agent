@@ -109,6 +109,10 @@ def api_get(path: str, query: dict):
         doc = artifacts.get_comparison(name)
         return (200, doc) if doc else (404, {"error": f"no comparison {name!r}"})
 
+    if path == "/api/noise":
+        doc = artifacts.get_noise_floor()
+        return (200, doc) if doc else (404, {"error": "no noise-floor.json"})
+
     if path == "/api/taxonomy":
         doc = artifacts.get_taxonomy()
         return (200, doc) if doc else (404, {"error": "no failure-taxonomy.json"})

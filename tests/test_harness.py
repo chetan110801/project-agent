@@ -81,6 +81,7 @@ from scripts.run_evals import main as run_evals_main  # noqa: E402
 from scripts import compare_evals  # noqa: E402
 from scripts import run_evals  # noqa: E402
 from scripts import failure_taxonomy as ftax  # noqa: E402
+from scripts import noise_floor as nf  # noqa: E402
 
 
 class TestAction(unittest.TestCase):
@@ -1613,6 +1614,157 @@ class TestFailureTaxonomy(unittest.TestCase):
             "ls20-9607627b.llm-gemini-3.5-flash-lite-objects.80.def.trace.jsonl"))
         self.assertEqual(stand_arm, "llm-gemini-3.5-flash-lite-objects")
         self.assertEqual(sn, 80)
+
+
+class TestNoiseFloor(unittest.TestCase):
+    """The measured spread of an A/B where nothing changed (`scripts/noise_floor.py`).
+
+    Two properties carry the whole result and neither is visible by reading the output:
+    that the arms grouped as replicates really are one configuration, and that the two arms
+    of every enumerated pair share no episode. A bug in either would quietly shrink the
+    noise band, which would in turn promote noise to "finding" everywhere it is applied.
+    """
+
+    @staticmethod
+    def _ep(game, *, actions=10, illegal=0, no_change=0, unique=None, score=0):
+        return {
+            "game_id": game, "policy": "llm:test", "actions": actions,
+            "illegal_actions": illegal,
+            "no_change_actions": no_change,
+            "unique_screens": actions if unique is None else unique,
+            "top_action_count": 1, "longest_repeat_streak": 1, "distinct_actions": 2,
+            "game_overs": 0, "resets": 0, "final_score": score,
+            "final_state": "NOT_FINISHED", "wall_seconds": 1.0,
+            "median_legal_options": 4, "distinct_targets": 2,
+        }
+
+    def test_absent_flags_read_as_their_defaults_so_r3_matches_p0_attempt1(self):
+        # The grouping this whole measurement rests on. `dev-llm-r3` was recorded before
+        # --hypothesis/--progress existed, so its config has no such keys; `dev-llm-p0` has
+        # them, both False. Same agent, so they must fingerprint the same.
+        r3 = {"policy": "llm", "model": "m", "encoder": "objects", "history": 0,
+              "max_actions": 30, "seed": 0, "repeat_limit": 3}
+        p0 = {**r3, "attempts": 2, "hypothesis": False, "progress": False, "mock": False}
+        self.assertEqual(nf.fingerprint(r3, 1), nf.fingerprint(p0, 1))
+        self.assertEqual(nf.fingerprint(r3, 1), nf.fingerprint(p0, 2))
+
+    def test_progress_arm_is_a_replicate_on_attempt_1_but_not_attempt_2(self):
+        # The signal is the PREVIOUS attempt's summary, so attempt 1 of a progress arm runs
+        # the untouched control prompt. That is what makes p1 attempt 1 a free replicate.
+        control = {"policy": "llm", "model": "m", "encoder": "objects", "history": 0,
+                   "max_actions": 30, "seed": 0, "repeat_limit": 3, "progress": False}
+        treated = {**control, "progress": True}
+        self.assertEqual(nf.fingerprint(control, 1), nf.fingerprint(treated, 1))
+        self.assertNotEqual(nf.fingerprint(control, 2), nf.fingerprint(treated, 2))
+
+    def test_a_changed_setting_is_never_pooled_as_a_replicate(self):
+        base = {"policy": "llm", "model": "m", "encoder": "objects", "history": 0,
+                "max_actions": 30, "seed": 0, "repeat_limit": 3}
+        for key, value in [("history", 8), ("repeat_limit", None), ("hypothesis", True),
+                           ("encoder", "grid"), ("model", "other"), ("seed", 1),
+                           ("max_actions", 80)]:
+            with self.subTest(key=key):
+                self.assertNotEqual(
+                    nf.fingerprint(base, 1), nf.fingerprint({**base, key: value}, 1)
+                )
+
+    def test_the_two_arms_of_every_enumerated_pair_share_no_episode(self):
+        # One game, two replicates: 0% and 50% illegal. The only disjoint deals are
+        # (rep0 vs rep1) and (rep1 vs rep0), so every difference is the full 0.5. If the
+        # enumeration ever paired an arm with itself, a 0.0 would appear and drag p50 down.
+        runs = [
+            {"label": "a", "suite": "dev", "episodes": [self._ep("g1", illegal=0)]},
+            {"label": "b", "suite": "dev", "episodes": [self._ep("g1", illegal=5)]},
+        ]
+        null, pairs = nf.null_distribution(runs, ["g1"], "dev")
+        self.assertEqual(pairs, 2)
+        self.assertEqual(null["illegal_action_rate"]["null_p50"], 0.5)
+        self.assertEqual(null["illegal_action_rate"]["null_max"], 0.5)
+        self.assertFalse(null["illegal_action_rate"]["never_moved"])
+
+    def test_pair_count_is_the_exhaustive_product_over_games(self):
+        # 3 replicates -> 6 ordered i!=j choices per game; 2 games -> 36 pairs.
+        runs = [
+            {"label": f"r{i}", "suite": "dev",
+             "episodes": [self._ep("g1", illegal=i), self._ep("g2", illegal=i)]}
+            for i in range(3)
+        ]
+        _, pairs = nf.null_distribution(runs, ["g1", "g2"], "dev")
+        self.assertEqual(pairs, 36)
+
+    def test_a_metric_identical_across_replicates_is_flagged_not_trusted(self):
+        # A band of zero means "never moved here", never "cannot move" — 16 episodes cannot
+        # resolve a band below their own resolution, and the report has to say so.
+        runs = [
+            {"label": "a", "suite": "dev", "episodes": [self._ep("g1", illegal=1)]},
+            {"label": "b", "suite": "dev", "episodes": [self._ep("g1", illegal=1)]},
+        ]
+        null, _ = nf.null_distribution(runs, ["g1"], "dev")
+        self.assertTrue(null["illegal_action_rate"]["never_moved"])
+        self.assertEqual(null["illegal_action_rate"]["null_max"], 0)
+
+    def test_only_same_unit_metrics_are_compared_for_widest_band(self):
+        self.assertTrue(nf.is_rate("no_change_rate"))
+        self.assertTrue(nf.is_rate("top_action_share"))
+        self.assertTrue(nf.is_rate("top_action_share_excess"))
+        self.assertFalse(nf.is_rate("distinct_targets"))    # a count, not a share
+        self.assertFalse(nf.is_rate("llm_input_tokens"))
+        self.assertFalse(nf.is_rate("longest_repeat_streak"))
+
+    def test_audit_marks_inside_noise_and_refuses_the_random_arm(self):
+        null = {"no_change_rate": {"kind": "steering", "null_p50": 0.02,
+                                   "null_p95": 0.08, "null_max": 0.1,
+                                   "never_moved": False}}
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "comparison-a-vs-b.json").write_text(json.dumps({
+                "before": "dev-llm-a", "after": "dev-llm-b", "single_variable": True,
+                "rows": [{"kind": "steering", "metric": "no_change_rate",
+                          "before": 0.10, "after": 0.15, "direction": "worse"}],
+            }), encoding="utf-8")
+            (d / "comparison-r-vs-b.json").write_text(json.dumps({
+                "before": "dev-random-30", "after": "dev-llm-b", "single_variable": True,
+                "rows": [{"kind": "steering", "metric": "no_change_rate",
+                          "before": 0.10, "after": 0.95, "direction": "worse"}],
+            }), encoding="utf-8")
+            original = nf.EVAL_DIR
+            nf.EVAL_DIR = d
+            try:
+                audit = {c["before"]: c for c in nf.audit_comparisons(null)}
+            finally:
+                nf.EVAL_DIR = original
+
+        llm = audit["dev-llm-a"]
+        self.assertTrue(llm["in_scope"])
+        # 0.05 of movement against a p95 of 0.08: the experiment could not have told.
+        self.assertEqual(llm["rows_inside_noise"], 1)
+        self.assertEqual(llm["survivors"], [])
+        # A random-policy arm is a different generator; the band must not be applied to it.
+        self.assertFalse(audit["dev-random-30"]["in_scope"])
+        self.assertIn("OUT OF SCOPE", audit["dev-random-30"]["scope_note"])
+
+    def test_exceeding_every_change_free_pair_is_reported_separately(self):
+        null = {"revisit_rate": {"kind": "steering", "null_p50": 0.02, "null_p95": 0.06,
+                                 "null_max": 0.1, "never_moved": False}}
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "comparison-a-vs-b.json").write_text(json.dumps({
+                "before": "dev-llm-a", "after": "dev-llm-b", "single_variable": True,
+                "rows": [
+                    # past p95 but not past every pair
+                    {"kind": "steering", "metric": "revisit_rate",
+                     "before": 0.10, "after": 0.18, "direction": "worse"},
+                ],
+            }), encoding="utf-8")
+            original = nf.EVAL_DIR
+            nf.EVAL_DIR = d
+            try:
+                (only,) = nf.audit_comparisons(null)
+            finally:
+                nf.EVAL_DIR = original
+        (row,) = only["survivors"]
+        self.assertAlmostEqual(row["abs_diff"], 0.08)
+        self.assertFalse(row["exceeds_null_max"])       # 0.08 < null_max 0.1
 
 
 if __name__ == "__main__":

@@ -219,6 +219,24 @@ would have learned nothing, slowly, for a week. **Designing the measurement firs
 me find the dead metric in an afternoon instead of after that week** (note 07).
 :::
 
+### How big a difference counts — measured, not assumed
+
+A fourth discipline, and the one most people skip: each arm is **one** run, so before reading any
+difference you have to know how much the number moves on its own. [Note 08 Part 7](08-evals.md)
+has the method — 16 replicate episodes I already had on disk, split **20,736** ways into pairs of
+arms testing nothing at all. The result is a band per metric: **9.2 points** for repetition above
+chance, 8.3 for dead actions, 0.8 for illegal actions, and score never moved at all
+(`artifacts/noise-floor.json`).
+
+::: key
+**It cost zero model calls and it corrected two things I had already written down.** I had called
+the repetition guard's 2.5-point rise in dead actions a trade I made on purpose — that band is
+8.3 points, so I had no evidence I paid anything. And I had called the last experiment a *null*
+when it was a measurable degradation (Movement 5). The wins survived untouched. It also killed the
+single blanket "noise floor" I used to quote: there is no such number — it runs from 0.8 to 9.2
+points depending on the metric.
+:::
+
 ---
 
 ## Movement 5 — The investigation, and the wall it found
@@ -283,9 +301,12 @@ time you used 30 actions and cleared 0 of 7 levels. A reference clears level 1 i
 something different."* I checked two things before reading the result: the reference number
 came back for **all four** dev games (22, 18, 32, 32 — a pre-registered worry resolved), and
 the agent **read it back** (its first reasoning on one retry: *"do something different this
-time to clear level 1"*). And it **still did not help** — the "works" pattern moved the right
-way by less than the noise, while the number that cleared the noise was the agent taking *more
-dead actions*. Score 0 (note 09; `artifacts/evals/dev-llm-p1.json`).
+time to clear level 1"*). And it **did worse than nothing.** The "works" pattern moved the right
+way by less than the noise band, while **four** numbers moved the wrong way by more than *every
+one* of the 20,736 change-free differences: more dead actions, more revisits, a longer repeated
+streak, and on `ls20` the agent demanded unavailable buttons 10 times in 30 moves, each rejection
+forcing a reset. Told flatly that it had failed, it flailed. Score 0 (note 09;
+`artifacts/evals/dev-llm-p1.json`, `artifacts/noise-floor.json`).
 :::
 
 Put the four together and they stop being disappointing and start being a *result*:
@@ -457,11 +478,11 @@ checked", and every mystery on this project into a lookup.
 Honest status, no rounding up:
 
 - **Done and solid:** the hand-built loop; the encoders and their measured costs; the eval
-  suite with the steering/outcome/cost split and the dev/held-out discipline; the trace
-  machinery and the failure taxonomy built on it; the budget machinery; the four-experiment arc,
-  closed on a named wall; and the Explorer app that shows all of it offline in one command.
-  The test suite is **154 tests, passing offline in under two seconds** (0.6s of test time,
-  measured 2026-07-30).
+  suite with the steering/outcome/cost split, the dev/held-out discipline and a **measured
+  per-metric noise band**; the trace machinery and the failure taxonomy built on it; the budget
+  machinery; the four-experiment arc, closed on a named wall; and the Explorer app that shows all
+  of it offline in one command. The test suite is **163 tests, passing offline in under two
+  seconds** (1.3s of test time, measured 2026-07-30).
 - **The result is a negative one, reported as loudly as a win would be:** the agent is no
   better at the game than random on the outcome that counts — **0% of its actions reach
   `progress`**. The value is in *how thoroughly that is established* and *what it locates*.
@@ -577,11 +598,15 @@ line; then the follow-ups that actually get asked.
 > produces no new result, so it doesn't change a single number I've quoted you."
 
 **"If you had a budget, where would it go first?"**
-> "More games and multiple seeds per game, in that order. Everything I report is a single
-> seed on four games, bounded by 500 requests a day. More games attacks overfitting to the
-> handful I've stared at; more seeds attacks noise — and I can put a number on that noise,
-> because one game where my change never fired still swung 17 points. I'd rather say that
-> plainly than pretend four games is comfortable."
+> "More games, then more runs per game. Everything I report is one run per arm on four games,
+> bounded by 500 requests a day. More games attacks overfitting to the handful I've stared at.
+> More runs attacks noise — though I got a first instalment of that for free: my last experiment
+> played each game twice and its signal only speaks on the second play, so I already had four
+> runs of one setup on each of four games sitting on disk. Splitting those 16 episodes into pairs
+> of arms that share no episode gives 20,736 A/B experiments where the change is nothing at all,
+> which is my noise band per metric — between 0.8 and 9.2 points. Buying more runs can only widen
+> that band, never narrow it, which is exactly why I want them. I'd rather say all that plainly
+> than pretend four games is comfortable."
 
 **"How is this different from documentation?"**
 > "Documentation says what the code does. This whole project says *why the design is what it

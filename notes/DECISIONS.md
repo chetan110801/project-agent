@@ -5,6 +5,131 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-30 (later session) — The noise floor, measured: 20,736 change-free A/Bs, two corrected verdicts
+
+*The one item the interview pack had been promising for a week — "if I had more quota I'd spend it
+on multiple seeds" — turned out to be already paid for. No new runs, no quota, no agent code
+touched.*
+
+**The finding that made it possible.** Four eval runs are the *same effective configuration*:
+`dev-llm-r3`, `dev-llm-p0` attempt 1, `dev-llm-p0` attempt 2 (that arm has `progress=False` on
+both attempts), and `dev-llm-p1` attempt 1 (the progress signal summarises the *previous* attempt,
+so attempt 1 carries no block). Verified in code, not assumed: `render_progress_block(None)`
+returns `""` and `hypothesis=False` leaves the theory block empty — both golden-tested as the
+control prompt byte for byte — and the traces confirm all four start from the same screen and
+diverge at the first model call. That is **4 runs × 4 games = 16 episodes of one configuration**.
+
+**What was built.** `scripts/noise_floor.py` → `artifacts/noise-floor.json`. It re-derives the
+replicate grouping from the stored configs (never from my reading of them), then deals the 16
+episodes into every pair of four-game arms **sharing no episode** — 12 ordered choices per game,
+12⁴ = **20,736 pairs, enumerated exhaustively, not sampled**. Every pair is an A/B whose treatment
+is nothing, so its differences are noise by construction. Each arm's aggregate comes from
+`Arm.aggregate()` itself, so the band belongs to the numbers the tables actually print. 9 new
+tests; the two that matter assert the replicate grouping (absent flags read as defaults) and that
+no enumerated pair shares an episode — a bug in either would silently shrink the band.
+
+**The measured band (95th percentile of change-free difference).** `top_action_share_excess`
+**9.2 pts**, `no_change_rate` 8.3, `revisit_rate` 6.7, `usable_reply_rate` 6.7,
+`distinct_targets` 2.0, `distinct_actions` 0.75, `illegal_action_rate` **0.8**,
+`llm_input_tokens` 3,348; `final_score`, `levels_completed`, `longest_repeat_streak`,
+`game_overs`, `llm_calls` **never moved across all 16 episodes**.
+
+**The old figure was the right number for the wrong level — this supersedes it.** "17 points"
+came from one metric on one game (`tn36` unreadable replies 9→14 of 30 where the guard was
+provably inactive). Measured per game it is if anything understated (that game's band is **20
+points**; `ar25`'s `top_action_share_excess` band is also 20). But it was being applied to
+**four-game averages**, where averaging cancels wobble — 6.7 points for that same metric. So the
+threshold was **two to three times too lenient**, and there is no single noise floor at all: the
+bands span 0.8 → 9.2 points.
+
+**Two of the project's own recorded verdicts are corrected (§4).**
+1. **The repetition guard's "price" was never measurable.** The 2026-07-23 entry below and note 09
+   both framed `no_change_rate` 9.2%→11.7% and `revisit_rate` 7.5%→10.0% (2.5 pts each) as a
+   trade bought on purpose. Both are **inside** their bands (8.3 and 6.7). The honest claim is
+   "the streak fix is beyond every change-free pair and any price it charged is below what this
+   suite can see." The guard's wins are unaffected — `top_action_share_excess` 36.9→17.7 and
+   streak 26→3 both exceed *all* 20,736 change-free differences.
+2. **Experiment 4 was not a null on steering — it was a measurable degradation.** Six rows clear
+   the band and four are adverse *beyond every change-free pair*: `no_change_rate` 11.7%→25%,
+   `revisit_rate` 12.5%→32.5%, `illegal_action_rate` 0%→8.3%, streak 3→6. Mechanism found in the
+   episodes: on `ls20` the agent asked for unavailable buttons **10 times in 30 moves**, each
+   forcing a reset. The earlier entry had already flagged the adverse metrics as above-noise, so
+   this sharpens rather than reverses it — but "null" was the wrong word and is now corrected
+   everywhere. Score 0→0 stands; the wall is untouched.
+   *Experiment 3 is confirmed correct as written: 17 of 18 rows inside noise, only +9% tokens
+   survives. Experiment 1's revert is confirmed decisively (revisits, targets, streak, tokens all
+   beyond every change-free pair).*
+
+**Scope limits, stated in the artifact and the notes.** 16 episodes inherit their luck, so a band
+is a lower bound and more runs can only widen it — inside is decisively not evidence, just outside
+is suggestive, not proven. Both sides of a real A/B are still single runs, so clearing p95 is not
+a p-value and is never called one. "Never moved" is reported as *never moved here*, not *stable*.
+The random-policy comparison is marked **OUT OF SCOPE**: a different generator has its own
+variance.
+
+**Taught, per §6A.** Study note 08 gained **Part 7** (built incrementally: the problem → the
+anecdote that was not a measurement → the four free replicates → one game's 12 splits → all
+20,736 → the band → the re-audit → the four limits) plus two new spoken answers. Notes 09, 13, 06
+and 04 now cite per-metric bands instead of the blanket figure, and the two corrected verdicts are
+written into all of them. The Explorer app surfaces it: new `/api/noise`, a noise-band card in the
+**Evals** view, and a **"vs noise band"** column on every comparison row with out-of-scope
+comparisons refused rather than judged.
+
+**What was run / verified (§3).** `py scripts/noise_floor.py` → 20,736 pairs, artifact written.
+`py -m unittest discover -s tests` → **163 tests, OK** (1.3s). `py explorer/smoke_test.py` → all
+checks pass, including the three new ones (noise artifact present, comparison rows arrive already
+judged, the random arm marked out of scope). The Evals view was **rendered for real** against a
+live server on port 8131 under a DOM shim in Node — the noise card, band column and verdict cells
+all present, 603 nodes — and every other view re-rendered clean (`replay.js` fails under the shim
+only because Node has no `<canvas>`; unchanged by this session). One own-error caught and fixed
+mid-session: the first version of the report compared "widest band" *across units*, ranking a
+count of click targets against a share-of-actions, which would have produced a confident headline
+about nothing — hence `is_rate()` and same-unit comparison only.
+
+---
+
+## 2026-07-30 (later session) — §6A gains rule 9: no redundancy. Say it once, then link
+
+*Chetan, mid-session, unprompted: **"there should be no kind of repetitive, redundant and
+un-wanted/un-necessary explanations… because that will make me lose interest in reading and
+learning about the project"**, and **"all the current or upcoming explanations should have the
+prerequisite knowledge in the earlier explanations itself… also reference things if needed that
+already got explained earlier"**. Recorded because it is a standing instruction, not a one-off.*
+
+**The rule (now `CLAUDE.md` §6A rule 9, binding on every model).** One home per idea; everywhere
+else links to it. The only sanctioned repetition is rule 8's one-line gist and the deliberate
+rehearsal in `Say it in an interview`. Cut rather than pad — no restating for emphasis, no recaps
+of a point two paragraphs up, no summary paragraph closing a section. Prerequisites live upstream:
+if a later note needs something, teach it on the earlier rung, never fold a mini-tutorial inline.
+A fifth recheck pass was added: *redundancy — is this already said elsewhere, and could it be a
+link?* **Boredom is now a defect on the level of a wrong number**, because a note he stops reading
+teaches nothing.
+
+**The end-to-end audit he asked for, done mechanically rather than by eyeball.** All 14 study
+notes were shingled (7-word windows over prose only, tables/quotes/code/callouts excluded) to find
+near-identical sentences within and across notes, plus a heuristic scan for terms used before the
+note that defines them.
+
+Result: **zero within-note repetition**, and the forward-reference hits were all false positives
+by design — note 00 is a map that names what is coming, note 02 *is* the glossary, note 13 is the
+declared recap. Four genuine second-homes were found and fixed:
+
+- **note 11 re-narrated note 08's history experiment** (the 41 presses, the eight-line block) →
+  cut to a one-line gist plus a link, keeping only the part that is a fact about *memory*.
+- **note 09 re-taught the noise anecdote** that note 08 Part 7 now owns → cut to two lines and a
+  back-reference.
+- **note 09 re-explained the cross-process quota fix** that note 12 owns and measures → cut to
+  the event plus a link.
+- **note 13's new noise sub-section, written earlier in this same session, was itself a second
+  home** — it re-explained the whole method → cut to a gist, the bands, and the two corrections.
+  It had also repeated one sentence *inside* note 13; removed.
+
+Everything that remains is note 13 ↔ earlier notes (its header already declares "re-teaches none
+of them in full; carries a one-line gist") or single-sentence overlaps that are a term with its
+gloss. Re-running the audit after the cuts confirms it.
+
+---
+
 ## 2026-07-30 — The capstone refreshed: notes 10, 11 and the app folded into the one story
 
 *The last open item of the completion plan (`notes/05`, Milestone 3: "refresh the capstone to

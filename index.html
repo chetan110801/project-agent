@@ -3023,11 +3023,12 @@ its own API is a good way to never see the number that matters."</p>
 change, with a dev set you tune on and a held-out set you don't. It gets written when the
 suite exists, because a note about an unbuilt thing is guesswork.</p><nav class="pager"><a class="pager-prev" data-target="06-context-engineering" href="#06-context-engineering" title="Study 06 — Context engineering: choosing what the model gets to see">← <span>Context engineering: choosing what the model gets to see</span></a><a class="pager-next" data-target="08-evals" href="#08-evals" title="Study 08 — Evals: making the comparison a habit instead of an event"><span>Evals: making the comparison a habit instead of an event</span> →</a></nav></article>
 <article class="doc" id="doc-08-evals" data-tabid="08-evals"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-0" href="#sec-0">Learn from zero</a></nav><h1>Study 08 — Evals: making the comparison a habit instead of an event</h1>
-<p><em>Written 2026-07-22, the day the eval suite was built. Every number here comes from a file
-in this repo you can regenerate: <code>artifacts/evals/*.json</code> (built by <code>scripts/run_evals.py</code>),
+<p><em>Written 2026-07-22, the day the eval suite was built; Part 7 (noise) added 2026-07-30. Every
+number here comes from a file in this repo you can regenerate: <code>artifacts/evals/*.json</code> (built
+by <code>scripts/run_evals.py</code>), <code>artifacts/noise-floor.json</code> (by <code>scripts/noise_floor.py</code>),
 <code>artifacts/model-bakeoff.json</code> (by <code>scripts/model_bakeoff.py</code>), and the four run reports in
 <code>artifacts/</code> (rebuilt by <code>scripts/analyze_run.py</code> from the recordings in <code>runs/</code>). The code
-was run: 89 tests pass offline, and every arm below was played against the live server.</em></p>
+was run: the test suite passes offline, and every arm below was played against the live server.</em></p>
 <blockquote>
 <p><strong>You are here:</strong> rung 8. Part 2, the engineering.
 <strong>Assumes you read:</strong> <a href="#07-baselines-and-controlled-experiments" class="wikilink" data-target="07-baselines-and-controlled-experiments">07</a> (baselines and one
@@ -3037,9 +3038,11 @@ compare against, and we found that the game's <strong>score</strong> stays at ze
 do, so it cannot tell us whether a change helped.
 <strong>After this you can:</strong> say what an eval suite is and why every serious AI team has one,
 explain the dev/held-out split and why touching held-out data is the one unforgivable
-mistake, describe how you choose a metric when the obvious one is broken, and — the parts
-that actually land in an interview — tell the story of a metric you designed, ran, and
-found was measuring nothing, and of an experiment you ran, disproved, and reverted.</p>
+mistake, describe how you choose a metric when the obvious one is broken, say how big a
+difference has to be before it means anything — and why that is a thing you <em>measure</em> — and,
+the parts that actually land in an interview, tell the story of a metric you designed, ran,
+and found was measuring nothing; of an experiment you ran, disproved, and reverted; and of
+two conclusions you had to correct once you measured your own noise.</p>
 </blockquote>
 <hr />
 <h2>The question this note answers</h2>
@@ -3622,6 +3625,217 @@ from "I am closer to the goal". That is a harder problem than a prompt tweak, an
 which of the two you have is worth more than the eight hours it would take to find out by
 tweaking.</p>
 <hr />
+<h2>Part 7 — How big does a difference have to be before it means anything?</h2>
+<p>Everything above compares two arms that were each run <strong>once</strong>. Look again at the table from
+the experiment we just reverted:</p>
+<table>
+<thead>
+<tr>
+<th>what we measured</th>
+<th style="text-align: right;">history off</th>
+<th style="text-align: right;">history on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>actions that changed nothing</td>
+<td style="text-align: right;">9.2%</td>
+<td style="text-align: right;">11.7%</td>
+</tr>
+</tbody>
+</table>
+<p>Two and a half points worse. Is that a result?</p>
+<p>Here is the uncomfortable part: <strong>you cannot tell from this table.</strong> The model does not answer
+identically every time it is asked — it samples (<em>picks its next word with some randomness</em>),
+so running the <em>same</em> configuration twice gives two different numbers. If the same setup
+wobbles by three points on its own, then a two-and-a-half point "regression" is not a
+regression. It is the wobble.</p>
+<p>That wobble has a name.</p>
+<div class="callout key">
+<p><strong>Noise</strong> is how much a number moves when nothing about your setup changed. Until you know
+your noise, you cannot read any difference — you are looking at a ruler with no idea how thick
+its lines are.</p>
+</div>
+<h3>The embarrassing version of this project's answer</h3>
+<p>For most of this project, the noise figure I quoted was <strong>one anecdote</strong>. In the repetition-guard
+experiment, one game (<code>tn36</code>) offers exactly one legal button, so the guard could never fire
+there — its prompt was identical in both arms. And its count of replies the parser could not
+read still moved from 9 to 14 out of 30: about <strong>17 points of movement where the change was
+provably inactive</strong>. I wrote "17 points" into my notes and used it thereafter as <em>the</em> noise
+floor.</p>
+<p>That was better than nothing and much worse than a measurement. It was <strong>one metric, on one
+game, from one pair of runs</strong> — then applied to every metric in every table.</p>
+<h3>Step 1 — the fix I could not afford</h3>
+<p>The normal way to measure noise: run the same arm five times and look at how much the numbers
+spread. One arm is 120 model calls, and the free tier gives me 500 a day. Five runs of two arms
+is 1,200 calls. I cannot buy this.</p>
+<h3>Step 2 — the four free runs already on my disk</h3>
+<p>So I went looking for runs of the <em>same</em> setup that I had already paid for. A <strong>replicate</strong> is
+simply a re-run of the identical setup. I found four:</p>
+<ol>
+<li>The <strong>repetition-guard arm</strong> — guards on, nothing else added.</li>
+<li>and 3. The <strong>control arm of the progress experiment</strong>, which played each game twice. Its
+   progress signal was switched <strong>off</strong>, so both of its plays are the same plain setup.</li>
+<li>The <strong>first play of the treated arm</strong> — and this is the nice one. The progress signal is a
+   summary of <em>the previous play</em>. On the first play there is no previous play, so there is
+   nothing to show the agent: its prompt is the plain one too.</li>
+</ol>
+<p>Four runs of one setup on each of four games — <strong>16 real episodes, already recorded.</strong> The only
+thing separating them is the model's own randomness, which is exactly what I wanted to measure.</p>
+<div class="callout warn">
+<p>"Same setup" is a claim I had to check, not eyeball: two of those arms were recorded before the
+newer flags existed, so their saved settings do not even have the same fields. The check lives
+in the code — with those features off, the prompt-builder inserts an empty string, and there are
+tests asserting the prompt comes out identical to the control one, character for character.</p>
+</div>
+<h3>Step 3 — turning 4 runs into thousands of experiments</h3>
+<p>Start small. Take <strong>one</strong> game with its 4 replicate runs. Put run #1 in a left-hand arm and run</p>
+<h1>2 in a right-hand arm. Both arms are the same setup, so whatever difference you see between</h1>
+<p>them is pure noise. There are 12 ways to pick two different runs out of four like this (4
+choices for the left, then 3 remaining for the right).</p>
+<p>Now add the second game — 12 choices again, independent of the first. Two games gives 12 × 12 =
+144 combinations. Four games gives 12 × 12 × 12 × 12 = <strong>20,736</strong>.</p>
+<p>So: <strong>20,736 complete A/B experiments in which the thing being tested is nothing at all.</strong> The
+rule that the two arms never share an episode matters — if both arms reused the same run for a
+game, they would agree on that game for free and the noise would look smaller than it is.</p>
+<p>Every difference in all 20,736 is noise, by construction. Line them all up, smallest to largest,
+and you get a picture of how big a change-free difference normally is. That picture is called the
+<strong>null distribution</strong> (<em>"null" = no real change; the spread you get from nothing</em>).</p>
+<div class="callout key">
+<p>From that list, take the value that only <strong>5 in every 100</strong> differences exceed. Call it the
+<strong>band</strong>. A difference smaller than the band is something a change-free experiment produces
+routinely, so it tells you nothing. That is the number I was missing.</p>
+</div>
+<div class="callout example">
+<p>All of it is one command — <code>py scripts/noise_floor.py</code> — writing <code>artifacts/noise-floor.json</code>,
+using <strong>zero</strong> model calls. Every one of the 20,736 is worked out exactly, not sampled, so the
+answer does not depend on any random choice of mine. Cheapest experiment in the project, and it
+re-judges every other one.</p>
+</div>
+<h3>What the noise actually is</h3>
+<p>From 20,736 change-free pairs on the four dev games (30 actions each):</p>
+<table>
+<thead>
+<tr>
+<th>metric</th>
+<th style="text-align: right;">change-free difference exceeded only 5% of the time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>repetition above chance (<code>top_action_share_excess</code>)</td>
+<td style="text-align: right;"><strong>9.2 points</strong></td>
+</tr>
+<tr>
+<td>actions that changed nothing (<code>no_change_rate</code>)</td>
+<td style="text-align: right;"><strong>8.3 points</strong></td>
+</tr>
+<tr>
+<td>screens revisited (<code>revisit_rate</code>)</td>
+<td style="text-align: right;"><strong>6.7 points</strong></td>
+</tr>
+<tr>
+<td>replies the parser could read (<code>usable_reply_rate</code>)</td>
+<td style="text-align: right;"><strong>6.7 points</strong></td>
+</tr>
+<tr>
+<td>different targets tried (<code>distinct_targets</code>)</td>
+<td style="text-align: right;"><strong>2.0 targets</strong></td>
+</tr>
+<tr>
+<td>different actions tried (<code>distinct_actions</code>)</td>
+<td style="text-align: right;"><strong>0.75 actions</strong></td>
+</tr>
+<tr>
+<td>illegal actions (<code>illegal_action_rate</code>)</td>
+<td style="text-align: right;"><strong>0.8 points</strong></td>
+</tr>
+<tr>
+<td>input tokens</td>
+<td style="text-align: right;"><strong>3,348 tokens</strong></td>
+</tr>
+<tr>
+<td><strong>score, levels completed, longest identical streak</strong></td>
+<td style="text-align: right;"><strong>0 — never moved at all</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Read the first thing that jumps out: there is no such thing as "the" noise floor. It is
+<strong>9.2 points for one metric and 0.8 points for another</strong> — an eleven-fold difference. A single
+blanket number was always going to be wrong twice: too strict for the stable metrics, too
+lenient for the jumpy ones.</p>
+<p>And my old 17-point figure? It was not a wrong number. It was <strong>the right number for the wrong
+thing.</strong></p>
+<p>Look at one game at a time and the noise really is that big: on <code>tn36</code> the parser-readable rate
+covered a 20-point range across four identical runs. But my tables report the <strong>average of four
+games</strong>, and averaging calms things down — when one game jumps up, another is usually drifting
+down, so the average moves less than any single game does. Measured: 20 points of wobble per game
+becomes 6.7 points of wobble in the four-game average.</p>
+<p>So I had a <strong>per-game</strong> figure and I was using it to judge <strong>four-game averages</strong> — a threshold
+two to three times too loose. Whichever level you are claiming at, use the band from that level.</p>
+<h3>Re-judging all four experiments, after the fact</h3>
+<p>This is the part that made the measurement worth doing. Every comparison already stored in
+<code>artifacts/evals/</code> got re-scored against the measured band:</p>
+<table>
+<thead>
+<tr>
+<th>experiment</th>
+<th>what survives the noise band</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1. history in the prompt</strong> (reverted)</td>
+<td>Survives, decisively. Revisits +15.8 points, different targets 10.75 → 4.75, longest streak 26 → 30, +14,662 tokens — all bigger than <em>every one</em> of the 20,736 change-free differences. The revert was right.</td>
+</tr>
+<tr>
+<td><strong>2. repetition guard</strong> (kept)</td>
+<td>The two wins survive and are bigger than every change-free pair: repetition above chance 36.9 → 17.7 points, longest streak 26 → 3.</td>
+</tr>
+<tr>
+<td><strong>3. falsifiable theory</strong> (not adopted)</td>
+<td>17 of 18 rows inside noise. Only the token cost (+9%) survives. Confirmed null — I had called this correctly.</td>
+</tr>
+<tr>
+<td><strong>4. after-the-fact progress signal</strong> (not adopted)</td>
+<td>Six rows survive, and four are <em>adverse</em>: dead actions 11.7% → 25%, revisits 12.5% → 32.5%, illegal actions 0% → 8.3%, longest streak 3 → 6. Score 0 → 0. Not a null — a measurable <strong>degradation</strong>.</td>
+</tr>
+</tbody>
+</table>
+<p>Two of those rows changed my mind about something I had written down.</p>
+<p><strong>The repetition guard's "price" was never measurable.</strong> I reported two red rows as the trade I
+knowingly bought: dead actions 9.2% → 11.7% and revisits 7.5% → 10.0%, both 2.5 points. The
+measured bands are 8.3 and 6.7 points. <strong>Both red rows are inside noise.</strong> The honest statement
+is not "I paid 2.5 points of dead actions for the streak fix" — it is <em>"the streak fix was
+enormous, and any price it charged was too small for my suite to see."</em> I had been telling a
+tidy story about a trade-off I had no evidence for.</p>
+<p><strong>Experiment 4 was worse than null, and now I can say so.</strong> Its adverse metrics do not merely
+clear the band, they exceed <em>every</em> change-free difference. On <code>ls20</code> the agent asked for
+unavailable buttons 10 times out of 30 — each rejection forcing a reset — after being told
+flatly that it had failed. Told it was failing, it did not explore better; it flailed. That is
+a sharper finding than "no effect", and it was only sayable once the band existed.</p>
+<h3>The three things this cannot tell you</h3>
+<div class="callout warn">
+<ol>
+<li><strong>Sixteen episodes is not many, so the band inherits their luck.</strong> More runs could only make
+   it wider, never narrower. So: inside the band means <em>definitely not evidence</em>; just outside
+   the band means <em>worth a look</em>, not <em>proven</em>.</li>
+<li><strong>A real A/B still has one run per side.</strong> "Bigger than 95% of change-free differences" is
+   as strong as I can put it, and I do not dress it up as a statistical test.</li>
+<li><strong>"Never moved" is not "cannot move".</strong> Score and longest streak were identical in all 16
+   episodes. Sixteen episodes cannot see a wobble smaller than themselves, so the report says
+   <em>never moved here</em> — a fact — rather than <em>is stable</em>, which would be a guess.</li>
+<li><strong>It does not apply to the random baseline.</strong> Random button-pressing wobbles by its own
+   amount, not the model's, so the random-vs-LLM comparison is marked <strong>out of scope</strong> instead
+   of being judged by the wrong band.</li>
+</ol>
+</div>
+<div class="callout key">
+<p>The reusable habit: <strong>look for replicates you have already paid for.</strong> A control arm, a run that
+plays each game twice, a feature that is inert on the first pass — any of these is a free
+measurement of your own noise, sitting in files you already have.</p>
+</div>
+<hr />
 <h2>Say it in an interview</h2>
 <p><strong>"Tell me how you evaluate your agent."</strong></p>
 <blockquote>
@@ -3716,8 +3930,36 @@ not tokens — measured, the arm ran at 13.8 calls a minute against a ceiling of
 using 11.8K tokens a minute against a ceiling of 250K. So an arm spends most of its
 wall-clock asleep on the rate limiter: 334 seconds of 522. Four games is the largest suite I can
 run twice in an evening, which is what an A/B needs. If I had budget, the first thing I'd
-spend it on is more games and multiple seeds per game, in that order — more games attacks
-overfitting, more seeds attacks noise, and right now overfitting is the bigger risk."</p>
+spend it on is more games, because overfitting to four games I've stared at is now my bigger
+risk — noise I've since managed to measure for free."</p>
+</blockquote>
+<p><strong>"How do you know your differences aren't just noise?"</strong> <em>(the answer that shows measurement discipline)</em></p>
+<blockquote>
+<p>"I measured it instead of guessing. Each arm is one run, so a difference only counts if it's
+bigger than what two <em>identical</em> runs give you — and repeat runs cost 120 model calls each
+against a 500-a-day free cap, so I couldn't buy them. Then I found four of them already on my
+disk. My progress-signal experiment played each game twice, and the signal is a summary of the
+previous play — so the first play of the treated arm had nothing to show the agent and ran the
+plain prompt. With that, the control arm's two plays, and an earlier arm on the same settings,
+I had four runs of one setup on each of four games: 16 episodes, already paid for.</p>
+<p>Then I split those 16 into two four-game arms that share no episode. There are 20,736 ways to
+do that, and I work out all of them — every one is an A/B experiment where the change is
+nothing at all, so every difference is noise. I take the size that only 5% of them exceed, and
+that's my band per metric. It came out between 0.8 and 9.2 points depending on the metric,
+which was the real lesson: there's no single noise floor. My old figure was one anecdote from
+one game, and I'd been using a per-game number to judge four-game averages, which made it two
+to three times too loose."</p>
+</blockquote>
+<p><strong>"Did that change any of your conclusions?"</strong></p>
+<blockquote>
+<p>"Two of them. I'd written that my repetition guard cost me 2.5 points of dead actions, and
+called it a trade I made on purpose. The band for that metric is 8.3 points — so the cost was
+inside noise and I'd been telling a tidy story about a trade-off I had no evidence for. And
+I'd called my last experiment a null. Against the band, four of its metrics are worse than
+<em>every single one</em> of those 20,736 change-free differences: told flatly that it had failed,
+the agent started demanding buttons that weren't even available, ten times in thirty moves on
+one game. So it wasn't a null, it was a measurable degradation — which is more useful to know.
+The wins held up: the streak fix and the history revert both clear the band easily."</p>
 </blockquote>
 <hr />
 <p><strong>Next:</strong> note 09 — exploration: the note above ends by promising a progress signal as the
@@ -4053,6 +4295,7 @@ identical setup with the guard switched off. One variable moved.</p>
 <th style="text-align: right;">guard off</th>
 <th style="text-align: right;">guard on</th>
 <th></th>
+<th>vs the noise band</th>
 </tr>
 </thead>
 <tbody>
@@ -4061,56 +4304,74 @@ identical setup with the guard switched off. One variable moved.</p>
 <td style="text-align: right;">26</td>
 <td style="text-align: right;"><strong>3</strong></td>
 <td>better</td>
+<td>beyond every change-free pair</td>
 </tr>
 <tr>
 <td>repetition above chance</td>
 <td style="text-align: right;">+36.9 pts</td>
 <td style="text-align: right;"><strong>+17.7 pts</strong></td>
 <td>better</td>
+<td>beyond every change-free pair</td>
 </tr>
 <tr>
 <td>different actions tried</td>
 <td style="text-align: right;">2.5</td>
 <td style="text-align: right;">3.25</td>
 <td>better</td>
+<td>inside noise (band 0.75)</td>
 </tr>
 <tr>
 <td>different targets tried</td>
 <td style="text-align: right;">10.75</td>
 <td style="text-align: right;">12.25</td>
 <td>better</td>
+<td>inside noise (band 2.0)</td>
 </tr>
 <tr>
 <td>actions that changed nothing</td>
 <td style="text-align: right;">9.2%</td>
 <td style="text-align: right;">11.7%</td>
 <td>worse</td>
+<td>inside noise (band 8.3 pts)</td>
 </tr>
 <tr>
 <td>screens revisited</td>
 <td style="text-align: right;">7.5%</td>
 <td style="text-align: right;">10.0%</td>
 <td>worse</td>
+<td>inside noise (band 6.7 pts)</td>
 </tr>
 <tr>
 <td><strong>score</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td>—</td>
+<td>never moved at all</td>
 </tr>
 <tr>
 <td>tokens spent</td>
 <td style="text-align: right;">103,162</td>
 <td style="text-align: right;">104,376</td>
 <td>+1.2%</td>
+<td>inside noise (band 3,348)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>We kept it</strong>, and the reason for keeping it despite two red rows is worth learning as a
-pattern: both red rows come from <strong>one game out of four</strong>. On that game the agent, denied its
-favourite button, tried alternatives that did nothing. That is the trade we bought on
-purpose — paying 2.5 points of dead actions to stop losing 26 turns in a row to one button —
-and the eval suite makes it a <em>visible</em> trade instead of a hidden one.</p>
+<p><strong>We kept it.</strong> The last column is the part I could not write on the day — it arrived later,
+when the noise band of note 08 Part 7 was finally measured, and it corrected me.</p>
+<p>At the time I explained away the two red rows as a <em>trade</em>: both come from one game out of
+four, where the agent, denied its favourite button, tried alternatives that did nothing. I
+wrote that we were "paying 2.5 points of dead actions to stop losing 26 turns in a row to one
+button". Measured, the change-free band for that metric is <strong>8.3 points</strong>. So the 2.5-point
+price is inside noise: I cannot say I paid it, only that if there was a price my suite was too
+small to see it.</p>
+<div class="callout warn">
+<p>The tidy story was the tempting one, and it was unfalsifiable until I measured the wobble. The
+correct version is less quotable and more useful: <strong>the streak fix is enormous and beyond
+anything chance produced; every cost I attributed to it is inside noise.</strong> Note how the mistake
+was not a wrong number — 2.5 points is exactly what the arms differed by. It was calling a
+number a <em>finding</em>.</p>
+</div>
 <div class="callout warn">
 <p><strong>The headline is not the win.</strong> The score is still 0, and level progress did not move. The
 guard did exactly what it was designed to do and <strong>the agent is no better at the game.</strong> If
@@ -4124,16 +4385,11 @@ code fired <strong>0 times out of 120</strong>. The agent complied with the sent
 <em>"ACTION2 was blocked after 3 consecutive uses, so I must switch to ACTION1."</em> We kept the
 enforcement half anyway. One obedient run is not a guarantee, and the difference between a
 request and a guarantee is the whole reason we write guards.</p>
-<p><strong>One game gave us a free measurement of noise.</strong> On the fourth game the guard never fired at
-all, in either arm — the agent clicked 27 different squares in 30 moves, so it never repeated
-itself three times. Its prompt was therefore unchanged between the two runs. And its count of
-replies we could not read still moved from <strong>9 to 14 out of 30</strong>.</p>
-<div class="callout key">
-<p>A metric that moves in a game where your change never fired is <strong>noise</strong>, not an effect. That
-one number is the first honest sense of how much of a single run's difference is just the
-model rolling different dice — and it is why "5 metrics improved" is a weaker claim than it
-looks when each game is played only once.</p>
-</div>
+<p><strong>And one game handed us a free glimpse of noise.</strong> On the fourth game the guard never fired in
+either arm — 27 different squares clicked in 30 moves, so never three in a row — meaning its
+prompt was identical in both runs, and its unreadable replies <em>still</em> moved 9 → 14 of 30. This
+is the observation <a href="#08-evals" class="wikilink" data-target="08-evals">note 08 Part 7</a> turns into a proper per-metric band; the point
+here is only that it exists.</p>
 <p>One last thing to be honest about: this guard is not the agent getting smarter. It is the
 <em>harness</em> compensating for the agent. That is the project's thesis rather than a confession —
 the engineering around the model is the part you control — but it should be said in those
@@ -4236,15 +4492,14 @@ four arms was a fresh program that believed it had the full 500. Four times 120 
 the earlier runs and the day was already over quota. The counter was per-<em>run</em> when the limit
 is per-<em>day</em>.</p>
 </div>
-<p>The fix is the kind of unglamorous plumbing that separates a harness from a script: every
-request now writes one line to a file that outlives the program, and a run <strong>reads that file
-before it starts and refuses to begin an arm that will not fit in what is left of the day</strong>.
-An arm that dies half-way is not a cheap failure — it spends the quota <em>and</em> leaves a table
-full of random fallbacks that look like play. Better to not start.</p>
+<p>The fix is a counter that outlives the program, plus a refusal to start an arm that will not fit
+in what is left of the day — because an arm that dies half-way spends the quota <em>and</em> leaves a
+table full of random fallbacks that look like play. <a href="#12-budgets-tokens-cost-latency" class="wikilink" data-target="12-budgets-tokens-cost-latency">Note 12</a>
+is where that machinery is built and measured; here it is only the thing that stopped the run.</p>
 <p><strong>The window rolled the next day, and the arm was re-run to completion</strong> — all four dev games,
-120 real model calls, no fallbacks. Now report it against the noise floor: a single-seed
-difference of 17 points was shown that same morning to be within noise, so nothing small is a
-result. Guard-only against guard-plus-falsification, aggregated over the four games:</p>
+120 real model calls, no fallbacks. Now report it against the noise band (note 08 Part 7), which
+says how far each number drifts when nothing changes. Guard-only against
+guard-plus-falsification, aggregated over the four games:</p>
 <table>
 <thead>
 <tr>
@@ -4252,6 +4507,7 @@ result. Guard-only against guard-plus-falsification, aggregated over the four ga
 <th style="text-align: right;">guard only</th>
 <th style="text-align: right;">+ falsification</th>
 <th></th>
+<th>vs the noise band</th>
 </tr>
 </thead>
 <tbody>
@@ -4260,36 +4516,42 @@ result. Guard-only against guard-plus-falsification, aggregated over the four ga
 <td style="text-align: right;">+17.7 pts</td>
 <td style="text-align: right;">+17.7 pts</td>
 <td>identical</td>
+<td>inside (band 9.2 pts)</td>
 </tr>
 <tr>
 <td>longest identical streak</td>
 <td style="text-align: right;">3</td>
 <td style="text-align: right;">3</td>
 <td>same</td>
+<td>never moved at all</td>
 </tr>
 <tr>
 <td>different targets tried</td>
 <td style="text-align: right;">12.25</td>
 <td style="text-align: right;">13.25</td>
-<td>+1, within noise</td>
+<td>+1</td>
+<td>inside (band 2.0)</td>
 </tr>
 <tr>
 <td><strong>score</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td>—</td>
+<td>never moved at all</td>
 </tr>
 <tr>
 <td>tokens</td>
 <td style="text-align: right;">104,376</td>
 <td style="text-align: right;">114,142</td>
 <td>+9%</td>
+<td><strong>beyond</strong> (band 3,348)</td>
 </tr>
 </tbody>
 </table>
-<p>Nothing there clears the noise floor — the repetition number is <em>byte-for-byte identical</em>
-between the two arms. <strong>On the numbers, this changed nothing.</strong> But the numbers are not where
-this experiment's finding is.</p>
+<p>Seventeen of the eighteen measured rows are inside the band. The one that clears it is the bill:
+<strong>+9% tokens.</strong> The repetition number is <em>byte-for-byte identical</em> between the two arms.
+<strong>On the numbers, this bought nothing and cost 9%.</strong> But the numbers are not where this
+experiment's finding is.</p>
 <div class="callout key">
 <p>The finding is about the <em>mechanism</em>, and you can see it without any statistics. The stuck
 agent held <strong>one theory for 41 turns</strong>. Under the falsification prompt the agent stated <strong>17
@@ -4369,6 +4631,7 @@ the numbers that moved enough to trust moved the <em>wrong</em> way.</p>
 <th style="text-align: right;">control</th>
 <th style="text-align: right;">+ progress signal</th>
 <th></th>
+<th>vs the noise band</th>
 </tr>
 </thead>
 <tbody>
@@ -4376,37 +4639,57 @@ the numbers that moved enough to trust moved the <em>wrong</em> way.</p>
 <td>repetition above chance</td>
 <td style="text-align: right;">18.5 pts</td>
 <td style="text-align: right;">16.0 pts</td>
-<td>−2.5, within noise</td>
+<td>−2.5</td>
+<td>inside (band 9.2 pts)</td>
 </tr>
 <tr>
 <td>different targets tried</td>
 <td style="text-align: right;">10.75</td>
 <td style="text-align: right;">11.25</td>
-<td>+0.5, within noise</td>
+<td>+0.5</td>
+<td>inside (band 2.0)</td>
 </tr>
 <tr>
 <td>actions that changed nothing</td>
-<td style="text-align: right;">12%</td>
+<td style="text-align: right;">11.7%</td>
 <td style="text-align: right;">25%</td>
 <td><strong>worse</strong></td>
+<td><strong>beyond every change-free pair</strong></td>
 </tr>
 <tr>
 <td>screens revisited</td>
-<td style="text-align: right;">12%</td>
-<td style="text-align: right;">32%</td>
-<td><strong>worse — clears the noise band</strong></td>
+<td style="text-align: right;">12.5%</td>
+<td style="text-align: right;">32.5%</td>
+<td><strong>worse</strong></td>
+<td><strong>beyond every change-free pair</strong></td>
+</tr>
+<tr>
+<td>illegal actions</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">8.3%</td>
+<td><strong>worse</strong></td>
+<td><strong>beyond every change-free pair</strong></td>
+</tr>
+<tr>
+<td>longest identical streak</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
+<td><strong>worse</strong></td>
+<td><strong>never moved in 16 control episodes</strong></td>
 </tr>
 <tr>
 <td><strong>score</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td style="text-align: right;"><strong>0</strong></td>
 <td>—</td>
+<td>never moved at all</td>
 </tr>
 </tbody>
 </table>
 <p>Read it honestly. "Repetition down, targets up" is the pattern that would have said <em>working</em> — and
-it is there, but at half a point and two-and-a-half points, well inside the 17-point noise floor
-Part 9 established. Break it out by game and it dissolves. Repetition-above-chance <em>fell</em> on two
+it is there, but at half a point and two-and-a-half points, well inside the measured bands for
+those two metrics (2.0 targets and 9.2 points; note 08 Part 7). Break it out by game and it
+dissolves. Repetition-above-chance <em>fell</em> on two
 games — on <code>ar25</code> sharply (0.36 → 0.22), and that game also tripled its distinct targets (4 → 10),
 the one case that looks like the pattern working — but <em>rose</em> on a third (<code>sb26</code>), and could not
 move on the fourth, the single-action game. And the +0.5 on "targets" is an averaging trick: the two
@@ -4461,21 +4744,32 @@ two percent of its moves and my LLM on thirty to seventy-seven percent, so the r
 <p>"On what it was built to fix, yes and by a lot: the longest identical streak went from 26
 to 3 and repetition-above-chance halved, from plus 37 points to plus 18, for one percent
 more tokens. On whether the agent plays better — no. Score stayed at zero, level progress
-didn't move. I kept it, because two of the three metrics that got worse came from a single
-game where the agent, denied its favourite button, tried things that did nothing, and
-that's the trade I meant to make. But I report it as 'the guard works and the agent is not
+didn't move. I kept it. At the time I explained the metrics that got worse as a trade I
+meant to make; when I later measured my noise band properly, those costs turned out to be
+inside it, so the honest version is 'the streak fix is huge and any price it charged is too
+small for my suite to see'. Either way I report it as 'the guard works and the agent is not
 better yet', because the alternative is a table full of green rows that means nothing."</p>
 </blockquote>
 <p><strong>Follow-up: "How do you know that improvement isn't noise?"</strong></p>
 <blockquote>
-<p>"Partly I don't, and I can put a number on my uncertainty. One of the four games never
-triggered the guard at all — the agent clicked 27 different squares in 30 moves, so it never
-repeated three times, which means its prompt was identical in both arms. Its count of
-unreadable replies still moved from 9 to 14 out of 30. So a game where my change was
-provably inactive still swung by 17 points, which tells me single-seed differences of that
-size are within noise. The streak going from 26 to 3 is far outside it and is anyway true
-by construction. If I had more free quota I'd spend it on multiple seeds per game before
-anything else."</p>
+<p>"I measured the noise instead of assuming it. The first version of this answer was an
+anecdote: one of the four games never triggered the guard at all — the agent clicked 27
+different squares in 30 moves, so it never repeated three times and its prompt was identical
+in both arms — and its count of unreadable replies still moved from 9 to 14 out of 30. A game
+where my change was provably inactive swinging 17 points told me something, but it was one
+metric on one game, and I was applying it to every metric in every table.</p>
+<p>What I do now is a real measurement that cost nothing. My progress-signal experiment ran two
+attempts per game, and its signal is a summary of the <em>previous</em> attempt — so attempt 1 of
+the treated arm is the control prompt byte for byte. Counting that, the control arm's two
+attempts, and an earlier arm with the same settings, I already had four runs of one
+configuration on each of four games. I deal those 16 episodes into two four-game arms that
+share no episode — 12 to the fourth, 20,736 A/B experiments in which the change is nothing at
+all — and take the 95th percentile of each metric's difference. That's my band: 9.2 points for
+repetition, 8.3 for dead actions, 0.8 for illegal actions. So there is no single noise floor,
+and my old 17-point figure was a <em>per-game</em> band being used on <em>suite</em> averages, which made it
+two to three times too lenient. The streak going from 26 to 3 is bigger than all 20,736
+change-free differences, so that one was never in doubt. More seeds would still be the first
+thing I'd buy — more runs can only widen the band, never narrow it."</p>
 </blockquote>
 <p><strong>Follow-up: "Isn't that just hard-coding around a weak model?"</strong></p>
 <blockquote>
@@ -4536,13 +4830,16 @@ do something different.' I checked two things before reading the result — that
 number came back for all four games, which it did, 22, 18, 32, 32, and that the line appeared
 only where it should, the second attempts of the treatment arm. The agent even read it back; its
 first reasoning on one retry was 'do something different this time to clear level 1.' And the
-score stayed zero. The metric that would have meant success moved the right way by less than the
-noise; the one that cleared the noise was the agent taking more actions that did nothing. So the
-single signal that actually knows the goal, delivered in plain words and provably read, still
-didn't help — because telling something it failed isn't telling it what would work. That closed
-the arc for me: four experiments, each changed the behaviour, none moved the score, and together
-they point at the real gap — the agent can't turn feedback into a better next action without
-learning across attempts."</p>
+score stayed zero. The metrics that would have meant success moved the right way by less than my
+noise band; four metrics moved the <em>wrong</em> way by more than every single one of the 20,736
+change-free differences I'd measured — more dead actions, more revisits, a longer repeated
+streak, and on one game the agent demanded unavailable buttons 10 times in 30 moves, each one
+forcing a reset. So this isn't even a null: telling the agent flatly that it had failed made it
+measurably flail. The single signal that actually knows the goal, delivered in plain words and
+provably read, made things worse — because telling something it failed isn't telling it what
+would work. That closed the arc for me: four experiments, each changed the behaviour, none moved
+the score, and together they point at the real gap — the agent can't turn feedback into a better
+next action without learning across attempts."</p>
 </blockquote>
 <hr />
 <p>With Part 10 the four-experiment steering arc is <strong>closed</strong> — four interventions, four behaviour
@@ -5012,22 +5309,17 @@ two experiments you can re-run.</p>
 last few turns. For our agent it is the <strong>history window</strong>: the agent's own last N actions and
 what each one changed on screen, pasted into the prompt (<code>harness/frames.render_history</code>).</p>
 </div>
-<p>We built it for a concrete reason (note 05): in the very first LLM run the agent pressed
-<code>ACTION3</code> <strong>forty-one times in a row</strong>, writing a fresh justification each turn. It was not
-broken. It was being asked a question <em>with no memory in it</em> — it saw one screen, one last
-action, one diff (<em>what changed since the previous screen</em>), and from that spot pressing the button again is a perfectly reasonable
-answer. Forty times in a row is only visibly absurd <strong>if you can see the other thirty-nine.</strong>
-Short-term memory was meant to let it see them.</p>
-<p>Here is the part that makes this note worth reading. <strong>It backfired.</strong> The experiment (note 08)
-added the last 8 actions to the prompt, measured it against the same agent without them, and
-the version <em>with</em> memory came out <strong>worse</strong> on most of the steering metrics (<em>the numbers that track whether its play improved</em>), for more tokens.
-The change was reverted. And the reason is the lesson:</p>
+<p>Why we built it, in one line you already have: the agent pressed one button 41 times in a row
+because it was being asked a question <em>with no memory in it</em>, and forty times is only visibly
+absurd if you can see the other thirty-nine (note 05).</p>
+<p>And it <strong>backfired</strong> — <a href="#08-evals" class="wikilink" data-target="08-evals">note 08 Part 6</a> has the experiment and the numbers: eight
+past actions in the prompt, worse on most steering metrics (<em>the numbers that track whether its
+play improved</em>), reverted. What belongs in <em>this</em> note is the reason, because it is a fact about
+memory rather than about that one experiment:</p>
 <div class="callout warn">
-<p>After eight presses of the same button, the history block reads:
-<code>ACTION3 -&gt; 2 cells changed</code> — eight times over. I read that block as <em>"you are stuck, stop."</em>
-<strong>The model read it as <em>"this action reliably works — keep going."</em></strong> Eight lines of the same
-small effect are eight pieces of evidence <em>for</em> the very thing I wanted it to abandon. The
-memory was accurate. It just pointed the wrong way.</p>
+<p>Eight lines of <code>ACTION3 -&gt; 2 cells changed</code> read to me as <em>"you are stuck, stop."</em> <strong>The model
+read them as <em>"this action reliably works — keep going."</em></strong> The memory was perfectly accurate.
+It just pointed the wrong way.</p>
 </div>
 <div class="callout key">
 <p><strong>Memory is only as useful as the conclusion it lets the model draw.</strong> A record of <em>what you
@@ -5759,6 +6051,21 @@ started tweaking prompts against a dead score, every experiment would have read 
 would have learned nothing, slowly, for a week. <strong>Designing the measurement first is what let
 me find the dead metric in an afternoon instead of after that week</strong> (note 07).</p>
 </div>
+<h3>How big a difference counts — measured, not assumed</h3>
+<p>A fourth discipline, and the one most people skip: each arm is <strong>one</strong> run, so before reading any
+difference you have to know how much the number moves on its own. <a href="#08-evals" class="wikilink" data-target="08-evals">Note 08 Part 7</a>
+has the method — 16 replicate episodes I already had on disk, split <strong>20,736</strong> ways into pairs of
+arms testing nothing at all. The result is a band per metric: <strong>9.2 points</strong> for repetition above
+chance, 8.3 for dead actions, 0.8 for illegal actions, and score never moved at all
+(<code>artifacts/noise-floor.json</code>).</p>
+<div class="callout key">
+<p><strong>It cost zero model calls and it corrected two things I had already written down.</strong> I had called
+the repetition guard's 2.5-point rise in dead actions a trade I made on purpose — that band is
+8.3 points, so I had no evidence I paid anything. And I had called the last experiment a <em>null</em>
+when it was a measurable degradation (Movement 5). The wins survived untouched. It also killed the
+single blanket "noise floor" I used to quote: there is no such number — it runs from 0.8 to 9.2
+points depending on the metric.</p>
+</div>
 <hr />
 <h2>Movement 5 — The investigation, and the wall it found</h2>
 <p>This is the heart of the story, and it is a <em>negative</em> result told as one arc: <strong>four
@@ -5816,9 +6123,12 @@ time you used 30 actions and cleared 0 of 7 levels. A reference clears level 1 i
 something different."</em> I checked two things before reading the result: the reference number
 came back for <strong>all four</strong> dev games (22, 18, 32, 32 — a pre-registered worry resolved), and
 the agent <strong>read it back</strong> (its first reasoning on one retry: <em>"do something different this
-time to clear level 1"</em>). And it <strong>still did not help</strong> — the "works" pattern moved the right
-way by less than the noise, while the number that cleared the noise was the agent taking <em>more
-dead actions</em>. Score 0 (note 09; <code>artifacts/evals/dev-llm-p1.json</code>).</p>
+time to clear level 1"</em>). And it <strong>did worse than nothing.</strong> The "works" pattern moved the right
+way by less than the noise band, while <strong>four</strong> numbers moved the wrong way by more than <em>every
+one</em> of the 20,736 change-free differences: more dead actions, more revisits, a longer repeated
+streak, and on <code>ls20</code> the agent demanded unavailable buttons 10 times in 30 moves, each rejection
+forcing a reset. Told flatly that it had failed, it flailed. Score 0 (note 09;
+<code>artifacts/evals/dev-llm-p1.json</code>, <code>artifacts/noise-floor.json</code>).</p>
 </div>
 <p>Put the four together and they stop being disappointing and start being a <em>result</em>:</p>
 <div class="callout key">
@@ -5987,11 +6297,11 @@ checked", and every mystery on this project into a lookup.</p>
 <p>Honest status, no rounding up:</p>
 <ul>
 <li><strong>Done and solid:</strong> the hand-built loop; the encoders and their measured costs; the eval
-  suite with the steering/outcome/cost split and the dev/held-out discipline; the trace
-  machinery and the failure taxonomy built on it; the budget machinery; the four-experiment arc,
-  closed on a named wall; and the Explorer app that shows all of it offline in one command.
-  The test suite is <strong>154 tests, passing offline in under two seconds</strong> (0.6s of test time,
-  measured 2026-07-30).</li>
+  suite with the steering/outcome/cost split, the dev/held-out discipline and a <strong>measured
+  per-metric noise band</strong>; the trace machinery and the failure taxonomy built on it; the budget
+  machinery; the four-experiment arc, closed on a named wall; and the Explorer app that shows all
+  of it offline in one command. The test suite is <strong>163 tests, passing offline in under two
+  seconds</strong> (1.3s of test time, measured 2026-07-30).</li>
 <li><strong>The result is a negative one, reported as loudly as a win would be:</strong> the agent is no
   better at the game than random on the outcome that counts — <strong>0% of its actions reach
   <code>progress</code></strong>. The value is in <em>how thoroughly that is established</em> and <em>what it locates</em>.</li>
@@ -6107,11 +6417,15 @@ produces no new result, so it doesn't change a single number I've quoted you."</
 </blockquote>
 <p><strong>"If you had a budget, where would it go first?"</strong></p>
 <blockquote>
-<p>"More games and multiple seeds per game, in that order. Everything I report is a single
-seed on four games, bounded by 500 requests a day. More games attacks overfitting to the
-handful I've stared at; more seeds attacks noise — and I can put a number on that noise,
-because one game where my change never fired still swung 17 points. I'd rather say that
-plainly than pretend four games is comfortable."</p>
+<p>"More games, then more runs per game. Everything I report is one run per arm on four games,
+bounded by 500 requests a day. More games attacks overfitting to the handful I've stared at.
+More runs attacks noise — though I got a first instalment of that for free: my last experiment
+played each game twice and its signal only speaks on the second play, so I already had four
+runs of one setup on each of four games sitting on disk. Splitting those 16 episodes into pairs
+of arms that share no episode gives 20,736 A/B experiments where the change is nothing at all,
+which is my noise band per metric — between 0.8 and 9.2 points. Buying more runs can only widen
+that band, never narrow it, which is exactly why I want them. I'd rather say all that plainly
+than pretend four games is comfortable."</p>
 </blockquote>
 <p><strong>"How is this different from documentation?"</strong></p>
 <blockquote>
@@ -7198,9 +7512,12 @@ the "silent drift into the expensive new direction" §2 exists to prevent.</p>
   not dilute the effect.</li>
 <li><strong>Metrics, tagged as always.</strong> <em>Steering</em> (decides keep/revert): <code>top_action_share_excess</code>,
   <code>distinct_targets</code>, <code>no_change_rate</code>, <code>revisit_rate</code>. <em>Outcome</em>: <code>final_score</code>,
-  <code>levels_completed</code>. <em>Cost</em>: <code>input_tokens</code>, wall seconds. Only steering decides; the
-  17-point single-seed noise floor (<code>eval-noise-floor</code>) applies, so a verdict needs a
-  consistent cross-game direction, not one game's swing.</li>
+  <code>levels_completed</code>. <em>Cost</em>: <code>input_tokens</code>, wall seconds. Only steering decides, and each
+  metric is judged against <strong>its own</strong> measured band from <code>artifacts/noise-floor.json</code>
+  (<code>py scripts/noise_floor.py</code>) — 9.2 points for <code>top_action_share_excess</code>, 8.3 for
+  <code>no_change_rate</code>, 6.7 for <code>revisit_rate</code>, 2.0 for <code>distinct_targets</code>. Those replace the old
+  blanket 17-point figure, which was a per-game band being applied to suite averages. A verdict
+  still needs a consistent cross-game direction, not one game's swing.</li>
 <li><strong>Kept-or-reverted rule.</strong> <code>--attempt-memory</code> stays <strong>off by default</strong> and the mechanism
   is reverted unless steering improves with no outcome regression, recorded with before/after
   numbers (§5). A null is written up as a null (§4).</li>
@@ -7614,11 +7931,28 @@ prompt fixes it. Same pattern as the illegal-action guard: the model asks, the h
 guarantees."</p>
 </blockquote>
 </li>
-<li><strong>"How do you know an improvement isn't noise?"</strong><blockquote>
-<p>"Partly I don't, and I can put a number on it: one of my four games never triggered the change
-at all, so its prompt was identical in both arms — and it still swung 17 points. So single-seed
-differences that size are within noise; a streak going from 26 to 3 is far outside it. If I had
-more quota I'd spend it on multiple seeds before anything else."</p>
+<li><strong>"How do you know an improvement isn't noise?" ★</strong><blockquote>
+<p>"I measured the noise instead of guessing it. Repeat runs cost 120 model calls each against a
+500-a-day free cap, so I couldn't buy them — but I found four already on disk. My last
+experiment played each game twice, and its signal is a summary of the <em>previous</em> play, so the
+first play of the treated arm ran the plain prompt. With that plus the control arm's two plays
+and an earlier arm on the same settings, I had four runs of one setup on each of four games.
+I split those 16 episodes into two four-game arms that share no episode — 20,736 ways to do it,
+all of them worked out — and every one is an A/B where the change is nothing, so every
+difference is noise. The size only 5% exceed is my band: 9.2 points for repetition, 8.3 for
+dead actions, 0.8 for illegal actions. The lesson was that there's no single noise floor, and
+my old 17-point figure was a <em>per-game</em> number I'd been using on four-game averages — two to
+three times too loose. A streak going from 26 to 3 beats all 20,736, so that one was never in
+doubt. More seeds is still the first thing I'd buy: more runs can only widen the band."</p>
+</blockquote>
+</li>
+<li><strong>"Did measuring the noise change anything you'd already concluded?" ★</strong><blockquote>
+<p>"Two things, and I'd rather volunteer them. I'd written that my repetition guard cost 2.5 points
+of dead actions as a deliberate trade — that metric's band is 8.3 points, so the cost was inside
+noise and I'd told a tidy story I had no evidence for. And I'd called the progress-signal
+experiment a null; four of its metrics are worse than <em>every one</em> of the 20,736 change-free
+differences — on one game the agent demanded unavailable buttons ten times in thirty moves. So
+it was a measurable degradation, not a null. The wins were unaffected."</p>
 </blockquote>
 </li>
 </ul>
@@ -7714,8 +8048,10 @@ write the decision down before building — which is how every turn in this proj
   breaks trust — and the honesty is your strongest card, so don't throw it away.</li>
 <li><strong>Don't quote a token number without naming the tokeniser.</strong> That's the project's own headline
   correction; contradicting it in the room would be self-inflicted.</li>
-<li><strong>Don't over-claim the statistics.</strong> Everything is single-seed on four games. Say so, and say you
-  can put a <em>number</em> on the noise (17 points). Volunteering the limitation reads as strength.</li>
+<li><strong>Don't over-claim the statistics.</strong> Every arm is one run on four games. Say so — then say you
+  measured the noise band anyway, per metric, from 16 replicate episodes you already had
+  (<code>artifacts/noise-floor.json</code>). Volunteering the limitation <em>and</em> the measurement reads as
+  strength. Don't call the band a p-value; it isn't one.</li>
 <li><strong>Don't call the guards "the agent improving."</strong> They're the harness compensating — "the model
   asks, the harness guarantees." Naming that distinction is the point.</li>
 <li><strong>Don't get pulled into defending the score.</strong> When someone presses "but it's zero," pivot to
@@ -7741,7 +8077,7 @@ write the decision down before building — which is how every turn in this proj
    answer <em>why did it do that.</em>"</li>
 <li><strong><a href="../artifacts/failure-taxonomy.json"><code>artifacts/failure-taxonomy.json</code></a></strong> — the 88% / 0%
    table, the wall as a number.</li>
-<li><strong><code>py -m unittest discover -s tests</code></strong> — 154 tests pass in about a second, live.</li>
+<li><strong><code>py -m unittest discover -s tests</code></strong> — 163 tests pass in about a second, live.</li>
 </ol>
 <hr />
 <p><em>Full narrative: <a href="#13-the-interview-story" class="wikilink" data-target="13-the-interview-story">note 13 — the interview story</a>. The whole
@@ -7929,6 +8265,114 @@ optional, gated, and free-tier only.</p>
 <article class="doc" id="doc-decisions" data-tabid="decisions"><nav class="crumb"><a data-target="home" href="#home">⌂ Home</a><span class="crumb-sep">›</span><a data-target="sec-2" href="#sec-2">Project record</a></nav><h1>Decision log</h1>
 <p>One entry per decision that shaped the project. Newest first.
 Format: date · decision · why · what was rejected.</p>
+<hr />
+<h2>2026-07-30 (later session) — The noise floor, measured: 20,736 change-free A/Bs, two corrected verdicts</h2>
+<p><em>The one item the interview pack had been promising for a week — "if I had more quota I'd spend it
+on multiple seeds" — turned out to be already paid for. No new runs, no quota, no agent code
+touched.</em></p>
+<p><strong>The finding that made it possible.</strong> Four eval runs are the <em>same effective configuration</em>:
+<code>dev-llm-r3</code>, <code>dev-llm-p0</code> attempt 1, <code>dev-llm-p0</code> attempt 2 (that arm has <code>progress=False</code> on
+both attempts), and <code>dev-llm-p1</code> attempt 1 (the progress signal summarises the <em>previous</em> attempt,
+so attempt 1 carries no block). Verified in code, not assumed: <code>render_progress_block(None)</code>
+returns <code>""</code> and <code>hypothesis=False</code> leaves the theory block empty — both golden-tested as the
+control prompt byte for byte — and the traces confirm all four start from the same screen and
+diverge at the first model call. That is <strong>4 runs × 4 games = 16 episodes of one configuration</strong>.</p>
+<p><strong>What was built.</strong> <code>scripts/noise_floor.py</code> → <code>artifacts/noise-floor.json</code>. It re-derives the
+replicate grouping from the stored configs (never from my reading of them), then deals the 16
+episodes into every pair of four-game arms <strong>sharing no episode</strong> — 12 ordered choices per game,
+12⁴ = <strong>20,736 pairs, enumerated exhaustively, not sampled</strong>. Every pair is an A/B whose treatment
+is nothing, so its differences are noise by construction. Each arm's aggregate comes from
+<code>Arm.aggregate()</code> itself, so the band belongs to the numbers the tables actually print. 9 new
+tests; the two that matter assert the replicate grouping (absent flags read as defaults) and that
+no enumerated pair shares an episode — a bug in either would silently shrink the band.</p>
+<p><strong>The measured band (95th percentile of change-free difference).</strong> <code>top_action_share_excess</code>
+<strong>9.2 pts</strong>, <code>no_change_rate</code> 8.3, <code>revisit_rate</code> 6.7, <code>usable_reply_rate</code> 6.7,
+<code>distinct_targets</code> 2.0, <code>distinct_actions</code> 0.75, <code>illegal_action_rate</code> <strong>0.8</strong>,
+<code>llm_input_tokens</code> 3,348; <code>final_score</code>, <code>levels_completed</code>, <code>longest_repeat_streak</code>,
+<code>game_overs</code>, <code>llm_calls</code> <strong>never moved across all 16 episodes</strong>.</p>
+<p><strong>The old figure was the right number for the wrong level — this supersedes it.</strong> "17 points"
+came from one metric on one game (<code>tn36</code> unreadable replies 9→14 of 30 where the guard was
+provably inactive). Measured per game it is if anything understated (that game's band is <strong>20
+points</strong>; <code>ar25</code>'s <code>top_action_share_excess</code> band is also 20). But it was being applied to
+<strong>four-game averages</strong>, where averaging cancels wobble — 6.7 points for that same metric. So the
+threshold was <strong>two to three times too lenient</strong>, and there is no single noise floor at all: the
+bands span 0.8 → 9.2 points.</p>
+<p><strong>Two of the project's own recorded verdicts are corrected (§4).</strong>
+1. <strong>The repetition guard's "price" was never measurable.</strong> The 2026-07-23 entry below and note 09
+   both framed <code>no_change_rate</code> 9.2%→11.7% and <code>revisit_rate</code> 7.5%→10.0% (2.5 pts each) as a
+   trade bought on purpose. Both are <strong>inside</strong> their bands (8.3 and 6.7). The honest claim is
+   "the streak fix is beyond every change-free pair and any price it charged is below what this
+   suite can see." The guard's wins are unaffected — <code>top_action_share_excess</code> 36.9→17.7 and
+   streak 26→3 both exceed <em>all</em> 20,736 change-free differences.
+2. <strong>Experiment 4 was not a null on steering — it was a measurable degradation.</strong> Six rows clear
+   the band and four are adverse <em>beyond every change-free pair</em>: <code>no_change_rate</code> 11.7%→25%,
+   <code>revisit_rate</code> 12.5%→32.5%, <code>illegal_action_rate</code> 0%→8.3%, streak 3→6. Mechanism found in the
+   episodes: on <code>ls20</code> the agent asked for unavailable buttons <strong>10 times in 30 moves</strong>, each
+   forcing a reset. The earlier entry had already flagged the adverse metrics as above-noise, so
+   this sharpens rather than reverses it — but "null" was the wrong word and is now corrected
+   everywhere. Score 0→0 stands; the wall is untouched.
+   <em>Experiment 3 is confirmed correct as written: 17 of 18 rows inside noise, only +9% tokens
+   survives. Experiment 1's revert is confirmed decisively (revisits, targets, streak, tokens all
+   beyond every change-free pair).</em></p>
+<p><strong>Scope limits, stated in the artifact and the notes.</strong> 16 episodes inherit their luck, so a band
+is a lower bound and more runs can only widen it — inside is decisively not evidence, just outside
+is suggestive, not proven. Both sides of a real A/B are still single runs, so clearing p95 is not
+a p-value and is never called one. "Never moved" is reported as <em>never moved here</em>, not <em>stable</em>.
+The random-policy comparison is marked <strong>OUT OF SCOPE</strong>: a different generator has its own
+variance.</p>
+<p><strong>Taught, per §6A.</strong> Study note 08 gained <strong>Part 7</strong> (built incrementally: the problem → the
+anecdote that was not a measurement → the four free replicates → one game's 12 splits → all
+20,736 → the band → the re-audit → the four limits) plus two new spoken answers. Notes 09, 13, 06
+and 04 now cite per-metric bands instead of the blanket figure, and the two corrected verdicts are
+written into all of them. The Explorer app surfaces it: new <code>/api/noise</code>, a noise-band card in the
+<strong>Evals</strong> view, and a <strong>"vs noise band"</strong> column on every comparison row with out-of-scope
+comparisons refused rather than judged.</p>
+<p><strong>What was run / verified (§3).</strong> <code>py scripts/noise_floor.py</code> → 20,736 pairs, artifact written.
+<code>py -m unittest discover -s tests</code> → <strong>163 tests, OK</strong> (1.3s). <code>py explorer/smoke_test.py</code> → all
+checks pass, including the three new ones (noise artifact present, comparison rows arrive already
+judged, the random arm marked out of scope). The Evals view was <strong>rendered for real</strong> against a
+live server on port 8131 under a DOM shim in Node — the noise card, band column and verdict cells
+all present, 603 nodes — and every other view re-rendered clean (<code>replay.js</code> fails under the shim
+only because Node has no <code>&lt;canvas&gt;</code>; unchanged by this session). One own-error caught and fixed
+mid-session: the first version of the report compared "widest band" <em>across units</em>, ranking a
+count of click targets against a share-of-actions, which would have produced a confident headline
+about nothing — hence <code>is_rate()</code> and same-unit comparison only.</p>
+<hr />
+<h2>2026-07-30 (later session) — §6A gains rule 9: no redundancy. Say it once, then link</h2>
+<p><em>Chetan, mid-session, unprompted: </em><em>"there should be no kind of repetitive, redundant and
+un-wanted/un-necessary explanations… because that will make me lose interest in reading and
+learning about the project"</em><em>, and </em><em>"all the current or upcoming explanations should have the
+prerequisite knowledge in the earlier explanations itself… also reference things if needed that
+already got explained earlier"</em><em>. Recorded because it is a standing instruction, not a one-off.</em></p>
+<p><strong>The rule (now <code>CLAUDE.md</code> §6A rule 9, binding on every model).</strong> One home per idea; everywhere
+else links to it. The only sanctioned repetition is rule 8's one-line gist and the deliberate
+rehearsal in <code>Say it in an interview</code>. Cut rather than pad — no restating for emphasis, no recaps
+of a point two paragraphs up, no summary paragraph closing a section. Prerequisites live upstream:
+if a later note needs something, teach it on the earlier rung, never fold a mini-tutorial inline.
+A fifth recheck pass was added: <em>redundancy — is this already said elsewhere, and could it be a
+link?</em> <strong>Boredom is now a defect on the level of a wrong number</strong>, because a note he stops reading
+teaches nothing.</p>
+<p><strong>The end-to-end audit he asked for, done mechanically rather than by eyeball.</strong> All 14 study
+notes were shingled (7-word windows over prose only, tables/quotes/code/callouts excluded) to find
+near-identical sentences within and across notes, plus a heuristic scan for terms used before the
+note that defines them.</p>
+<p>Result: <strong>zero within-note repetition</strong>, and the forward-reference hits were all false positives
+by design — note 00 is a map that names what is coming, note 02 <em>is</em> the glossary, note 13 is the
+declared recap. Four genuine second-homes were found and fixed:</p>
+<ul>
+<li><strong>note 11 re-narrated note 08's history experiment</strong> (the 41 presses, the eight-line block) →
+  cut to a one-line gist plus a link, keeping only the part that is a fact about <em>memory</em>.</li>
+<li><strong>note 09 re-taught the noise anecdote</strong> that note 08 Part 7 now owns → cut to two lines and a
+  back-reference.</li>
+<li><strong>note 09 re-explained the cross-process quota fix</strong> that note 12 owns and measures → cut to
+  the event plus a link.</li>
+<li><strong>note 13's new noise sub-section, written earlier in this same session, was itself a second
+  home</strong> — it re-explained the whole method → cut to a gist, the bands, and the two corrections.
+  It had also repeated one sentence <em>inside</em> note 13; removed.</li>
+</ul>
+<p>Everything that remains is note 13 ↔ earlier notes (its header already declares "re-teaches none
+of them in full; carries a one-line gist") or single-sentence overlaps that are a term with its
+gloss. Re-running the audit after the cuts confirms it.</p>
 <hr />
 <h2>2026-07-30 — The capstone refreshed: notes 10, 11 and the app folded into the one story</h2>
 <p><em>The last open item of the completion plan (<code>notes/05</code>, Milestone 3: "refresh the capstone to
@@ -9686,12 +10130,28 @@ They live in <code>notes/study/</code>, numbered, and are read in order:</p>
    plus the follow-up questions an interviewer would ask and how to answer them.</li>
 <li><strong>Closure.</strong> No idea may be left half-open. If a note leans on an earlier one, carry
    a one-line gist so he is never stranded.</li>
+<li><strong>No redundancy — say it once, then point at it (added 2026-07-30 at Chetan's
+   instruction).</strong> Chetan's exact reason: <em>"that will make me lose interest in reading and
+   learning about the project."</em> Boredom is therefore a defect on the level of a wrong
+   number, because a note he stops reading teaches nothing. So:
+   - <strong>One home per idea.</strong> Every concept has exactly one note that explains it. Everywhere
+     else <strong>links to it</strong> (<code>note 08 Part 7</code>) instead of re-explaining it.
+   - The only sanctioned repetition is rule 8's <strong>one-line gist</strong> when a note leans on an
+     earlier one, and the <code>Say it in an interview</code> sections (deliberate rehearsal). A gist is
+     one sentence — a second paragraph on a settled idea is redundancy.
+   - <strong>Cut, don't pad.</strong> No restating a point in different words for emphasis, no "as we saw
+     above" recaps of something two paragraphs up, no closing paragraph that summarises the
+     section you just read. If a sentence would not be missed, delete it.
+   - <strong>Prerequisites live upstream, not inline.</strong> The knowledge a note needs must already be
+     on an earlier rung. If it is not, the fix is to teach it <em>there</em> — never to fold a
+     mini-tutorial into the middle of a later note.</li>
 </ol>
 <p><strong>Recheck passes (separate reads, one question each — not one combined skim):</strong>
 (1) <em>flow</em> — does it read as one continuous line with no jump where he falls off?
 (2) <em>jargon</em> — is every technical term defined before use, and every non-basic word
 glossed? (3) <em>closure</em> — does every idea land and finish? (4) <em>truth</em> — does every
-claim survive rule 3 above (run artifact or checked source)?</p>
+claim survive rule 3 above (run artifact or checked source)? (5) <em>redundancy</em> — is anything
+here already said elsewhere, and could it be a link instead (rule 9)?</p>
 <p><strong>When the project changes, the course changes with it.</strong> A session that adds a
 capability but leaves the ladder unable to explain it is unfinished.</p>
 <h2>6B. Anything Chetan must do himself gets a step-by-step — HARD RULE (2026-07-22)</h2>

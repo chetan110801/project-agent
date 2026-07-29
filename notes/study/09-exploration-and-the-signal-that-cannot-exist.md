@@ -310,22 +310,34 @@ The first makes a good answer likelier. The second makes a bad answer harmless.
 One arm of the eval suite: 4 dev games, 30 actions each, 120 model calls, against the
 identical setup with the guard switched off. One variable moved.
 
-| what we measured | guard off | guard on | |
-|---|---:|---:|---|
-| longest identical streak | 26 | **3** | better |
-| repetition above chance | +36.9 pts | **+17.7 pts** | better |
-| different actions tried | 2.5 | 3.25 | better |
-| different targets tried | 10.75 | 12.25 | better |
-| actions that changed nothing | 9.2% | 11.7% | worse |
-| screens revisited | 7.5% | 10.0% | worse |
-| **score** | **0** | **0** | — |
-| tokens spent | 103,162 | 104,376 | +1.2% |
+| what we measured | guard off | guard on | | vs the noise band |
+|---|---:|---:|---|---|
+| longest identical streak | 26 | **3** | better | beyond every change-free pair |
+| repetition above chance | +36.9 pts | **+17.7 pts** | better | beyond every change-free pair |
+| different actions tried | 2.5 | 3.25 | better | inside noise (band 0.75) |
+| different targets tried | 10.75 | 12.25 | better | inside noise (band 2.0) |
+| actions that changed nothing | 9.2% | 11.7% | worse | inside noise (band 8.3 pts) |
+| screens revisited | 7.5% | 10.0% | worse | inside noise (band 6.7 pts) |
+| **score** | **0** | **0** | — | never moved at all |
+| tokens spent | 103,162 | 104,376 | +1.2% | inside noise (band 3,348) |
 
-**We kept it**, and the reason for keeping it despite two red rows is worth learning as a
-pattern: both red rows come from **one game out of four**. On that game the agent, denied its
-favourite button, tried alternatives that did nothing. That is the trade we bought on
-purpose — paying 2.5 points of dead actions to stop losing 26 turns in a row to one button —
-and the eval suite makes it a *visible* trade instead of a hidden one.
+**We kept it.** The last column is the part I could not write on the day — it arrived later,
+when the noise band of note 08 Part 7 was finally measured, and it corrected me.
+
+At the time I explained away the two red rows as a *trade*: both come from one game out of
+four, where the agent, denied its favourite button, tried alternatives that did nothing. I
+wrote that we were "paying 2.5 points of dead actions to stop losing 26 turns in a row to one
+button". Measured, the change-free band for that metric is **8.3 points**. So the 2.5-point
+price is inside noise: I cannot say I paid it, only that if there was a price my suite was too
+small to see it.
+
+::: warn
+The tidy story was the tempting one, and it was unfalsifiable until I measured the wobble. The
+correct version is less quotable and more useful: **the streak fix is enormous and beyond
+anything chance produced; every cost I attributed to it is inside noise.** Note how the mistake
+was not a wrong number — 2.5 points is exactly what the arms differed by. It was calling a
+number a *finding*.
+:::
 
 ::: warn
 **The headline is not the win.** The score is still 0, and level progress did not move. The
@@ -343,17 +355,11 @@ code fired **0 times out of 120**. The agent complied with the sentence, and sai
 enforcement half anyway. One obedient run is not a guarantee, and the difference between a
 request and a guarantee is the whole reason we write guards.
 
-**One game gave us a free measurement of noise.** On the fourth game the guard never fired at
-all, in either arm — the agent clicked 27 different squares in 30 moves, so it never repeated
-itself three times. Its prompt was therefore unchanged between the two runs. And its count of
-replies we could not read still moved from **9 to 14 out of 30**.
-
-::: key
-A metric that moves in a game where your change never fired is **noise**, not an effect. That
-one number is the first honest sense of how much of a single run's difference is just the
-model rolling different dice — and it is why "5 metrics improved" is a weaker claim than it
-looks when each game is played only once.
-:::
+**And one game handed us a free glimpse of noise.** On the fourth game the guard never fired in
+either arm — 27 different squares clicked in 30 moves, so never three in a row — meaning its
+prompt was identical in both runs, and its unreadable replies *still* moved 9 → 14 of 30. This
+is the observation [note 08 Part 7](08-evals.md) turns into a proper per-metric band; the point
+here is only that it exists.
 
 One last thing to be honest about: this guard is not the agent getting smarter. It is the
 *harness* compensating for the agent. That is the project's thesis rather than a confession —
@@ -451,28 +457,28 @@ the earlier runs and the day was already over quota. The counter was per-*run* w
 is per-*day*.
 :::
 
-The fix is the kind of unglamorous plumbing that separates a harness from a script: every
-request now writes one line to a file that outlives the program, and a run **reads that file
-before it starts and refuses to begin an arm that will not fit in what is left of the day**.
-An arm that dies half-way is not a cheap failure — it spends the quota *and* leaves a table
-full of random fallbacks that look like play. Better to not start.
+The fix is a counter that outlives the program, plus a refusal to start an arm that will not fit
+in what is left of the day — because an arm that dies half-way spends the quota *and* leaves a
+table full of random fallbacks that look like play. [Note 12](12-budgets-tokens-cost-latency.md)
+is where that machinery is built and measured; here it is only the thing that stopped the run.
 
 **The window rolled the next day, and the arm was re-run to completion** — all four dev games,
-120 real model calls, no fallbacks. Now report it against the noise floor: a single-seed
-difference of 17 points was shown that same morning to be within noise, so nothing small is a
-result. Guard-only against guard-plus-falsification, aggregated over the four games:
+120 real model calls, no fallbacks. Now report it against the noise band (note 08 Part 7), which
+says how far each number drifts when nothing changes. Guard-only against
+guard-plus-falsification, aggregated over the four games:
 
-| 4 dev games, 30 actions each | guard only | + falsification | |
-|---|---:|---:|---|
-| repetition above chance | +17.7 pts | +17.7 pts | identical |
-| longest identical streak | 3 | 3 | same |
-| different targets tried | 12.25 | 13.25 | +1, within noise |
-| **score** | **0** | **0** | — |
-| tokens | 104,376 | 114,142 | +9% |
+| 4 dev games, 30 actions each | guard only | + falsification | | vs the noise band |
+|---|---:|---:|---|---|
+| repetition above chance | +17.7 pts | +17.7 pts | identical | inside (band 9.2 pts) |
+| longest identical streak | 3 | 3 | same | never moved at all |
+| different targets tried | 12.25 | 13.25 | +1 | inside (band 2.0) |
+| **score** | **0** | **0** | — | never moved at all |
+| tokens | 104,376 | 114,142 | +9% | **beyond** (band 3,348) |
 
-Nothing there clears the noise floor — the repetition number is *byte-for-byte identical*
-between the two arms. **On the numbers, this changed nothing.** But the numbers are not where
-this experiment's finding is.
+Seventeen of the eighteen measured rows are inside the band. The one that clears it is the bill:
+**+9% tokens.** The repetition number is *byte-for-byte identical* between the two arms.
+**On the numbers, this bought nothing and cost 9%.** But the numbers are not where this
+experiment's finding is.
 
 ::: key
 The finding is about the *mechanism*, and you can see it without any statistics. The stuck
@@ -557,17 +563,20 @@ And then: **it did not help.** The table the experiment was pre-committed to rea
 failed, does the agent explore more?* — moved the right way by an amount too small to trust, while
 the numbers that moved enough to trust moved the *wrong* way.
 
-| attempt 2, 4 dev games | control | + progress signal | |
-|---|---:|---:|---|
-| repetition above chance | 18.5 pts | 16.0 pts | −2.5, within noise |
-| different targets tried | 10.75 | 11.25 | +0.5, within noise |
-| actions that changed nothing | 12% | 25% | **worse** |
-| screens revisited | 12% | 32% | **worse — clears the noise band** |
-| **score** | **0** | **0** | — |
+| attempt 2, 4 dev games | control | + progress signal | | vs the noise band |
+|---|---:|---:|---|---|
+| repetition above chance | 18.5 pts | 16.0 pts | −2.5 | inside (band 9.2 pts) |
+| different targets tried | 10.75 | 11.25 | +0.5 | inside (band 2.0) |
+| actions that changed nothing | 11.7% | 25% | **worse** | **beyond every change-free pair** |
+| screens revisited | 12.5% | 32.5% | **worse** | **beyond every change-free pair** |
+| illegal actions | 0% | 8.3% | **worse** | **beyond every change-free pair** |
+| longest identical streak | 3 | 6 | **worse** | **never moved in 16 control episodes** |
+| **score** | **0** | **0** | — | never moved at all |
 
 Read it honestly. "Repetition down, targets up" is the pattern that would have said *working* — and
-it is there, but at half a point and two-and-a-half points, well inside the 17-point noise floor
-Part 9 established. Break it out by game and it dissolves. Repetition-above-chance *fell* on two
+it is there, but at half a point and two-and-a-half points, well inside the measured bands for
+those two metrics (2.0 targets and 9.2 points; note 08 Part 7). Break it out by game and it
+dissolves. Repetition-above-chance *fell* on two
 games — on `ar25` sharply (0.36 → 0.22), and that game also tripled its distinct targets (4 → 10),
 the one case that looks like the pattern working — but *rose* on a third (`sb26`), and could not
 move on the fourth, the single-action game. And the +0.5 on "targets" is an averaging trick: the two
@@ -624,20 +633,32 @@ agent it is not there yet.
 > "On what it was built to fix, yes and by a lot: the longest identical streak went from 26
 > to 3 and repetition-above-chance halved, from plus 37 points to plus 18, for one percent
 > more tokens. On whether the agent plays better — no. Score stayed at zero, level progress
-> didn't move. I kept it, because two of the three metrics that got worse came from a single
-> game where the agent, denied its favourite button, tried things that did nothing, and
-> that's the trade I meant to make. But I report it as 'the guard works and the agent is not
+> didn't move. I kept it. At the time I explained the metrics that got worse as a trade I
+> meant to make; when I later measured my noise band properly, those costs turned out to be
+> inside it, so the honest version is 'the streak fix is huge and any price it charged is too
+> small for my suite to see'. Either way I report it as 'the guard works and the agent is not
 > better yet', because the alternative is a table full of green rows that means nothing."
 
 **Follow-up: "How do you know that improvement isn't noise?"**
-> "Partly I don't, and I can put a number on my uncertainty. One of the four games never
-> triggered the guard at all — the agent clicked 27 different squares in 30 moves, so it never
-> repeated three times, which means its prompt was identical in both arms. Its count of
-> unreadable replies still moved from 9 to 14 out of 30. So a game where my change was
-> provably inactive still swung by 17 points, which tells me single-seed differences of that
-> size are within noise. The streak going from 26 to 3 is far outside it and is anyway true
-> by construction. If I had more free quota I'd spend it on multiple seeds per game before
-> anything else."
+> "I measured the noise instead of assuming it. The first version of this answer was an
+> anecdote: one of the four games never triggered the guard at all — the agent clicked 27
+> different squares in 30 moves, so it never repeated three times and its prompt was identical
+> in both arms — and its count of unreadable replies still moved from 9 to 14 out of 30. A game
+> where my change was provably inactive swinging 17 points told me something, but it was one
+> metric on one game, and I was applying it to every metric in every table.
+>
+> What I do now is a real measurement that cost nothing. My progress-signal experiment ran two
+> attempts per game, and its signal is a summary of the *previous* attempt — so attempt 1 of
+> the treated arm is the control prompt byte for byte. Counting that, the control arm's two
+> attempts, and an earlier arm with the same settings, I already had four runs of one
+> configuration on each of four games. I deal those 16 episodes into two four-game arms that
+> share no episode — 12 to the fourth, 20,736 A/B experiments in which the change is nothing at
+> all — and take the 95th percentile of each metric's difference. That's my band: 9.2 points for
+> repetition, 8.3 for dead actions, 0.8 for illegal actions. So there is no single noise floor,
+> and my old 17-point figure was a *per-game* band being used on *suite* averages, which made it
+> two to three times too lenient. The streak going from 26 to 3 is bigger than all 20,736
+> change-free differences, so that one was never in doubt. More seeds would still be the first
+> thing I'd buy — more runs can only widen the band, never narrow it."
 
 **Follow-up: "Isn't that just hard-coding around a weak model?"**
 > "Yes, and I would say so plainly. It is the harness compensating for the agent, not the
@@ -693,13 +714,16 @@ agent it is not there yet.
 > number came back for all four games, which it did, 22, 18, 32, 32, and that the line appeared
 > only where it should, the second attempts of the treatment arm. The agent even read it back; its
 > first reasoning on one retry was 'do something different this time to clear level 1.' And the
-> score stayed zero. The metric that would have meant success moved the right way by less than the
-> noise; the one that cleared the noise was the agent taking more actions that did nothing. So the
-> single signal that actually knows the goal, delivered in plain words and provably read, still
-> didn't help — because telling something it failed isn't telling it what would work. That closed
-> the arc for me: four experiments, each changed the behaviour, none moved the score, and together
-> they point at the real gap — the agent can't turn feedback into a better next action without
-> learning across attempts."
+> score stayed zero. The metrics that would have meant success moved the right way by less than my
+> noise band; four metrics moved the *wrong* way by more than every single one of the 20,736
+> change-free differences I'd measured — more dead actions, more revisits, a longer repeated
+> streak, and on one game the agent demanded unavailable buttons 10 times in 30 moves, each one
+> forcing a reset. So this isn't even a null: telling the agent flatly that it had failed made it
+> measurably flail. The single signal that actually knows the goal, delivered in plain words and
+> provably read, made things worse — because telling something it failed isn't telling it what
+> would work. That closed the arc for me: four experiments, each changed the behaviour, none moved
+> the score, and together they point at the real gap — the agent can't turn feedback into a better
+> next action without learning across attempts."
 
 ---
 

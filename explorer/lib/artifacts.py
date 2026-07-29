@@ -73,8 +73,48 @@ def get_eval(arm: str) -> dict | None:
 
 
 def get_comparison(name: str) -> dict | None:
+    """One before/after comparison, with each row annotated against the measured noise band.
+
+    The annotation is a lookup, not a calculation: `scripts/noise_floor.py` already decided
+    which rows a change-free experiment reproduces routinely, and the app repeats that verdict
+    rather than re-deriving it. A comparison the audit does not cover (a random-policy arm,
+    whose noise is a different quantity) comes back with `noise: null` and the view says so
+    instead of judging it by the wrong band.
+    """
     path = _safe_under(repo.EVALS, name)
-    return _read_json(path) if path else None
+    if not path:
+        return None
+    doc = _read_json(path)
+    audit = next(
+        (c for c in (get_noise_floor() or {}).get("comparison_audit", [])
+         if c.get("comparison") == path.name),
+        None,
+    )
+    if audit:
+        by_metric = {r["metric"]: r for r in audit.get("rows", [])}
+        for row in doc.get("rows", []):
+            judged = by_metric.get(row.get("metric"))
+            if judged:
+                row["noise"] = {
+                    "null_p95": judged["null_p95"],
+                    "inside_noise": judged["inside_noise"],
+                    "exceeds_null_max": judged["exceeds_null_max"],
+                }
+        doc["noise_scope"] = {
+            "in_scope": audit["in_scope"],
+            "note": audit["scope_note"],
+            "rows_inside_noise": audit["rows_inside_noise"],
+            "rows_judged": audit["rows_judged"],
+        }
+    return doc
+
+
+# --- the measured noise band --------------------------------------------------------------
+
+def get_noise_floor() -> dict | None:
+    """artifacts/noise-floor.json — how far each metric drifts when nothing changed."""
+    path = repo.ARTIFACTS / "noise-floor.json"
+    return _read_json(path) if path.exists() else None
 
 
 # --- failure taxonomy --------------------------------------------------------------------

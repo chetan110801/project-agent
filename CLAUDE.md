@@ -101,12 +101,28 @@ They live in `notes/study/`, numbered, and are read in order:
    plus the follow-up questions an interviewer would ask and how to answer them.
 8. **Closure.** No idea may be left half-open. If a note leans on an earlier one, carry
    a one-line gist so he is never stranded.
+9. **No redundancy — say it once, then point at it (added 2026-07-30 at Chetan's
+   instruction).** Chetan's exact reason: *"that will make me lose interest in reading and
+   learning about the project."* Boredom is therefore a defect on the level of a wrong
+   number, because a note he stops reading teaches nothing. So:
+   - **One home per idea.** Every concept has exactly one note that explains it. Everywhere
+     else **links to it** (`note 08 Part 7`) instead of re-explaining it.
+   - The only sanctioned repetition is rule 8's **one-line gist** when a note leans on an
+     earlier one, and the `Say it in an interview` sections (deliberate rehearsal). A gist is
+     one sentence — a second paragraph on a settled idea is redundancy.
+   - **Cut, don't pad.** No restating a point in different words for emphasis, no "as we saw
+     above" recaps of something two paragraphs up, no closing paragraph that summarises the
+     section you just read. If a sentence would not be missed, delete it.
+   - **Prerequisites live upstream, not inline.** The knowledge a note needs must already be
+     on an earlier rung. If it is not, the fix is to teach it *there* — never to fold a
+     mini-tutorial into the middle of a later note.
 
 **Recheck passes (separate reads, one question each — not one combined skim):**
 (1) *flow* — does it read as one continuous line with no jump where he falls off?
 (2) *jargon* — is every technical term defined before use, and every non-basic word
 glossed? (3) *closure* — does every idea land and finish? (4) *truth* — does every
-claim survive rule 3 above (run artifact or checked source)?
+claim survive rule 3 above (run artifact or checked source)? (5) *redundancy* — is anything
+here already said elsewhere, and could it be a link instead (rule 9)?
 
 **When the project changes, the course changes with it.** A session that adds a
 capability but leaves the ladder unable to explain it is unfinished.

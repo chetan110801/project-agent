@@ -1,10 +1,11 @@
 # Study 08 — Evals: making the comparison a habit instead of an event
 
-*Written 2026-07-22, the day the eval suite was built. Every number here comes from a file
-in this repo you can regenerate: `artifacts/evals/*.json` (built by `scripts/run_evals.py`),
+*Written 2026-07-22, the day the eval suite was built; Part 7 (noise) added 2026-07-30. Every
+number here comes from a file in this repo you can regenerate: `artifacts/evals/*.json` (built
+by `scripts/run_evals.py`), `artifacts/noise-floor.json` (by `scripts/noise_floor.py`),
 `artifacts/model-bakeoff.json` (by `scripts/model_bakeoff.py`), and the four run reports in
 `artifacts/` (rebuilt by `scripts/analyze_run.py` from the recordings in `runs/`). The code
-was run: 89 tests pass offline, and every arm below was played against the live server.*
+was run: the test suite passes offline, and every arm below was played against the live server.*
 
 > **You are here:** rung 8. Part 2, the engineering.
 > **Assumes you read:** [07](07-baselines-and-controlled-experiments.md) (baselines and one
@@ -14,9 +15,11 @@ was run: 89 tests pass offline, and every arm below was played against the live 
 > do, so it cannot tell us whether a change helped.
 > **After this you can:** say what an eval suite is and why every serious AI team has one,
 > explain the dev/held-out split and why touching held-out data is the one unforgivable
-> mistake, describe how you choose a metric when the obvious one is broken, and — the parts
-> that actually land in an interview — tell the story of a metric you designed, ran, and
-> found was measuring nothing, and of an experiment you ran, disproved, and reverted.
+> mistake, describe how you choose a metric when the obvious one is broken, say how big a
+> difference has to be before it means anything — and why that is a thing you *measure* — and,
+> the parts that actually land in an interview, tell the story of a metric you designed, ran,
+> and found was measuring nothing; of an experiment you ran, disproved, and reverted; and of
+> two conclusions you had to correct once you measured your own noise.
 
 ---
 
@@ -478,6 +481,186 @@ tweaking.
 
 ---
 
+## Part 7 — How big does a difference have to be before it means anything?
+
+Everything above compares two arms that were each run **once**. Look again at the table from
+the experiment we just reverted:
+
+| what we measured | history off | history on |
+|---|---:|---:|
+| actions that changed nothing | 9.2% | 11.7% |
+
+Two and a half points worse. Is that a result?
+
+Here is the uncomfortable part: **you cannot tell from this table.** The model does not answer
+identically every time it is asked — it samples (*picks its next word with some randomness*),
+so running the *same* configuration twice gives two different numbers. If the same setup
+wobbles by three points on its own, then a two-and-a-half point "regression" is not a
+regression. It is the wobble.
+
+That wobble has a name.
+
+::: key
+**Noise** is how much a number moves when nothing about your setup changed. Until you know
+your noise, you cannot read any difference — you are looking at a ruler with no idea how thick
+its lines are.
+:::
+
+### The embarrassing version of this project's answer
+
+For most of this project, the noise figure I quoted was **one anecdote**. In the repetition-guard
+experiment, one game (`tn36`) offers exactly one legal button, so the guard could never fire
+there — its prompt was identical in both arms. And its count of replies the parser could not
+read still moved from 9 to 14 out of 30: about **17 points of movement where the change was
+provably inactive**. I wrote "17 points" into my notes and used it thereafter as *the* noise
+floor.
+
+That was better than nothing and much worse than a measurement. It was **one metric, on one
+game, from one pair of runs** — then applied to every metric in every table.
+
+### Step 1 — the fix I could not afford
+
+The normal way to measure noise: run the same arm five times and look at how much the numbers
+spread. One arm is 120 model calls, and the free tier gives me 500 a day. Five runs of two arms
+is 1,200 calls. I cannot buy this.
+
+### Step 2 — the four free runs already on my disk
+
+So I went looking for runs of the *same* setup that I had already paid for. A **replicate** is
+simply a re-run of the identical setup. I found four:
+
+1. The **repetition-guard arm** — guards on, nothing else added.
+2. and 3. The **control arm of the progress experiment**, which played each game twice. Its
+   progress signal was switched **off**, so both of its plays are the same plain setup.
+4. The **first play of the treated arm** — and this is the nice one. The progress signal is a
+   summary of *the previous play*. On the first play there is no previous play, so there is
+   nothing to show the agent: its prompt is the plain one too.
+
+Four runs of one setup on each of four games — **16 real episodes, already recorded.** The only
+thing separating them is the model's own randomness, which is exactly what I wanted to measure.
+
+::: warn
+"Same setup" is a claim I had to check, not eyeball: two of those arms were recorded before the
+newer flags existed, so their saved settings do not even have the same fields. The check lives
+in the code — with those features off, the prompt-builder inserts an empty string, and there are
+tests asserting the prompt comes out identical to the control one, character for character.
+:::
+
+### Step 3 — turning 4 runs into thousands of experiments
+
+Start small. Take **one** game with its 4 replicate runs. Put run #1 in a left-hand arm and run
+#2 in a right-hand arm. Both arms are the same setup, so whatever difference you see between
+them is pure noise. There are 12 ways to pick two different runs out of four like this (4
+choices for the left, then 3 remaining for the right).
+
+Now add the second game — 12 choices again, independent of the first. Two games gives 12 × 12 =
+144 combinations. Four games gives 12 × 12 × 12 × 12 = **20,736**.
+
+So: **20,736 complete A/B experiments in which the thing being tested is nothing at all.** The
+rule that the two arms never share an episode matters — if both arms reused the same run for a
+game, they would agree on that game for free and the noise would look smaller than it is.
+
+Every difference in all 20,736 is noise, by construction. Line them all up, smallest to largest,
+and you get a picture of how big a change-free difference normally is. That picture is called the
+**null distribution** (*"null" = no real change; the spread you get from nothing*).
+
+::: key
+From that list, take the value that only **5 in every 100** differences exceed. Call it the
+**band**. A difference smaller than the band is something a change-free experiment produces
+routinely, so it tells you nothing. That is the number I was missing.
+:::
+
+::: example
+All of it is one command — `py scripts/noise_floor.py` — writing `artifacts/noise-floor.json`,
+using **zero** model calls. Every one of the 20,736 is worked out exactly, not sampled, so the
+answer does not depend on any random choice of mine. Cheapest experiment in the project, and it
+re-judges every other one.
+:::
+
+### What the noise actually is
+
+From 20,736 change-free pairs on the four dev games (30 actions each):
+
+| metric | change-free difference exceeded only 5% of the time |
+|---|---:|
+| repetition above chance (`top_action_share_excess`) | **9.2 points** |
+| actions that changed nothing (`no_change_rate`) | **8.3 points** |
+| screens revisited (`revisit_rate`) | **6.7 points** |
+| replies the parser could read (`usable_reply_rate`) | **6.7 points** |
+| different targets tried (`distinct_targets`) | **2.0 targets** |
+| different actions tried (`distinct_actions`) | **0.75 actions** |
+| illegal actions (`illegal_action_rate`) | **0.8 points** |
+| input tokens | **3,348 tokens** |
+| **score, levels completed, longest identical streak** | **0 — never moved at all** |
+
+Read the first thing that jumps out: there is no such thing as "the" noise floor. It is
+**9.2 points for one metric and 0.8 points for another** — an eleven-fold difference. A single
+blanket number was always going to be wrong twice: too strict for the stable metrics, too
+lenient for the jumpy ones.
+
+And my old 17-point figure? It was not a wrong number. It was **the right number for the wrong
+thing.**
+
+Look at one game at a time and the noise really is that big: on `tn36` the parser-readable rate
+covered a 20-point range across four identical runs. But my tables report the **average of four
+games**, and averaging calms things down — when one game jumps up, another is usually drifting
+down, so the average moves less than any single game does. Measured: 20 points of wobble per game
+becomes 6.7 points of wobble in the four-game average.
+
+So I had a **per-game** figure and I was using it to judge **four-game averages** — a threshold
+two to three times too loose. Whichever level you are claiming at, use the band from that level.
+
+### Re-judging all four experiments, after the fact
+
+This is the part that made the measurement worth doing. Every comparison already stored in
+`artifacts/evals/` got re-scored against the measured band:
+
+| experiment | what survives the noise band |
+|---|---|
+| **1. history in the prompt** (reverted) | Survives, decisively. Revisits +15.8 points, different targets 10.75 → 4.75, longest streak 26 → 30, +14,662 tokens — all bigger than *every one* of the 20,736 change-free differences. The revert was right. |
+| **2. repetition guard** (kept) | The two wins survive and are bigger than every change-free pair: repetition above chance 36.9 → 17.7 points, longest streak 26 → 3. |
+| **3. falsifiable theory** (not adopted) | 17 of 18 rows inside noise. Only the token cost (+9%) survives. Confirmed null — I had called this correctly. |
+| **4. after-the-fact progress signal** (not adopted) | Six rows survive, and four are *adverse*: dead actions 11.7% → 25%, revisits 12.5% → 32.5%, illegal actions 0% → 8.3%, longest streak 3 → 6. Score 0 → 0. Not a null — a measurable **degradation**. |
+
+Two of those rows changed my mind about something I had written down.
+
+**The repetition guard's "price" was never measurable.** I reported two red rows as the trade I
+knowingly bought: dead actions 9.2% → 11.7% and revisits 7.5% → 10.0%, both 2.5 points. The
+measured bands are 8.3 and 6.7 points. **Both red rows are inside noise.** The honest statement
+is not "I paid 2.5 points of dead actions for the streak fix" — it is *"the streak fix was
+enormous, and any price it charged was too small for my suite to see."* I had been telling a
+tidy story about a trade-off I had no evidence for.
+
+**Experiment 4 was worse than null, and now I can say so.** Its adverse metrics do not merely
+clear the band, they exceed *every* change-free difference. On `ls20` the agent asked for
+unavailable buttons 10 times out of 30 — each rejection forcing a reset — after being told
+flatly that it had failed. Told it was failing, it did not explore better; it flailed. That is
+a sharper finding than "no effect", and it was only sayable once the band existed.
+
+### The three things this cannot tell you
+
+::: warn
+1. **Sixteen episodes is not many, so the band inherits their luck.** More runs could only make
+   it wider, never narrower. So: inside the band means *definitely not evidence*; just outside
+   the band means *worth a look*, not *proven*.
+2. **A real A/B still has one run per side.** "Bigger than 95% of change-free differences" is
+   as strong as I can put it, and I do not dress it up as a statistical test.
+3. **"Never moved" is not "cannot move".** Score and longest streak were identical in all 16
+   episodes. Sixteen episodes cannot see a wobble smaller than themselves, so the report says
+   *never moved here* — a fact — rather than *is stable*, which would be a guess.
+4. **It does not apply to the random baseline.** Random button-pressing wobbles by its own
+   amount, not the model's, so the random-vs-LLM comparison is marked **out of scope** instead
+   of being judged by the wrong band.
+:::
+
+::: key
+The reusable habit: **look for replicates you have already paid for.** A control arm, a run that
+plays each game twice, a feature that is inert on the first pass — any of these is a free
+measurement of your own noise, sitting in files you already have.
+:::
+
+---
+
 ## Say it in an interview
 
 **"Tell me how you evaluate your agent."**
@@ -565,8 +748,35 @@ tweaking.
 > using 11.8K tokens a minute against a ceiling of 250K. So an arm spends most of its
 > wall-clock asleep on the rate limiter: 334 seconds of 522. Four games is the largest suite I can
 > run twice in an evening, which is what an A/B needs. If I had budget, the first thing I'd
-> spend it on is more games and multiple seeds per game, in that order — more games attacks
-> overfitting, more seeds attacks noise, and right now overfitting is the bigger risk."
+> spend it on is more games, because overfitting to four games I've stared at is now my bigger
+> risk — noise I've since managed to measure for free."
+
+**"How do you know your differences aren't just noise?"** *(the answer that shows measurement discipline)*
+> "I measured it instead of guessing. Each arm is one run, so a difference only counts if it's
+> bigger than what two *identical* runs give you — and repeat runs cost 120 model calls each
+> against a 500-a-day free cap, so I couldn't buy them. Then I found four of them already on my
+> disk. My progress-signal experiment played each game twice, and the signal is a summary of the
+> previous play — so the first play of the treated arm had nothing to show the agent and ran the
+> plain prompt. With that, the control arm's two plays, and an earlier arm on the same settings,
+> I had four runs of one setup on each of four games: 16 episodes, already paid for.
+>
+> Then I split those 16 into two four-game arms that share no episode. There are 20,736 ways to
+> do that, and I work out all of them — every one is an A/B experiment where the change is
+> nothing at all, so every difference is noise. I take the size that only 5% of them exceed, and
+> that's my band per metric. It came out between 0.8 and 9.2 points depending on the metric,
+> which was the real lesson: there's no single noise floor. My old figure was one anecdote from
+> one game, and I'd been using a per-game number to judge four-game averages, which made it two
+> to three times too loose."
+
+**"Did that change any of your conclusions?"**
+> "Two of them. I'd written that my repetition guard cost me 2.5 points of dead actions, and
+> called it a trade I made on purpose. The band for that metric is 8.3 points — so the cost was
+> inside noise and I'd been telling a tidy story about a trade-off I had no evidence for. And
+> I'd called my last experiment a null. Against the band, four of its metrics are worse than
+> *every single one* of those 20,736 change-free differences: told flatly that it had failed,
+> the agent started demanding buttons that weren't even available, ten times in thirty moves on
+> one game. So it wasn't a null, it was a measurable degradation — which is more useful to know.
+> The wins held up: the streak fix and the history revert both clear the band easily."
 
 ---
 

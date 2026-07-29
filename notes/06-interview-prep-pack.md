@@ -153,11 +153,26 @@ answers — lead with these when you get the chance.
   > improving. But I'd rather have a *measured* guard than an unmeasured belief that a better
   > prompt fixes it. Same pattern as the illegal-action guard: the model asks, the harness
   > guarantees."
-- **"How do you know an improvement isn't noise?"**
-  > "Partly I don't, and I can put a number on it: one of my four games never triggered the change
-  > at all, so its prompt was identical in both arms — and it still swung 17 points. So single-seed
-  > differences that size are within noise; a streak going from 26 to 3 is far outside it. If I had
-  > more quota I'd spend it on multiple seeds before anything else."
+- **"How do you know an improvement isn't noise?" ★**
+  > "I measured the noise instead of guessing it. Repeat runs cost 120 model calls each against a
+  > 500-a-day free cap, so I couldn't buy them — but I found four already on disk. My last
+  > experiment played each game twice, and its signal is a summary of the *previous* play, so the
+  > first play of the treated arm ran the plain prompt. With that plus the control arm's two plays
+  > and an earlier arm on the same settings, I had four runs of one setup on each of four games.
+  > I split those 16 episodes into two four-game arms that share no episode — 20,736 ways to do it,
+  > all of them worked out — and every one is an A/B where the change is nothing, so every
+  > difference is noise. The size only 5% exceed is my band: 9.2 points for repetition, 8.3 for
+  > dead actions, 0.8 for illegal actions. The lesson was that there's no single noise floor, and
+  > my old 17-point figure was a *per-game* number I'd been using on four-game averages — two to
+  > three times too loose. A streak going from 26 to 3 beats all 20,736, so that one was never in
+  > doubt. More seeds is still the first thing I'd buy: more runs can only widen the band."
+- **"Did measuring the noise change anything you'd already concluded?" ★**
+  > "Two things, and I'd rather volunteer them. I'd written that my repetition guard cost 2.5 points
+  > of dead actions as a deliberate trade — that metric's band is 8.3 points, so the cost was inside
+  > noise and I'd told a tidy story I had no evidence for. And I'd called the progress-signal
+  > experiment a null; four of its metrics are worse than *every one* of the 20,736 change-free
+  > differences — on one game the agent demanded unavailable buttons ten times in thirty moves. So
+  > it was a measurable degradation, not a null. The wins were unaffected."
 
 ### Memory & retrieval
 - **"Do you use embeddings or RAG? Why not?" ★**
@@ -229,8 +244,10 @@ answers — lead with these when you get the chance.
   breaks trust — and the honesty is your strongest card, so don't throw it away.
 - **Don't quote a token number without naming the tokeniser.** That's the project's own headline
   correction; contradicting it in the room would be self-inflicted.
-- **Don't over-claim the statistics.** Everything is single-seed on four games. Say so, and say you
-  can put a *number* on the noise (17 points). Volunteering the limitation reads as strength.
+- **Don't over-claim the statistics.** Every arm is one run on four games. Say so — then say you
+  measured the noise band anyway, per metric, from 16 replicate episodes you already had
+  (`artifacts/noise-floor.json`). Volunteering the limitation *and* the measurement reads as
+  strength. Don't call the band a p-value; it isn't one.
 - **Don't call the guards "the agent improving."** They're the harness compensating — "the model
   asks, the harness guarantees." Naming that distinction is the point.
 - **Don't get pulled into defending the score.** When someone presses "but it's zero," pivot to
@@ -258,7 +275,7 @@ If you can share a screen, this is the tour, in order:
    answer *why did it do that.*"
 6. **[`artifacts/failure-taxonomy.json`](../artifacts/failure-taxonomy.json)** — the 88% / 0%
    table, the wall as a number.
-7. **`py -m unittest discover -s tests`** — 154 tests pass in about a second, live.
+7. **`py -m unittest discover -s tests`** — 163 tests pass in about a second, live.
 
 ---
 

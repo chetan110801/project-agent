@@ -5,6 +5,56 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-30 — The capstone refreshed: notes 10, 11 and the app folded into the one story
+
+*The last open item of the completion plan (`notes/05`, Milestone 3: "refresh the capstone to
+fold in note 11 and state the final status"). Note 13 was written 2026-07-27, the day the
+four-experiment arc closed — before the failure taxonomy (note 10), before memory and retrieval
+(note 11), and before the Explorer app existed. The capstone is the note Chetan actually speaks
+from, so a stale capstone is the most expensive kind of stale note. No code was touched.*
+
+**What changed in `notes/study/13`:**
+- **The wall is now stated as a number, not only as an argument** — a new sub-section under
+  Movement 5 carrying note 10's count: 2,071 actions across 46 episodes, six partitioning
+  buckets, **88% active-but-no-progress / 12% dead / 0% progress**, the classifier validated
+  against the 41-in-a-row run (60% perseveration), and — the strongest of the three — the guard
+  **relocating** waste rather than removing it (perseveration 53%→0% while active-no-progress
+  rose 22%→88%). None of this was in the capstone before.
+- **A short honest account of memory** (note 11): memory as a discipline about what is
+  re-inserted into the prompt, the project's two built mechanisms (history window = short-term,
+  progress signal = long-term), and the deliberate **no-RAG** decision with its reason.
+- **Movement 7 — Making it visible**: the Explorer app, with the one picture worth showing
+  (Replay → *jump to where it got stuck*) and two honest boundaries — it is a **viewer** that
+  produces no result and changed no number, and the Live tab spends real quota.
+- **The spoken answers were updated, since they are the point of the note:** the three-minute
+  walk-through now carries the 88%/0% number; two follow-ups added ("Do you use embeddings or
+  RAG?" and "Can I see it running?"). Status section re-dated to 2026-07-30 with the far-side
+  build recorded as *deferred, not abandoned* (four designs assessed in `notes/04`).
+
+**One real defect found and fixed while checking (§3 consistency).** Note 13 quoted the
+checkerboard worst case as "**8.7×** larger" and the interview pack as "**21×** larger" — two
+different numbers for the same fact, and *both* were bare ratios with no tokeniser named, three
+paragraphs after note 13's own headline rule ("if you cannot name the tokeniser, you do not
+have a number"). Both are correct under different counters — **20.9× under tiktoken/o200k_base,
+8.71× under Gemini's**, `artifacts/tokens-by-tokeniser.json`. Both notes now name the counter.
+The project's loudest rule was being broken by the project's own two most-quoted documents.
+
+**What was run / verified (§3):** every number folded in was read from
+`artifacts/failure-taxonomy.json` (88.33% → 88%, 11.67% → 12%, 2,071 actions, 46 episodes) or
+`artifacts/tokens-by-tokeniser.json`, not from memory or from the earlier note's prose; the
+app's default port (8000), the exact control label (*⤷ Jump to where it got stuck*) and the
+"no key and no network" claim were read out of `explorer/app.py`, `explorer/static/js/views/
+replay.js` and a passing `py explorer/smoke_test.py`; `notes/04` was checked to confirm it
+really assesses **four** designs before the capstone said so. `py -m unittest discover -s
+tests` → **154 tests, OK** (0.70s). `py build_site.py` → **28 documents**, and the rebuilt
+`index.html` was checked to contain Movement 7 with no leaked `:::` markup.
+
+**Also fixed while in there:** Movement 6 still called itself "the last movement" after
+Movement 7 was added, and two §6A gloss gaps in the new prose (*perseveration*, *RAG*) were
+closed at first use.
+
+---
+
 ## 2026-07-29 (later session) — The app is now teachable: how-to 03 + the course points at it
 
 *The previous session shipped the Explorer app but left two of this project's own hard rules

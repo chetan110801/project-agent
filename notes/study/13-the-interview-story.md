@@ -1,22 +1,24 @@
 # Study 13 — The interview story: the whole project as one answer
 
-*Written 2026-07-27, the day the four-experiment steering arc closed. This note invents no
-new fact. Every number in it is carried from an earlier note, and each of those traces to a
-file in this repo you can regenerate — the artifacts are named where the number first
-appeared (notes 06–09 and 12). The one thing this note adds is the **order**: it puts the
-whole project into a single line you can say out loud.*
+*Written 2026-07-27, the day the four-experiment steering arc closed. **Revised 2026-07-30**,
+once the last three rungs existed, to fold in what they added: the failure taxonomy (note 10),
+memory and retrieval (note 11), and the Explorer app you can now show on a screen. This note
+invents no new fact. Every number in it is carried from an earlier note, and each of those
+traces to a file in this repo you can regenerate — the artifacts are named where the number
+first appeared (notes 06–12). The one thing this note adds is the **order**: it puts the whole
+project into a single line you can say out loud.*
 
 > **You are here:** rung 13 — the capstone (*the stone that finishes an arch and holds the
-> rest in place*). The last written rung of the course.
+> rest in place*). The last rung of the course.
 > **Assumes you read:** the whole ladder — [00](00-how-to-use-these-notes.md) through
-> [09](09-exploration-and-the-signal-that-cannot-exist.md), and
 > [12](12-budgets-tokens-cost-latency.md). This note leans on all of them and re-teaches
 > none of them in full; it carries a one-line gist of each thing as it needs it, so you are
 > never stranded, but the depth lives in the earlier notes.
 > **After this you can:** tell the entire project as one continuous story — the problem, the
 > machine, the one lever you hold, how you know anything, the four experiments and the wall
-> they found, and the budget you actually spend — in three minutes, and hold your ground on
-> the hard follow-ups.
+> they found, what that wall looks like as a number, the budget you actually spend, and how to
+> put the whole thing on a screen — in three minutes, and hold your ground on the hard
+> follow-ups.
 
 ---
 
@@ -157,8 +159,10 @@ at what the environment already tells you before adding intelligence to guess it
 :::
 
 The object view compresses a real frame ~7× in the units that bill me — but on a
-checkerboard (2,048 one-cell objects) the "compressed" form is **8.7× larger** than the raw
-grid, so it carries a cap that truncates loudly and says it truncated. *A compression scheme
+checkerboard (2,048 one-cell objects) the "compressed" form **inverts** and comes out larger
+than the raw grid: **8.7× larger under Gemini's counter, 20.9× under OpenAI's** — and naming
+which counter is exactly the rule in the box above, so I do it here too. Hence the encoder
+carries a cap that truncates loudly and says it truncated. *A compression scheme
 must be measured on its worst input, because it meets that input exactly when the game gets
 complicated — the moment you least want it to fail.* And the cheapest valuable thing in the
 whole context turned out not to be more description of the world but feedback about the
@@ -298,13 +302,64 @@ on a wall, and the next idea worth trying is on the far side of it: **learning a
 attempts**, not one more sentence telling the agent it is not there yet.
 :::
 
+### The same wall, as a number instead of a story
+
+Everything above is an *argument*. The last piece of engineering turned it into a **count**,
+and this is the single strongest number I own (note 10).
+
+Every decision the agent makes writes one line to a **trace** (*the complete record of one
+operation — what went in, what came out, what it cost*), append-only, carrying the model's own
+stated reason. A script then reads every committed trace — **2,071 actions across 46
+episodes** — and drops each action into exactly one of six buckets, most-specific waste first,
+so the shares partition and sum to 100%: illegal (a button that wasn't there), dead (changed
+nothing), revisit (a screen already seen), **perseveration** (*repeating one action past the
+point chance would — the 4th identical press in a row or later*), active-but-no-progress, and
+progress. That catalogue is a **failure taxonomy**.
+
+::: key
+**For the current agent it reads 88% active-but-no-progress, 12% dead, and 0% everything else
+— including 0% progress.** Not stuck in a loop, not mashing dead buttons: nearly nine actions
+in ten are legal, non-repetitive, screen-changing work toward a goal it never identified. The
+wall of the four experiments, said as one number I can point at.
+(`artifacts/failure-taxonomy.json`.)
+:::
+
+Two disciplines around that number are worth as much as the number:
+
+- **The classifier was validated against a failure I already understood** before I trusted it
+  anywhere else — the run where the agent pressed one button 41 times. Perseveration *should*
+  dominate there, and it does, at **60%**. That rule exists because of a scar this project
+  earned earlier: a metric I invented from a *story* about a failure read **0%** on the
+  recording of that exact failure (note 08). A classifier of failures is a guess until it is
+  run against a real one.
+- **It caught my own fixes flattering me.** The repetition guard took perseveration from
+  **53% → 0%**, which looks like a clean win — but the taxonomy shows where those actions went:
+  active-but-no-progress rose **22% → 88%**. The guard did not make the agent play better, it
+  **relocated** the wasted motion from "same button" to "different buttons, same nowhere". A
+  single headline metric hides that; buckets that partition cannot.
+
+### What "just give it a memory" actually meant here
+
+Interviewers reach for this one, so it is worth having the honest version ready (note 11). The
+model is stateless, so **memory is not a brain the agent has — it is a discipline about what I
+re-insert into the prompt on every call.** This project built one of each kind and ran both:
+**short-term** — the agent's own recent actions inside the current game (Experiment 1, reverted
+because it read as encouragement) — and **long-term** — the previous attempt's result carried
+into the next attempt's prompt (Experiment 4, null). And it uses **no RAG** (*retrieval-augmented
+generation: searching a store of past text by meaning and pasting the relevant pieces into the
+prompt*) **at all**, on purpose: retrieval earns its place when your memory is too big for the
+context and you need a slice of it, whereas this agent's entire experience is a handful of
+attempts and eight action types, which fits whole. The bottleneck was never *recall* — the
+agent never lost a fact it needed. **Knowing when not to reach for RAG mattered more here than
+knowing how to build it.**
+
 ---
 
 ## Movement 6 — The budget you actually spend
 
-The last movement is the one that made all of it real: this ran on **free tiers only**, on a
-Windows laptop, by project rule — and that constraint is part of the engineering story, not an
-apology for it (note 12).
+The movement that made all of it real: this ran on **free tiers only**, on a Windows laptop,
+by project rule — and that constraint is part of the engineering story, not an apology for it
+(note 12).
 
 On a free tier the scarce budget is not money; it is **requests** and **time**. There are
 three limits at once — requests per minute, tokens per minute, requests per day — and only one
@@ -331,7 +386,48 @@ loud is worth more than pretending four games is statistically comfortable (note
 
 ---
 
-## The thread running under all six movements
+## Movement 7 — Making it visible
+
+Everything above lives in JSON files, JSONL traces and Markdown notes. That is the right place
+for it — but it is not a thing you can put in front of someone in the first two minutes of a
+conversation. So the last thing built was a **viewer**: a small local app, `explorer/`, started
+with one command.
+
+```powershell
+py explorer/app.py
+```
+
+It serves `localhost:8000` and needs **no API key, no internet, and nothing installed** — it is
+built on Python's own standard library precisely so there is no `pip install` standing between
+someone and seeing the project. Six offline views read the real files already committed here:
+**Home** (the headline), **Replay** (any recorded game move by move — the screen, the action,
+and the model's own reason — with side-by-side compare and a *⤷ Jump to where it got stuck*
+control), **Evals**, **Taxonomy**, **Traces**, **Budgets**. A **Learn ↔ Demo** switch adds or
+hides a plain-language explainer and the matching study note on every view, so the same app
+serves the person learning it and the person being shown it.
+
+::: key
+The one picture worth the whole app is in **Replay**, at *jump to where it got stuck*: **the
+screen keeps changing, the reasoning stays confident and articulate, and the score stays 0.**
+That is the project's finding as a thing you watch happen rather than a claim you make. Ten
+seconds of that beats ten minutes of me describing it.
+:::
+
+Two honest boundaries, because a dashboard invites over-claiming:
+
+- **It is a viewer on top of the harness, not part of it.** It only *reads* `runs/`,
+  `artifacts/` and `notes/`; it never touches `harness/`, `scripts/` or `tests/`. It produces
+  no result — the results were already there. Building it changed no number in this note.
+- **The optional Live tab is gated and honest about cost.** One mode lets you play a real game
+  yourself (ARC key only, no LLM quota), one lets you watch the real agent play (spends the
+  500-requests-a-day free tier, so its action budget is capped low, and a rate-limit refusal
+  degrades to a visible amber "fell back" step rather than a crash). With no key the buttons
+  disable with a link to the walkthrough instead of breaking. The offline six are the only ones
+  I would open in an interview.
+
+---
+
+## The thread running under all of it
 
 Step back and one theme runs through every movement above: **my own measurements lied to me
 repeatedly, and the discipline is what caught them.** This is the most senior thing in the
@@ -356,24 +452,32 @@ checked", and every mystery on this project into a lookup.
 
 ---
 
-## Where it stands today (2026-07-27)
+## Where it stands today (2026-07-30)
 
 Honest status, no rounding up:
 
 - **Done and solid:** the hand-built loop; the encoders and their measured costs; the eval
-  suite with the steering/outcome/cost split and the dev/held-out discipline; the budget
-  machinery; and the four-experiment arc, now closed on a named wall.
+  suite with the steering/outcome/cost split and the dev/held-out discipline; the trace
+  machinery and the failure taxonomy built on it; the budget machinery; the four-experiment arc,
+  closed on a named wall; and the Explorer app that shows all of it offline in one command.
+  The test suite is **154 tests, passing offline in under two seconds** (0.6s of test time,
+  measured 2026-07-30).
 - **The result is a negative one, reported as loudly as a win would be:** the agent is no
-  better at the game than random on the outcome that counts. The value is in *how thoroughly
-  that is established* and *what it locates*.
-- **The course is now complete:** note 11 (memory and retrieval) is written — it teaches short-
-  versus long-term memory and the honest version of RAG using the agent's own two memory
-  mechanisms (the history window and the progress signal), and is clear about why this project
-  needs no RAG at all. (Note 10, traces and the failure taxonomy, says the wall as a number —
-  88% of the current agent's actions are active-but-no-progress.)
+  better at the game than random on the outcome that counts — **0% of its actions reach
+  `progress`**. The value is in *how thoroughly that is established* and *what it locates*.
+- **The course is complete: 00 → 13, all fourteen rungs written**, and it now points at the app
+  (note 00) as well as at the artifacts. Note 10 gave the wall its number, note 11 gave the
+  honest account of memory and of the retrieval this project deliberately does *not* use, and
+  this note folds both in.
 - **The next project direction** is on the far side of the wall — *learning across attempts*
-  (credit assignment or an action-model). It is a genuinely new direction, so it gets its own
-  dated decision and explicit agreement before any build, not a quiet drift into it.
+  (credit assignment or an action-model). Four candidate designs are already assessed in writing
+  (`notes/04`), and the build is **deferred, not abandoned**: it is a genuinely new direction, so
+  it gets its own dated decision and explicit agreement before any code, not a quiet drift into
+  it. A documented wall with the far side scoped is a stronger artifact than a half-built agent.
+- **The one thing I would not claim:** the app's *live* modes have been exercised against a mock
+  and against the offline path, but a full real-server-plus-real-model live run has not been made
+  from the app itself — it spends the daily free quota. The offline six views are the ones every
+  number above comes from, and those run anywhere.
 
 ::: warn
 Do not let the closed arc read as "the project failed". The project's thesis was never "score
@@ -414,10 +518,15 @@ line; then the follow-ups that actually get asked.
 > end-of-game verdict fed into the next attempt. Every one changed the agent's behaviour.
 > Not one moved the score. Together they locate the wall precisely: the agent can't turn
 > feedback, however truthful, into a *better-chosen* next action, because a stateless prompt
-> has no credit assignment and no learned model of what its actions do. And all of it ran on
-> free tiers, which made the cost engineering real rather than decorative — the model with
-> the best throughput on paper couldn't serve a single real prompt, and finding that out is
-> its own lesson."
+> has no credit assignment and no learned model of what its actions do.
+>
+> And I can say that wall as a number rather than a story. I traced every decision and sorted
+> all two thousand of them into six buckets: 88% of the agent's actions are legal,
+> non-repetitive, screen-changing work that makes no progress, 12% do nothing at all, and zero
+> reach progress. It isn't flailing — it's competent-looking work toward a goal it never
+> identified. And all of it ran on free tiers, which made the cost engineering real rather than
+> decorative — the model with the best throughput on paper couldn't serve a single real prompt,
+> and finding that out is its own lesson."
 
 **"What are you proudest of?"**
 > "That the negative result is airtight. Anyone can report a win. I ran four reasonable fixes,
@@ -449,6 +558,24 @@ line; then the follow-ups that actually get asked.
 > narrate. It's a new direction, so I'd scope it and write the decision down before building —
 > which is how every other turn in this project was made."
 
+**"Do you use embeddings or RAG?"**
+> "No, deliberately. Retrieval earns its place when your memory is too big for the context and
+> you need only a slice of it. My agent's whole experience is a handful of attempts and eight
+> action types — it fits in the prompt, so there's nothing to retrieve. And recall was never my
+> bottleneck: the agent never lost a fact it needed. Its problem is that nothing turns feedback
+> into a better action, and RAG fetches past text — it doesn't manufacture a goal. Knowing when
+> *not* to reach for it mattered more here than knowing how to build it. What I did build is the
+> memory that was actually called for: short-term, the agent's own recent actions inside a game,
+> and long-term, the previous attempt's result carried into the next attempt."
+
+**"Can I see it running?"**
+> "Yes — one command, no keys, no internet: `py explorer/app.py`. It's a small local dashboard
+> over the repo's own recordings and artifacts. The view I'd show you is Replay, on 'jump to
+> where it got stuck': the screen keeps changing, the model's reasoning stays confident and
+> articulate, and the score stays zero. That's the finding as something you watch rather than
+> something I claim. It's a viewer on top of the harness, though — it reads the files and
+> produces no new result, so it doesn't change a single number I've quoted you."
+
 **"If you had a budget, where would it go first?"**
 > "More games and multiple seeds per game, in that order. Everything I report is a single
 > seed on four games, bounded by 500 requests a day. More games attacks overfitting to the
@@ -468,13 +595,21 @@ line; then the follow-ups that actually get asked.
 ## End of the course
 
 That is the ladder, top to bottom, as one line. If you can say Movement 5 and the thread
-under it in your own words — four changes, no score movement, a wall named, and a habit that
-caught every lie a measurement told — you can carry this whole project into any room.
+under it in your own words — four changes, no score movement, a wall named and then *counted*,
+and a habit that caught every lie a measurement told — you can carry this whole project into
+any room.
 
-The ladder is now complete: **note 11 (memory and retrieval)** was the last rung, written once
-the agent's own two memory mechanisms — the history window and the progress signal — gave it
-real, built cases to teach from. (Notes 10 and 11 were both written 2026-07-28.) A note about
-an unbuilt thing would be guesswork, and this project does not publish guesswork, which is
-exactly why note 11 could only be written once its subject existed.
+**The ladder is complete: 00 → 13, fourteen rungs.** The last two engineering rungs were
+written only when their subjects existed — note 10 once there were traces to count (the
+taxonomy), note 11 once the agent had both a short-term and a long-term memory mechanism built
+and run. A note about an unbuilt thing would be guesswork, and this project does not publish
+guesswork; that is why they came last rather than early.
+
+Two places to go from here, depending on what you need:
+
+- **To rehearse:** [`notes/06` — the interview-prep pack](../06-interview-prep-pack.md), which
+  drills the pitch at three lengths and a topic-indexed Q&A bank.
+- **To see it instead of read it:** start the app — [how-to 03](../howto/03-run-the-explorer-app.md)
+  is the click-by-click version — and put Movement 5 on a screen.
 
 **Back to the start:** [Study 00 — how to use these notes](00-how-to-use-these-notes.md).

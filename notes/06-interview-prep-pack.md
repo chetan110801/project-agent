@@ -79,9 +79,10 @@ answers — lead with these when you get the chance.
   > provider's own counter and the famous '5.6× cost' became 2× on the model I actually call."
 - **"Did compression work?"**
   > "7× on a real frame, and it's lossy — but the number I'd report is the failure case: on a
-  > checkerboard, 2,048 one-cell objects, the 'compressed' form was 21× *larger* than raw. So the
-  > encoder caps its output and says it truncated. A compression scheme has to be measured on its
-  > adversarial input, because it meets that input exactly when the state gets complicated."
+  > checkerboard, 2,048 one-cell objects, the 'compressed' form was *larger* than raw — 21× under
+  > OpenAI's tokeniser, 8.7× under the Gemini counter I actually bill against. So the encoder caps
+  > its output and says it truncated. A compression scheme has to be measured on its adversarial
+  > input, because it meets that input exactly when the state gets complicated."
 
 ### Agent design & failure modes
 - **"How do you debug an agent?" ★**

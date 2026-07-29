@@ -5,6 +5,53 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-29 — Add a separate local "Explorer" app (a presentation/understanding layer), built in a new session
+
+*Chetan asked for "a complete full-stack app locally" to see the project working
+end-to-end, saying it would also help him **understand the project in depth**. He wants
+its code kept **separate** ("I don't wanna go through any of that… don't need to
+understand that") and the build done in a **fresh Claude Code session**. This is his
+explicit in-session agreement to a scope addition, which CLAUDE.md §2 requires before
+deviating from the locked "not an app" scope.*
+
+**Decision.** Build a local **Explorer app** in `explorer/` (new session), specified in
+`notes/07-explorer-app-spec.md`. It is a **presentation / understanding layer that sits on
+top of the harness and does NOT supersede it** — the harness stays the deliverable that
+gets judged; the app is a viewer/driver on top. Locked product choices (from this
+session's Q&A):
+
+- **Offline core (always works):** browse & replay every recorded game, plus evals, the
+  failure taxonomy, traces, and budgets — all from existing `runs/` + `artifacts/` files,
+  no keys, no network, nothing that can fail in an interview.
+- **Learn ↔ Demo toggle:** Learn mode overlays each view with a link to the matching
+  study note (so using the app teaches the project); Demo mode is clean for interviewers.
+- **Optional live modes (added mid-session, gated):** *You play* the real ARC-AGI-3 game
+  live (ARC key only — no LLM quota burned); *Watch the agent play* live (ARC+LLM keys —
+  real 429/quota risk, must degrade like the harness does). Both reuse the existing
+  loop/policies/SDK; the offline core never depends on them.
+- **Constraints:** free + local + Windows, one-command start; recommended stack FastAPI +
+  no-build frontend (no Node required); all code under `explorer/`; `harness/`,
+  `scripts/`, `tests/` unchanged (the app may *call* them, never edit them).
+
+**Precursor built this session (proof of concept, kept):** `build_demo.py` →
+`demo.html` — a single self-contained, offline replay of three real recorded games
+(LLM·sb26, LLM·ls20, random·ls20; all final score 0). Renders the 64×64 screen + the
+model's own reasoning + score + cells-changed per move, makes "the wall" visible, and
+handles a real mid-run `429` as a clean amber "fell back" note. Verified: builder runs,
+embedded data validates (3 runs, correct 64×64 grids), frames confirmed to render as real
+game screens. One bug found + fixed from Chetan's screenshot: a generic `canvas{}` CSS
+rule bled a black background onto the score-timeline sparkline; scoped it to `#screen`.
+
+**Rejected / deferred.** "Offline-only, no live" was the first answer but Chetan amended it
+to include real-time play — so live is **in**, but optional and gated, not the core. Node/
+npm-based frontends are allowed only if start stays one command. The far-side "learn
+across attempts" agent build remains deferred (notes 04/05), untouched by this.
+
+**Open dependency.** Live modes need a working ARC key; the leaked `ARC_API_KEY` still
+needs rotation (memory `security-key-rotation`) before live play is relied on.
+
+---
+
 ## 2026-07-28 (end of session) — Consolidation executed: the project is presentable-complete
 
 *Closing summary for the consolidation plan (`notes/05`) chosen in the entry below. All three

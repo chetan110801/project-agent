@@ -5,6 +5,53 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-29 (new session) — Explorer app BUILT to spec (notes/07); one refinement, one honest gap
+
+*The session that followed the decision below. It read notes/07 + the 2026-07-29 decision +
+memory, then built the app. Recorded here because CLAUDE.md §1 requires a session that
+changed things to write down what it did, and §3 requires stating plainly what was run.*
+
+**What was built (all in `explorer/`, harness/scripts/tests untouched):**
+- **Offline core — the six views**, all reading real repo files with no key and no network:
+  Home (headline + the four experiments + counts), Replay (any recording move-by-move, with
+  **side-by-side compare** and **jump-to-where-it-got-stuck** = the longest repeated-action
+  streak), Evals (arms + before/after comparisons, metrics tagged steering/outcome/cost),
+  Taxonomy (the six buckets as a bar chart, 88%/0% read live from the JSON), Traces (one
+  run's raw decision records), Budgets (tokens · requests/day · latency + the model bakeoff).
+- **Learn ↔ Demo toggle** — Learn adds a plain-language explainer + the matching study note
+  (rendered in a modal) to every view; Demo hides them.
+- **Both gated live modes** — *you-play* (real ARC server, ARC key only; plus a **no-key
+  MockGame** fallback that works anywhere) and *watch-agent* (real LLM run streamed over
+  **SSE**, action-budget capped low to protect the 500/day free tier, 429 → amber "fell
+  back" step, never a crash). Buttons disable cleanly with a how-to link when a key is absent.
+
+**Refinement of the spec (recorded, per CLAUDE.md §2): stdlib `http.server`, not FastAPI.**
+notes/07 *recommended* FastAPI ("the builder may refine but keep the spirit"). FastAPI +
+uvicorn are not installed here, so choosing them adds a `pip install` step and a failure
+point. Python's own `http.server` needs nothing installed, so `py explorer/app.py` just
+works — the same "minimal-friction, one command, no build" goal, taken one step further.
+Frontend is no-build ES-module JS (no Node), as specced.
+
+**What was run / verified (CLAUDE.md §3):**
+- `py explorer/smoke_test.py` — PASSES: every offline endpoint returns real data, parsing is
+  correct (47 runs, 4 games, 8 eval arms, 5 comparisons; the 88%/0% headline read from
+  `failure-taxonomy.json`), path-traversal guards hold, and the **you-play cycle against the
+  offline MockGame** (start → action → score → close) works with no key.
+- A DOM-shim render harness executed **every one of the 7 views' real `render()`** against
+  the live server's JSON with **no runtime error**; all JS parses as ES modules.
+- The **watch-agent SSE transport** was verified offline with a scripted stub: correct
+  `data:` framing, a 429-fallback step (`err=True`) flows through, terminal `done` sent.
+
+**The one honest gap.** The **real** live path (real ARC server + real LLM) was **not**
+auto-run this session. Doing so burns the user's rationed free-tier quota and creates
+scorecards on his account — an outward-facing, resource-consuming action — and the ARC key
+is still flagged for rotation (memory `security-key-rotation`, open). The real path reuses
+the same already-verified harness (`arc_env.py`, verified 2026-07-22; the LLMPolicy 429
+fallback is existing tested code); Chetan drives it himself via the buttons once the key is
+rotated. This is labelled as a gap, not rounded up to "works".
+
+---
+
 ## 2026-07-29 — Add a separate local "Explorer" app (a presentation/understanding layer), built in a new session
 
 *Chetan asked for "a complete full-stack app locally" to see the project working

@@ -91,6 +91,9 @@ py scripts/run_agent.py --policy llm --model gemini-3.5-flash-lite
 # 5. (optional) run one eval configuration and compare two of them
 py scripts/run_evals.py --arm smoke --mock        # offline rehearsal, no quota
 py scripts/compare_evals.py dev-llm-p0 dev-llm-p1 --attempt 2
+
+# 6. (optional) explore the whole project in a local browser dashboard — offline, no keys
+py explorer/app.py                                # http://localhost:8000; see explorer/README.md
 ```
 
 Keys live in an untracked `.env` (see [`.env.example`](.env.example)); the two how-to notes in
@@ -125,6 +128,7 @@ artifacts/   every result the notes cite, as JSON you can re-generate
 notes/       study/ (the course) · howto/ (walkthroughs) · DECISIONS.md · design notes
 runs/        recorded game traces (gzipped JSONL)
 index.html   the whole course as one offline reading app (built by build_site.py)
+explorer/    optional local dashboard to SEE it all end-to-end (py explorer/app.py)
 ```
 
 *Built by Chetan J with Claude Code. The course is written for a data scientist learning this

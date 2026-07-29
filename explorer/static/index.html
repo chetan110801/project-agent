@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>project-agent · Explorer</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="t">project-agent · Explorer</span>
+      <span class="s">an LLM agent for ARC-AGI-3, judged by its harness — explored offline</span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <a href="#/home">Home</a>
+      <a href="#/replay">Replay</a>
+      <a href="#/evals">Evals</a>
+      <a href="#/taxonomy">Taxonomy</a>
+      <a href="#/traces">Traces</a>
+      <a href="#/budgets">Budgets</a>
+      <a href="#/live">Live</a>
+    </nav>
+    <div class="spacer"></div>
+    <label class="toggle" title="Learn mode adds a plain-language explainer + note links to every view">
+      Demo
+      <span class="switch"><input type="checkbox" id="learnToggle"><span class="slide"></span></span>
+      <b>Learn</b>
+    </label>
+  </div>
+</header>
+
+<main id="app">
+  <div class="loading">Loading…</div>
+</main>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <button class="close" id="modalClose">Close ✕</button>
+    <div class="md" id="modalBody"></div>
+  </div>
+</div>
+
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

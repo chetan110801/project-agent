@@ -1,8 +1,11 @@
 # notes/07 — Explorer app spec (the local, offline project dashboard)
 
-**Status: SPEC — not built yet. Build it in a fresh Claude Code session.**
-This is the brief the next session reads to build the app. Chetan does **not** need to
-read this; it exists so the builder gets it right without re-asking. Decided 2026-07-29.
+**Status: BUILT 2026-07-29 (new session), to this spec.** The app lives in `explorer/`;
+run it with `py explorer/app.py`. Offline core (six views + Learn/Demo toggle) and both
+gated live modes (you-play, watch-agent) are done and verified offline; see the
+2026-07-29 "built" entry in `notes/DECISIONS.md` for exactly what was verified and the one
+thing left to the user (real-server live play, which needs the still-unrotated ARC key).
+The brief below is kept as the record of what was asked for. Decided 2026-07-29.
 
 ---
 

@@ -114,6 +114,41 @@ know what they are so you don't confuse them with teaching:
 
 ---
 
+## Seeing it, not just reading it — the Explorer app
+
+There is a small app in this repo that shows the whole project on one screen in your
+browser. It needs no key, no internet, and nothing installed — one command starts it:
+
+```powershell
+py explorer/app.py
+```
+
+The click-by-click version is [how-to 03](../howto/03-run-the-explorer-app.md). Start it
+once *before* you begin the course, so the things these notes talk about are pictures in
+your head and not just words. Then, as you climb the ladder, open the tab that matches the
+note you just finished:
+
+| After you read | Open this tab | And you will see |
+|---|---|---|
+| 01, 13 | **Home** | the project's headline result, in one sentence |
+| 04, 05, 06, 09 | **Replay** | a real recorded game replayed move by move — the screen, the action, and the model's own reason for it. The **⤷ Jump to where it got stuck** button takes you straight to the part this project is about |
+| 07, 08 | **Evals** | the actual before/after numbers behind every claim in those notes |
+| 10 | **Taxonomy** and **Traces** | the counted failure buckets, and the raw records they were counted from |
+| 12 | **Budgets** | the tokens, the daily request limits, and the model comparison |
+
+The app has a **Demo / Learn** switch in the top-right corner. Set it to **Learn** and every
+view grows a plain-language explainer plus a link that opens the matching study note inside
+the app. So the course and the app point at each other: the notes give you the words, the
+app gives you the thing the words are about.
+
+::: note
+The app also has a **Live** tab that plays real games over the internet. Leave it alone
+until you have read note 04 — and read the warnings in how-to 03 first, because one of its
+two modes spends the daily free quota this project runs on.
+:::
+
+---
+
 ## How to actually read this
 
 1. **In order.** 00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13.

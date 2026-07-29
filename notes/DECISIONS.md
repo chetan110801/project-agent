@@ -5,6 +5,48 @@ Format: date · decision · why · what was rejected.
 
 ---
 
+## 2026-07-29 (later session) — The app is now teachable: how-to 03 + the course points at it
+
+*The previous session shipped the Explorer app but left two of this project's own hard rules
+unmet: §6B (anything Chetan does himself gets a click-by-click walkthrough in `notes/howto/`)
+and §6A's closing clause (*"a session that adds a capability but leaves the ladder unable to
+explain it is unfinished"*). Running the app is something he does himself, and the course did
+not know the app existed. This session closed both gaps; no harness or app code was touched.*
+
+**What was written:**
+- **`notes/howto/03-run-the-explorer-app.md`** — start it, a 15-minute guided tour (which tab
+  after which note, which button to press), stop it, a troubleshooting table, and the **Live**
+  tab handled as its own section with a cost column: mock = free, *you play* = ARC key only,
+  *watch the agent* = spends the 500/day tier. It repeats the standing instruction to rotate
+  the ARC key before any real live use and points at how-to 01's rotation steps.
+- **Study note 00** — new section *"Seeing it, not just reading it"*: the one command, a table
+  mapping each rung of the ladder to the tab that shows it, and the Learn/Demo switch. The
+  course and the app now point at each other (Learn mode already opened study notes; nothing
+  pointed the other way).
+- **`notes/06` screen-share checklist** — the app inserted as item 2, the strongest thing to
+  show, with the interview-specific warnings (keep it on **Demo**; start it before the call;
+  don't touch **Live** — it needs the network and spends quota).
+- **`README.md`** — the how-to notes line now names the Explorer walkthrough.
+
+**What was run / verified (CLAUDE.md §3) — every number and screen quote in how-to 03 comes
+from this session, not from memory:**
+- The app was **started for real** (`py explorer/app.py --port 8123`) and served: `/` 200,
+  `/api/overview` 200, `/api/runs` 200, `/api/learn` 200, `/api/live/status` 200. The
+  walkthrough's startup banner is the literal text from `serve()` (bar length checked: 68 `=`).
+- Every control the tour names was read out of the real view code — the **Run** and **Compare
+  with (same game)** dropdowns, **▶ Play** / **❚❚ Pause** / **Speed**, **⤷ Jump to where it got
+  stuck**, and the Live buttons (**▶ Real game**, **▶ No-key demo (mock)**, **▶ Start
+  watching**) — not invented from the spec.
+- The note↔tab mapping table was generated from the app's own `/api/learn` response.
+- `py explorer/smoke_test.py` — all checks pass. `py -m unittest discover -s tests` — **154
+  tests, OK, 1.9s**. `py build_site.py` — **28 documents** (26 + `notes/07` + the new how-to).
+
+**Unchanged and still true:** the real live path (real ARC server + real LLM) is still not
+auto-run here — it spends Chetan's quota and the ARC key is still unrotated. That gap is now
+written where he will actually meet it, at the top of the Live section of the walkthrough.
+
+---
+
 ## 2026-07-29 (new session) — Explorer app BUILT to spec (notes/07); one refinement, one honest gap
 
 *The session that followed the decision below. It read notes/07 + the 2026-07-29 decision +

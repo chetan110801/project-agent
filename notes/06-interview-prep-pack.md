@@ -244,14 +244,20 @@ answers — lead with these when you get the chance.
 If you can share a screen, this is the tour, in order:
 
 1. **[`README.md`](../README.md)** — the honest headline in 30 seconds.
-2. **`index.html`** (build with `py build_site.py`) — the 14-note course as one page; open note 13.
-3. **[`notes/DECISIONS.md`](DECISIONS.md)** — dated decisions with rejected alternatives. This is
+2. **The Explorer app** (`py explorer/app.py` → `localhost:8000`, offline, no keys) — the
+   strongest thing to show. **Home** for the headline, then **Replay** → *⤷ Jump to where it got
+   stuck*: the screen keeps changing while the score stays 0, which is the whole project in one
+   picture. Then **Evals** and **Taxonomy** for the numbers. Keep the toggle on **Demo**. Start it
+   *before* the call and leave it running; don't touch the **Live** tab in an interview — it spends
+   real quota and depends on the network. Walkthrough: [how-to 03](howto/03-run-the-explorer-app.md).
+3. **`index.html`** (build with `py build_site.py`) — the 14-note course as one page; open note 13.
+4. **[`notes/DECISIONS.md`](DECISIONS.md)** — dated decisions with rejected alternatives. This is
    the "why," and it's what separates a project from a tutorial.
-4. **A trace** in `runs/` — one JSONL line per decision, reasoning field included → "this is how I
+5. **A trace** in `runs/` — one JSONL line per decision, reasoning field included → "this is how I
    answer *why did it do that.*"
-5. **[`artifacts/failure-taxonomy.json`](../artifacts/failure-taxonomy.json)** — the 88% / 0%
+6. **[`artifacts/failure-taxonomy.json`](../artifacts/failure-taxonomy.json)** — the 88% / 0%
    table, the wall as a number.
-6. **`py -m unittest discover -s tests`** — 154 tests pass in about a second, live.
+7. **`py -m unittest discover -s tests`** — 154 tests pass in about a second, live.
 
 ---
 

@@ -93,11 +93,13 @@ py scripts/run_evals.py --arm smoke --mock        # offline rehearsal, no quota
 py scripts/compare_evals.py dev-llm-p0 dev-llm-p1 --attempt 2
 
 # 6. (optional) explore the whole project in a local browser dashboard — offline, no keys
-py explorer/app.py                                # http://localhost:8000; see explorer/README.md
+py explorer/app.py                                # http://localhost:8000; see notes/howto/03
 ```
 
-Keys live in an untracked `.env` (see [`.env.example`](.env.example)); the two how-to notes in
-[`notes/howto/`](notes/howto/) are click-by-click walkthroughs for getting them.
+Keys live in an untracked `.env` (see [`.env.example`](.env.example)); the how-to notes in
+[`notes/howto/`](notes/howto/) are click-by-click walkthroughs — two for getting the keys, and
+[one for running the Explorer dashboard](notes/howto/03-run-the-explorer-app.md) and reading
+what each of its tabs is showing you.
 
 ---
 
